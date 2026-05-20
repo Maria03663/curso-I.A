@@ -306,6 +306,7 @@
             document.getElementById(btn.dataset.target).classList.add('active');
             if (btn.dataset.target === 'sec-stats') initStatsCharts();
             if (btn.dataset.target === 'sec-students') loadInscriptions();
+            if (btn.dataset.target === 'sec-courses') loadCourses();
         });
     });
 
@@ -443,9 +444,11 @@
         setVal('kpiEstudiantes', total);
         setVal('kpiPendientes', pendientes);
         setVal('kpiAceptados', aceptados);
+        setVal('kpiCursos', COURSES.length);
         setVal('statsEstudiantes', total);
         setVal('statsPendientes', pendientes);
         setVal('statsAceptados', aceptados);
+        setVal('statsCursos', COURSES.length);
     }
 
     function updateRecentStudents(students) {
@@ -482,7 +485,7 @@
                 <td>${s.updated_at ? new Date(s.updated_at).toLocaleDateString('es-CO') : '—'}</td>
                 <td>
                     ${s.status === 'pending' ? '<button class="btn-sm green" onclick="acceptSupabaseStudent(\'' + s.id + '\',\'' + (s.full_name || '').replace(/'/g, "\\'") + '\',\'' + (s.email || '').replace(/'/g, "\\'") + '\',\'' + (s.course || '').replace(/'/g, "\\'") + '\',\'' + (s.temp_password || '').replace(/'/g, "\\'") + '\')">✔ Aceptar</button> ' : ''}
-                    <button class="btn-sm red" onclick="rejectSupabaseStudent('${s.id}')">✕ Rechazar</button>
+                    ${s.status === 'pending' ? '<button class="btn-sm red" onclick="rejectSupabaseStudent(\'' + s.id + '\')">✕ Rechazar</button>' : ''}
                 </td>
             </tr>
         `).join('');
@@ -509,7 +512,38 @@
         loadSupabaseData();
     }
 
+    // Courses data
+    const COURSES = [
+        { title:'Regresión Lineal', school:'ML', students:'2.4k', price:'Gratis', status:'Publicado', page:'regresion-lineal.html' },
+        { title:'Algoritmos Genéticos', school:'IA Evolutiva', students:'1.6k', price:'Gratis', status:'Publicado', page:'algoritmos-geneticos.html' },
+        { title:'Infraestructura y Despliegue', school:'Cloud & DevOps', students:'1.9k', price:'Gratis', status:'Publicado', page:'infraestructura.html' },
+        { title:'Inteligencia Artificial (General)', school:'Fundamentos', students:'3.2k', price:'Gratis', status:'Publicado', page:'ia-general.html' },
+        { title:'Redes Neuronales y Deep Learning', school:'Deep Learning', students:'2.7k', price:'Gratis', status:'Publicado', page:'redes-neuronales.html' },
+        { title:'Procesamiento de Lenguaje Natural (NLP)', school:'NLP', students:'2.1k', price:'Gratis', status:'Publicado', page:'nlp.html' },
+        { title:'Árboles de Decisión y Random Forest', school:'ML Clásico', students:'1.8k', price:'Gratis', status:'Publicado', page:'arboles-decision.html' },
+        { title:'Aprendizaje por Refuerzo', school:'RL', students:'1.5k', price:'Gratis', status:'Publicado', page:'aprendizaje-por-refuerzo.html' },
+    ];
+
+    function loadCourses() {
+        const tbody = document.getElementById('coursesTbody');
+        if (!tbody) return;
+        tbody.innerHTML = COURSES.map(c => `
+            <tr>
+                <td style="font-weight:600;color:#fff">${c.title}</td>
+                <td><span class="badge purple">${c.school}</span></td>
+                <td>${c.students}</td>
+                <td style="color:var(--green);font-weight:600">${c.price}</td>
+                <td><span class="badge green">${c.status}</span></td>
+                <td>
+                    <a href="${c.page}" class="btn-sm" style="text-decoration:none;display:inline-block">Ver</a>
+                    <button class="btn-sm purple" onclick="toast('✏️ Editar curso: ${c.title}')">Editar</button>
+                </td>
+            </tr>
+        `).join('');
+    }
+
     loadSupabaseData();
+    loadCourses();
 </script>
 </body>
 </html>
