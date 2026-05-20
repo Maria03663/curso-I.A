@@ -637,7 +637,7 @@
         const COURSE_NAME = 'Algoritmos Genéticos';
         const TOTAL_LESSONS = 4;
         const session = (() => { try { return JSON.parse(sessionStorage.getItem('ia_student_session')); } catch(e) { return null; } })();
-        const isAccepted = session && session.status === 'accepted'; if (session) { const adminLink = document.querySelector('.admin-link'); if (adminLink) adminLink.style.display = 'none'; }
+        const isAdmin = sessionStorage.getItem('ia_admin_auth') === 'true'; const isAccepted = (session && session.status === 'accepted') || isAdmin; if (session && !isAdmin) { const adminLink = document.querySelector('.admin-link'); if (adminLink) adminLink.style.display = 'none'; }
 
         if (!isAccepted) {
             document.getElementById('lockBanner').classList.add('visible');
