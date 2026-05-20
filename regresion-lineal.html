@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Regresión Lineal | Campus I.A.</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        :root {
+            --bg: #0a0a0f; --bg-card: rgba(15,15,25,0.7); --bg-card-hover: rgba(20,20,35,0.85);
+            --green: #98CA3F; --green-glow: rgba(152,202,63,0.35);
+            --purple: #8B5CF6; --purple-glow: rgba(139,92,246,0.35);
+            --pink: #EC4899; --pink-glow: rgba(236,72,153,0.35);
+            --blue: #3B82F6; --blue-glow: rgba(59,130,246,0.35);
+            --text: #E2E8F0; --text-secondary: #94A3B8; --text-muted: #64748B;
+            --border: rgba(255,255,255,0.08); --border-hover: rgba(255,255,255,0.18);
+            --radius: 14px; --radius-sm: 10px;
+            --shadow: 0 4px 24px rgba(0,0,0,0.4);
+            --transition: 0.25s cubic-bezier(0.4,0,0.2,1);
+        }
+        * { margin:0;padding:0;box-sizing:border-box }
+        html { scroll-behavior:smooth }
+        body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; overflow-x:hidden; line-height:1.6 }
+        #bgCanvas { position:fixed; top:0; left:0; width:100%; height:100%; z-index:0; pointer-events:none }
+        .grid-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background-image:linear-gradient(rgba(152,202,63,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(152,202,63,0.03) 1px,transparent 1px); background-size:50px 50px; z-index:0; pointer-events:none }
+        .container { max-width:1200px; margin:0 auto; padding:0 24px; position:relative; z-index:1 }
+
+        /* NAVBAR */
+        .navbar { position:fixed; top:0; left:0; right:0; z-index:100; padding:14px 0; transition:all .25s; background:transparent }
+        .navbar.scrolled { background:rgba(10,10,15,0.92); backdrop-filter:blur(16px); border-bottom:1px solid var(--border); box-shadow:0 4px 20px rgba(0,0,0,0.3) }
+        .navbar .container { display:flex; align-items:center; justify-content:space-between }
+        .nav-logo { font-size:1.4rem; font-weight:800; color:#fff; text-decoration:none; display:flex; align-items:center; gap:10px }
+        .nav-logo i { color:var(--green); font-size:1.3rem }
+        .nav-logo span { color:var(--green); font-family:'Syne',sans-serif }
+        .nav-links { display:flex; align-items:center; gap:4px }
+        .nav-links a { color:var(--text-secondary); text-decoration:none; font-size:.88rem; font-weight:500; padding:8px 16px; border-radius:8px; transition:all .2s }
+        .nav-links a:hover { color:#fff; background:rgba(255,255,255,0.05) }
+        .nav-toggle { display:none; background:none; border:1px solid var(--border); color:#fff; padding:8px 12px; border-radius:8px; cursor:pointer; font-size:1.2rem }
+        @media(max-width:768px) {
+            .nav-toggle{display:block}.nav-links{display:none;position:absolute;top:100%;left:0;right:0;background:rgba(10,10,15,0.96);backdrop-filter:blur(20px);flex-direction:column;padding:16px;gap:4px;border-bottom:1px solid var(--border)}
+            .nav-links.open{display:flex}
+        }
+
+        /* PROGRESS BAR */
+        .progress-bar-wrapper { position:fixed; top:0; left:0; right:0; height:3px; z-index:101; background:rgba(255,255,255,0.04) }
+        .progress-bar-fill { height:100%; background:linear-gradient(90deg,var(--purple),var(--pink)); transition:width .5s ease; border-radius:0 2px 2px 0 }
+
+        /* COURSE HERO */
+        .course-hero { padding:120px 0 50px; position:relative; z-index:1 }
+        .course-hero .container { max-width:800px }
+        .course-badge { display:inline-flex; align-items:center; gap:8px; padding:6px 16px; border-radius:20px; background:rgba(139,92,246,0.1); border:1px solid rgba(139,92,246,0.25); font-size:.78rem; color:var(--purple); font-weight:600; margin-bottom:20px }
+        .course-hero h1 { font-size:clamp(2rem,4.5vw,3rem); font-weight:900; line-height:1.2; margin-bottom:16px; font-family:'Syne',sans-serif }
+        .course-hero .desc { font-size:1.05rem; color:var(--text-secondary); line-height:1.8; max-width:620px }
+
+        /* LESSONS */
+        .lessons-section { padding:20px 0 80px; position:relative; z-index:1 }
+        .lessons-section .container { max-width:900px }
+        .section-heading { font-size:.75rem; font-weight:700; color:var(--purple); letter-spacing:3px; text-transform:uppercase; margin-bottom:20px }
+        .lessons-list { display:flex; flex-direction:column; gap:14px }
+        .lesson-card { background:var(--bg-card); backdrop-filter:blur(16px); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; transition:all .25s; box-shadow:var(--shadow) }
+        .lesson-card.open { border-color:rgba(139,92,246,0.3); background:rgba(20,20,35,0.85) }
+        .lesson-header { display:flex; align-items:center; gap:16px; padding:20px 24px; cursor:pointer; user-select:none; transition:background .2s }
+        .lesson-header:hover { background:rgba(255,255,255,0.02) }
+        .lesson-num { width:40px; height:40px; border-radius:10px; background:rgba(139,92,246,0.1); border:1px solid rgba(139,92,246,0.2); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:.9rem; color:var(--purple); flex-shrink:0; transition:all .3s }
+        .lesson-card.open .lesson-num { background:var(--purple); color:#fff; border-color:var(--purple); box-shadow:0 0 16px rgba(139,92,246,0.4) }
+        .lesson-info { flex:1; min-width:0 }
+        .lesson-title { font-weight:700; font-size:1.02rem; color:#fff; margin-bottom:3px }
+        .lesson-meta { font-size:.78rem; color:var(--text-muted); display:flex; align-items:center; gap:8px; flex-wrap:wrap }
+        .lesson-meta .tag { display:inline-block; padding:2px 8px; border-radius:8px; background:rgba(139,92,246,0.1); color:var(--purple); font-size:.68rem; font-weight:600 }
+        .lesson-chevron { color:var(--text-muted); font-size:.85rem; transition:transform .3s; flex-shrink:0 }
+        .lesson-card.open .lesson-chevron { transform:rotate(90deg) }
+        .lesson-check { width:24px; height:24px; border-radius:50%; border:2px solid var(--border); display:flex; align-items:center; justify-content:center; font-size:.6rem; color:transparent; transition:all .3s; flex-shrink:0; margin-left:4px }
+        .lesson-check.done { background:var(--purple); border-color:var(--purple); color:#fff }
+        .lesson-body { max-height:0; overflow:hidden; transition:max-height .45s ease; border-top:1px solid transparent }
+        .lesson-card.open .lesson-body { max-height:600px; border-top-color:var(--border) }
+        .lesson-content { padding:20px 24px 24px; display:flex; flex-direction:column; gap:14px }
+        .lesson-content p { font-size:.9rem; color:var(--text-secondary); line-height:1.75 }
+        .lesson-content .highlight-box { background:rgba(139,92,246,0.06); border:1px solid rgba(139,92,246,0.15); border-radius:var(--radius-sm); padding:14px 18px; font-size:.84rem; color:var(--text-secondary); line-height:1.7 }
+        .lesson-content .highlight-box i { color:var(--purple); margin-right:6px }
+        .lesson-duration { display:inline-flex; align-items:center; gap:4px; font-size:.76rem; color:var(--text-muted); padding:4px 10px; border-radius:8px; background:rgba(255,255,255,0.02); border:1px solid var(--border); align-self:flex-start }
+        .lesson-duration i { color:var(--purple) }
+
+        /* FOOTER */
+        .footer { border-top:1px solid var(--border); padding:40px 0 30px; position:relative; z-index:1 }
+        .footer-grid { display:grid; grid-template-columns:2fr 1fr 1fr; gap:30px; margin-bottom:30px }
+        @media(max-width:768px){.footer-grid{grid-template-columns:1fr}}
+        .footer-brand h3 { font-size:1.2rem; font-weight:800; margin-bottom:8px; font-family:'Syne',sans-serif }
+        .footer-brand h3 span { color:var(--green) }
+        .footer-brand p { font-size:.85rem; color:var(--text-secondary); line-height:1.6 }
+        .footer-col h4 { font-size:.78rem; text-transform:uppercase; letter-spacing:2px; color:var(--text-muted); margin-bottom:14px }
+        .footer-col a { display:block; color:var(--text-secondary); text-decoration:none; font-size:.85rem; margin-bottom:8px; transition:color .2s }
+        .footer-col a:hover { color:var(--green) }
+        .footer-bottom { border-top:1px solid var(--border); padding-top:20px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px }
+        .footer-bottom span { font-size:.82rem; color:var(--text-muted) }
+        .social-links { display:flex; gap:12px }
+        .social-links a { width:36px; height:36px; border-radius:50%; background:rgba(255,255,255,0.04); border:1px solid var(--border); color:var(--text-secondary); display:flex; align-items:center; justify-content:center; text-decoration:none; transition:all .2s; font-size:.9rem }
+        .social-links a:hover { background:rgba(152,202,63,0.1); border-color:var(--green); color:var(--green) }
+
+        ::-webkit-scrollbar { width:6px }
+        ::-webkit-scrollbar-track { background:var(--bg) }
+        ::-webkit-scrollbar-thumb { background:rgba(152,202,63,0.2); border-radius:3px }
+        ::-webkit-scrollbar-thumb:hover { background:rgba(152,202,63,0.4) }
+        .lock-banner{display:none;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.25);border-radius:var(--radius-sm);padding:14px 20px;margin-bottom:20px;font-size:.85rem;color:#F59E0B;text-align:center}
+        .lock-banner.visible{display:block}
+        .lock-banner a{color:#FBBF24;font-weight:700}
+        .lesson-card.locked .lesson-body{max-height:0!important;border-top-color:transparent!important}
+        .lesson-card.locked .lesson-header{cursor:default}
+        .lesson-card.locked .lesson-chevron{color:rgba(245,158,11,0.4)}
+        .lesson-card.locked:hover{border-color:rgba(245,158,11,0.3)}
+        .lesson-lock-msg{display:none;padding:14px 18px 14px 60px;font-size:.82rem;color:#F59E0B}
+        .lesson-card.locked.open .lesson-lock-msg{display:block}
+        .lesson-card.locked.open .lesson-body{display:none}
+
+        /* ============ NEW SECTIONS ============ */
+
+        /* COURSE LAYOUT (2-col grid) */
+        .course-layout { max-width:1200px; margin:0 auto; padding:0 24px; display:grid; grid-template-columns:1fr 340px; gap:40px; align-items:start; position:relative; z-index:1 }
+        .course-main { min-width:0 }
+
+        /* SIDEBAR */
+        .course-sidebar { position:sticky; top:100px }
+        .sidebar-card { background:var(--bg-card); backdrop-filter:blur(16px); border:1px solid var(--border); border-radius:var(--radius); padding:24px; box-shadow:var(--shadow) }
+        .sidebar-card h3 { font-size:1rem; font-weight:700; margin-bottom:20px; font-family:'Syne',sans-serif; color:#fff }
+        .sidebar-stat { display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid var(--border); font-size:.88rem; color:var(--text-secondary) }
+        .sidebar-stat:last-of-type { border-bottom:none }
+        .sidebar-stat i { width:20px; text-align:center; color:var(--green); font-size:.85rem; flex-shrink:0 }
+        .sidebar-stat .stat-value { font-weight:600; color:#fff; margin-left:auto }
+        .sidebar-stat .difficulty-badge { display:inline-block; padding:2px 10px; border-radius:12px; background:rgba(152,202,63,0.15); color:var(--green); font-size:.75rem; font-weight:600 }
+        .sidebar-stat .stars { color:#F59E0B; font-size:.8rem; letter-spacing:1px; margin-left:auto }
+        .sidebar-cert { display:flex; align-items:center; gap:8px; padding:12px; margin-top:12px; background:rgba(152,202,63,0.06); border-radius:var(--radius-sm); font-size:.82rem; color:var(--green); font-weight:600 }
+        .sidebar-cert i { font-size:1.1rem }
+        .sidebar-btn { display:block; width:100%; padding:12px; margin-top:16px; background:var(--green); color:#000; border:none; border-radius:var(--radius-sm); font-size:.9rem; font-weight:700; cursor:pointer; text-align:center; text-decoration:none; font-family:'Inter',sans-serif; transition:all .25s }
+        .sidebar-btn:hover { background:#a8db4f; transform:translateY(-1px); box-shadow:0 4px 16px rgba(152,202,63,0.35) }
+
+        /* SECTION HEADINGS */
+        .learn-section, .instructor-section, .project-section, .resources-section, .exam-section, .related-section, .cert-section { padding:20px 0 40px }
+        .learn-section h2, .instructor-section h2, .project-section h2, .resources-section h2, .exam-section h2, .related-section h2, .cert-section h2 { font-size:1.25rem; font-weight:700; color:#fff; margin-bottom:20px; font-family:'Syne',sans-serif }
+
+        /* SKILLS GRID */
+        .skills-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px }
+        .skill-card { display:flex; align-items:flex-start; gap:10px; background:var(--bg-card); backdrop-filter:blur(16px); border:1px solid var(--border); border-radius:var(--radius-sm); padding:14px 16px; font-size:.85rem; color:var(--text-secondary); line-height:1.5; transition:all .25s }
+        .skill-card:hover { border-color:var(--green); background:rgba(152,202,63,0.04) }
+        .skill-card i { color:var(--green); font-size:.85rem; margin-top:2px; flex-shrink:0 }
+
+        /* INSTRUCTOR */
+        .instructor-card { display:flex; gap:20px; background:var(--bg-card); backdrop-filter:blur(16px); border:1px solid var(--border); border-radius:var(--radius); padding:24px; box-shadow:var(--shadow); align-items:center }
+        .instructor-avatar { width:72px; height:72px; border-radius:50%; background:linear-gradient(135deg,rgba(139,92,246,0.2),rgba(236,72,153,0.2)); border:2px solid rgba(139,92,246,0.3); display:flex; align-items:center; justify-content:center; font-size:1.8rem; color:var(--purple); flex-shrink:0 }
+        .instructor-info h3 { font-size:1.05rem; font-weight:700; color:#fff; margin-bottom:4px }
+        .instructor-info .instructor-title { font-size:.82rem; color:var(--purple); font-weight:500; margin-bottom:8px }
+        .instructor-info p { font-size:.85rem; color:var(--text-secondary); line-height:1.7 }
+
+        /* PROJECT */
+        .project-card { background:var(--bg-card); backdrop-filter:blur(16px); border:1px solid var(--border); border-radius:var(--radius); padding:24px; box-shadow:var(--shadow) }
+        .project-card h3 { font-size:1rem; font-weight:700; color:#fff; margin-bottom:10px; display:flex; align-items:center; gap:10px }
+        .project-card h3 i { color:var(--pink) }
+        .project-card p { font-size:.88rem; color:var(--text-secondary); line-height:1.7 }
+
+        /* RESOURCES */
+        .resources-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px }
+        .resource-card { display:flex; align-items:flex-start; gap:14px; background:var(--bg-card); backdrop-filter:blur(16px); border:1px solid var(--border); border-radius:var(--radius-sm); padding:18px; transition:all .25s }
+        .resource-card:hover { border-color:rgba(59,130,246,0.3); background:rgba(59,130,246,0.03) }
+        .resource-card i { font-size:1.2rem; color:var(--blue); flex-shrink:0; margin-top:2px }
+        .resource-card h4 { font-size:.88rem; font-weight:600; color:#fff; margin-bottom:4px }
+        .resource-card span { font-size:.78rem; color:var(--text-muted) }
+
+        /* EXAM */
+        .exam-card { background:var(--bg-card); backdrop-filter:blur(16px); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; margin-bottom:10px; transition:all .25s; box-shadow:var(--shadow) }
+        .exam-card.open { border-color:rgba(139,92,246,0.3) }
+        .exam-header { display:flex; align-items:center; gap:14px; padding:18px 20px; cursor:pointer; user-select:none; transition:background .2s }
+        .exam-header:hover { background:rgba(255,255,255,0.02) }
+        .exam-num { width:32px; height:32px; border-radius:8px; background:rgba(139,92,246,0.1); border:1px solid rgba(139,92,246,0.2); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:.82rem; color:var(--purple); flex-shrink:0; transition:all .3s }
+        .exam-card.open .exam-num { background:var(--purple); color:#fff; border-color:var(--purple) }
+        .exam-title { font-weight:600; font-size:.92rem; color:#fff; flex:1 }
+        .exam-chevron { color:var(--text-muted); font-size:.8rem; transition:transform .3s }
+        .exam-card.open .exam-chevron { transform:rotate(90deg) }
+        .exam-body { max-height:0; overflow:hidden; transition:max-height .45s ease; border-top:1px solid transparent }
+        .exam-card.open .exam-body { max-height:400px; border-top-color:var(--border) }
+        .exam-content { padding:16px 20px 20px }
+        .exam-options { display:flex; flex-direction:column; gap:8px; margin-bottom:14px }
+        .exam-options label { display:flex; align-items:center; gap:10px; padding:10px 14px; background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:var(--radius-sm); cursor:pointer; font-size:.85rem; color:var(--text-secondary); transition:all .2s }
+        .exam-options label:hover { border-color:rgba(139,92,246,0.3); background:rgba(139,92,246,0.04) }
+        .exam-options input[type="radio"] { accent-color:var(--purple) }
+        .exam-btn { padding:8px 20px; background:var(--purple); color:#fff; border:none; border-radius:8px; font-size:.82rem; font-weight:600; cursor:pointer; transition:all .25s; font-family:'Inter',sans-serif }
+        .exam-btn:hover { background:#7c3aed }
+        .quiz-feedback { margin-top:10px; padding:10px 14px; border-radius:8px; font-size:.84rem; font-weight:600; display:none }
+        .quiz-feedback.visible { display:block }
+        .quiz-feedback.correct { background:rgba(152,202,63,0.1); border:1px solid rgba(152,202,63,0.3); color:var(--green) }
+        .quiz-feedback.incorrect { background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); color:#EF4444 }
+
+        /* RELATED */
+        .related-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px }
+        .related-card { display:block; text-decoration:none; background:var(--bg-card); backdrop-filter:blur(16px); border:1px solid var(--border); border-radius:var(--radius-sm); padding:18px; transition:all .25s }
+        .related-card:hover { border-color:var(--green); transform:translateY(-2px); box-shadow:0 8px 24px rgba(0,0,0,0.3) }
+        .related-card i { font-size:1.2rem; color:var(--green); margin-bottom:10px }
+        .related-card h4 { font-size:.9rem; font-weight:700; color:#fff; margin-bottom:4px }
+        .related-card span { font-size:.78rem; color:var(--text-muted) }
+
+        /* CERTIFICATION */
+        .cert-card { display:flex; gap:20px; align-items:center; background:var(--bg-card); backdrop-filter:blur(16px); border:1px solid var(--border); border-radius:var(--radius); padding:24px; box-shadow:var(--shadow) }
+        .cert-icon { width:60px; height:60px; border-radius:50%; background:rgba(152,202,63,0.1); border:2px solid rgba(152,202,63,0.3); display:flex; align-items:center; justify-content:center; font-size:1.5rem; color:var(--green); flex-shrink:0 }
+        .cert-info h3 { font-size:.95rem; font-weight:700; color:#fff; margin-bottom:6px }
+        .cert-info p { font-size:.85rem; color:var(--text-secondary); line-height:1.6 }
+
+        /* RESPONSIVE */
+        @media(max-width:768px) {
+            .course-layout{grid-template-columns:1fr;gap:24px}
+            .course-sidebar{position:static}
+            .skills-grid{grid-template-columns:1fr}
+            .resources-grid{grid-template-columns:1fr}
+            .related-grid{grid-template-columns:1fr}
+            .instructor-card{flex-direction:column;text-align:center}
+            .cert-card{flex-direction:column;text-align:center}
+        }
+    </style>
+</head>
+<body>
+    <canvas id="bgCanvas"></canvas>
+    <div class="grid-overlay"></div>
+
+    <div class="progress-bar-wrapper">
+        <div class="progress-bar-fill" id="progressBarFill" style="width:0%"></div>
+    </div>
+
+    <!-- NAVBAR -->
+    <nav class="navbar" id="navbar">
+        <div class="container">
+            <a href="index.html" class="nav-logo"><i class="fa-solid fa-brain"></i>Campus<span>IA</span></a>
+            <button class="nav-toggle" id="navToggle" aria-label="Menú"><i class="fa-solid fa-bars"></i></button>
+            <div class="nav-links" id="navLinks">
+                <a href="index.html#cursos">Cursos</a>
+                <a href="index.html#demo">Demo</a>
+                <a href="index.html#infra">Infraestructura</a>
+                <a href="perfil.html">👤 Mi Perfil</a>
+                <a href="admin.html" class="admin-link">⚡ Admin</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- COURSE LAYOUT (main + sidebar) -->
+    <div class="course-layout">
+        <div class="course-main">
+
+            <!-- COURSE HEADER -->
+            <section class="course-hero">
+                <div class="container">
+                    <div class="course-badge"><i class="fa-solid fa-chart-line"></i> ML · 5 lecciones · 6h</div>
+                    <h1>Regresión Lineal</h1>
+                    <p class="desc">Domina el algoritmo fundamental del Machine Learning. Aprendé desde mínimos cuadrados hasta regularización con implementaciones prácticas.</p>
+                    <div class="lock-banner" id="lockBanner">🔒 <strong>Vista previa.</strong> El contenido completo solo está disponible para estudiantes aceptados. <a href="inscripcion.html">Inscribite aquí</a></div>
+                </div>
+            </section>
+
+            <!-- LO QUE APRENDERÁS -->
+            <section class="learn-section">
+                <h2>🎯 Lo que aprenderás</h2>
+                <div class="skills-grid">
+                    <div class="skill-card"><i class="fa-solid fa-circle-check"></i> Modelar relaciones lineales con OLS</div>
+                    <div class="skill-card"><i class="fa-solid fa-circle-check"></i> Evaluar modelos con R², MSE, RMSE y MAE</div>
+                    <div class="skill-card"><i class="fa-solid fa-circle-check"></i> Aplicar regularización Ridge y Lasso</div>
+                    <div class="skill-card"><i class="fa-solid fa-circle-check"></i> Implementar regresión múltiple con notación matricial</div>
+                    <div class="skill-card"><i class="fa-solid fa-circle-check"></i> Prevenir overfitting con validación cruzada</div>
+                    <div class="skill-card"><i class="fa-solid fa-circle-check"></i> Interpretar coeficientes y su significancia estadística</div>
+                    <div class="skill-card"><i class="fa-solid fa-circle-check"></i> Implementar en Python con scikit-learn</div>
+                    <div class="skill-card"><i class="fa-solid fa-circle-check"></i> Visualizar rectas de regresión con matplotlib</div>
+                </div>
+            </section>
+
+            <!-- INSTRUCTOR -->
+            <section class="instructor-section">
+                <h2>👨‍🏫 Instructor</h2>
+                <div class="instructor-card">
+                    <div class="instructor-avatar"><i class="fa-solid fa-user-graduate"></i></div>
+                    <div class="instructor-info">
+                        <h3>Dr. Carlos Mendoza</h3>
+                        <div class="instructor-title">Investigador en Machine Learning</div>
+                        <p>Doctor en Ciencias de la Computación por el MIT, con más de 10 años de experiencia en Machine Learning aplicado a problemas reales. Ha publicado más de 40 artículos en revistas indexadas y liderado equipos de investigación en modelos predictivos para las industrias financiera y de salud. Apasionado por la docencia y la divulgación científica, ha formado a más de 5,000 estudiantes en Latinoamérica.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- PROYECTO DEL CURSO -->
+            <section class="project-section">
+                <h2>📊 Proyecto del curso</h2>
+                <div class="project-card">
+                    <h3><i class="fa-solid fa-house-chimney"></i> Predicción de precios inmobiliarios</h3>
+                    <p>Construirás un modelo de regresión lineal para predecir el precio de viviendas utilizando un dataset real con múltiples variables: metros cuadrados, número de habitaciones, ubicación geográfica, antigüedad y servicios cercanos. Implementarás el modelo completo en Python con scikit-learn, calcularás R², MSE y RMSE para evaluar su rendimiento, aplicarás regularización Ridge y Lasso para optimizarlo, y finalmente servirás las predicciones mediante una API REST con FastAPI. Este proyecto integra todas las técnicas aprendidas en un caso práctico del mundo real.</p>
+                </div>
+            </section>
+
+            <!-- RECURSOS INCLUIDOS -->
+            <section class="resources-section">
+                <h2>📦 Recursos incluidos</h2>
+                <div class="resources-grid">
+                    <div class="resource-card">
+                        <i class="fa-solid fa-file-csv"></i>
+                        <div><h4>Datasets descargables</h4><span>CSV de entrenamiento y prueba con datos reales</span></div>
+                    </div>
+                    <div class="resource-card">
+                        <i class="fa-solid fa-book"></i>
+                        <div><h4>Notebooks Jupyter</h4><span>Ejercicios resueltos paso a paso</span></div>
+                    </div>
+                    <div class="resource-card">
+                        <i class="fa-solid fa-file-pdf"></i>
+                        <div><h4>Slides de teoría</h4><span>PDF descargable con todas las fórmulas</span></div>
+                    </div>
+                    <div class="resource-card">
+                        <i class="fa-brands fa-github"></i>
+                        <div><h4>Código fuente</h4><span>Repositorio completo en GitHub</span></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- EXAMEN DEL CURSO -->
+            <section class="exam-section">
+                <h2>📝 Examen del curso</h2>
+
+                <div class="exam-card">
+                    <div class="exam-header" onclick="toggleExamQuestion(this)">
+                        <div class="exam-num">1</div>
+                        <div class="exam-title">¿Qué minimiza OLS?</div>
+                        <i class="fa-solid fa-chevron-right exam-chevron"></i>
+                    </div>
+                    <div class="exam-body">
+                        <div class="exam-content">
+                            <div class="exam-options">
+                                <label><input type="radio" name="q1" value="a"> La suma de los errores absolutos</label>
+                                <label><input type="radio" name="q1" value="b"> La suma de los errores al cuadrado</label>
+                                <label><input type="radio" name="q1" value="c"> El máximo error</label>
+                                <label><input type="radio" name="q1" value="d"> La mediana de los errores</label>
+                            </div>
+                            <button class="exam-btn" onclick="checkExamAnswer(1,'b')">Verificar</button>
+                            <div class="quiz-feedback" id="feedback-q1"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="exam-card">
+                    <div class="exam-header" onclick="toggleExamQuestion(this)">
+                        <div class="exam-num">2</div>
+                        <div class="exam-title">¿Qué métrica está en las mismas unidades que Y?</div>
+                        <i class="fa-solid fa-chevron-right exam-chevron"></i>
+                    </div>
+                    <div class="exam-body">
+                        <div class="exam-content">
+                            <div class="exam-options">
+                                <label><input type="radio" name="q2" value="a"> MSE</label>
+                                <label><input type="radio" name="q2" value="b"> R²</label>
+                                <label><input type="radio" name="q2" value="c"> RMSE</label>
+                                <label><input type="radio" name="q2" value="d"> MAE</label>
+                            </div>
+                            <button class="exam-btn" onclick="checkExamAnswer(2,'c')">Verificar</button>
+                            <div class="quiz-feedback" id="feedback-q2"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="exam-card">
+                    <div class="exam-header" onclick="toggleExamQuestion(this)">
+                        <div class="exam-num">3</div>
+                        <div class="exam-title">¿Qué regularización puede llevar coeficientes a cero?</div>
+                        <i class="fa-solid fa-chevron-right exam-chevron"></i>
+                    </div>
+                    <div class="exam-body">
+                        <div class="exam-content">
+                            <div class="exam-options">
+                                <label><input type="radio" name="q3" value="a"> Ridge</label>
+                                <label><input type="radio" name="q3" value="b"> Lasso</label>
+                                <label><input type="radio" name="q3" value="c"> OLS</label>
+                                <label><input type="radio" name="q3" value="d"> ElasticNet</label>
+                            </div>
+                            <button class="exam-btn" onclick="checkExamAnswer(3,'b')">Verificar</button>
+                            <div class="quiz-feedback" id="feedback-q3"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- CURSOS RELACIONADOS -->
+            <section class="related-section">
+                <h2>🔗 Cursos relacionados</h2>
+                <div class="related-grid">
+                    <a href="arboles-decision.html" class="related-card">
+                        <i class="fa-solid fa-tree"></i>
+                        <h4>Árboles de Decisión</h4>
+                        <span>Aprendé modelos basados en árboles</span>
+                    </a>
+                    <a href="redes-neuronales.html" class="related-card">
+                        <i class="fa-solid fa-network-wired"></i>
+                        <h4>Redes Neuronales</h4>
+                        <span>Deep Learning desde cero</span>
+                    </a>
+                    <a href="infraestructura.html" class="related-card">
+                        <i class="fa-solid fa-server"></i>
+                        <h4>Infraestructura y Despliegue</h4>
+                        <span>Deploy de modelos en producción</span>
+                    </a>
+                </div>
+            </section>
+
+            <!-- CERTIFICACIÓN -->
+            <section class="cert-section">
+                <h2>📜 Certificación</h2>
+                <div class="cert-card">
+                    <div class="cert-icon"><i class="fa-solid fa-award"></i></div>
+                    <div class="cert-info">
+                        <h3>Certificado digital verificable</h3>
+                        <p>Al finalizar el curso recibirás un certificado digital verificable que acredita tu dominio en Regresión Lineal. El certificado incluye un código QR de verificación y puede compartirse directamente en LinkedIn o incluirse en tu CV.</p>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+
+        <!-- SIDEBAR -->
+        <aside class="course-sidebar">
+            <div class="sidebar-card">
+                <h3>📋 Detalles del curso</h3>
+                <div class="sidebar-stat">
+                    <i class="fa-solid fa-tag"></i> Precio
+                    <span class="stat-value">Gratis</span>
+                </div>
+                <div class="sidebar-stat">
+                    <i class="fa-solid fa-signal"></i> Dificultad
+                    <span class="difficulty-badge">Principiante</span>
+                </div>
+                <div class="sidebar-stat">
+                    <i class="fa-regular fa-clock"></i> Duración
+                    <span class="stat-value">6h</span>
+                </div>
+                <div class="sidebar-stat">
+                    <i class="fa-solid fa-book"></i> Lecciones
+                    <span class="stat-value">5 lecciones</span>
+                </div>
+                <div class="sidebar-stat">
+                    <i class="fa-solid fa-users"></i> Estudiantes
+                    <span class="stat-value">2,400 inscritos</span>
+                </div>
+                <div class="sidebar-stat">
+                    <i class="fa-solid fa-star"></i> Calificación
+                    <span class="stars">4.8 / 5 ★★★★★</span>
+                </div>
+                <div class="sidebar-stat">
+                    <i class="fa-regular fa-calendar"></i> Actualizado
+                    <span class="stat-value">Mayo 2026</span>
+                </div>
+                <div class="sidebar-stat">
+                    <i class="fa-solid fa-language"></i> Idioma
+                    <span class="stat-value">Español</span>
+                </div>
+                <div class="sidebar-cert">
+                    <i class="fa-solid fa-certificate"></i> Certificado incluido
+                </div>
+                <a href="inscripcion.html" class="sidebar-btn">Inscribirme ahora</a>
+            </div>
+        </aside>
+    </div>
+
+    <!-- LESSONS -->
+    <section class="lessons-section">
+        <div class="container">
+            <div class="section-heading">📚 Contenido del curso</div>
+            <div class="lessons-list" id="lessonsList">
+
+                <div class="lesson-card open" data-lesson="1">
+                    <div class="lesson-header" onclick="toggleLesson(this)">
+                        <div class="lesson-num">1</div>
+                        <div class="lesson-info">
+                            <div class="lesson-title">Introducción a la Regresión</div>
+                            <div class="lesson-meta"><span class="tag">Teoría</span> Regresión simple vs. múltiple, aplicaciones reales</div>
+                        </div>
+                        <div class="lesson-check" data-check="1"><i class="fa-solid fa-check"></i></div>
+                        <i class="fa-solid fa-chevron-right lesson-chevron"></i>
+                    </div>
+                    <div class="lesson-body">
+                        <div class="lesson-content">
+                            <p>La regresión lineal es el algoritmo más fundamental del Machine Learning supervisado. Su objetivo es modelar la relación entre una variable dependiente (lo que queremos predecir) y una o más variables independientes (los features o predictores).</p>
+                            <p>En la <strong>regresión lineal simple</strong> trabajamos con una sola variable predictora. En la <strong>regresión lineal múltiple</strong> extendemos el modelo a dos o más variables, permitiendo capturar relaciones mucho más complejas y realistas del mundo real.</p>
+                            <div class="highlight-box">
+                                <i class="fa-solid fa-lightbulb"></i> <strong>Aplicaciones reales:</strong> Predicción del precio de casas en base a metros cuadrados, ubicación y antigüedad. Estimación de ventas futuras según inversión publicitaria. Pronóstico de temperatura a partir de datos históricos. Cálculo de rendimiento académico según horas de estudio y asistencia.
+                            </div>
+                            <div class="lesson-duration"><i class="fa-regular fa-clock"></i> ⏱ 45 min</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="lesson-card" data-lesson="2">
+                    <div class="lesson-header" onclick="toggleLesson(this)">
+                        <div class="lesson-num">2</div>
+                        <div class="lesson-info">
+                            <div class="lesson-title">Mínimos Cuadrados Ordinarios</div>
+                            <div class="lesson-meta"><span class="tag">Algoritmo</span> Fórmula Y = mX + b, derivación, ejemplo numérico</div>
+                        </div>
+                        <div class="lesson-check" data-check="2"><i class="fa-solid fa-check"></i></div>
+                        <i class="fa-solid fa-chevron-right lesson-chevron"></i>
+                    </div>
+                    <div class="lesson-body">
+                        <div class="lesson-content">
+                            <p>Los Mínimos Cuadrados Ordinarios (OLS por sus siglas en inglés) son el método estándar para estimar los parámetros de una regresión lineal. El objetivo es encontrar la recta que minimice la suma de los errores al cuadrado entre los valores observados y los predichos.</p>
+                            <p>La fórmula base es <strong>Y = mX + b</strong>, donde <strong>m</strong> es la pendiente (cuánto cambia Y por cada unidad de X) y <strong>b</strong> es el intercepto (el valor de Y cuando X = 0). La pendiente se calcula como la covarianza de X e Y dividida por la varianza de X. El intercepto se obtiene restando m por la media de X a la media de Y.</p>
+                            <div class="highlight-box">
+                                <i class="fa-solid fa-calculator"></i> <strong>Ejemplo numérico paso a paso:</strong> Datos: (1, 2), (2, 3), (3, 5), (4, 7). Media de X = 2.5, Media de Y = 4.25. Covarianza = Σ(Xi−X̄)(Yi−Ȳ) = 6.5. Varianza de X = Σ(Xi−X̄)² = 5. m = 6.5/5 = 1.3. b = 4.25 − (1.3 × 2.5) = 1.0. Recta resultante: Y = 1.3X + 1.0.
+                            </div>
+                            <p>Para evaluar el ajuste, calculamos los residuos (diferencia entre valor real y predicho por el modelo) y los elevamos al cuadrado. La recta de OLS garantiza que ninguna otra recta produce una suma de residuos al cuadrado menor.</p>
+                            <div class="lesson-duration"><i class="fa-regular fa-clock"></i> ⏱ 60 min</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="lesson-card" data-lesson="3">
+                    <div class="lesson-header" onclick="toggleLesson(this)">
+                        <div class="lesson-num">3</div>
+                        <div class="lesson-info">
+                            <div class="lesson-title">Evaluación del Modelo</div>
+                            <div class="lesson-meta"><span class="tag">Métricas</span> R², MSE, RMSE, MAE explicados con fórmulas y ejemplos</div>
+                        </div>
+                        <div class="lesson-check" data-check="3"><i class="fa-solid fa-check"></i></div>
+                        <i class="fa-solid fa-chevron-right lesson-chevron"></i>
+                    </div>
+                    <div class="lesson-body">
+                        <div class="lesson-content">
+                            <p>Evaluar un modelo de regresión es tan importante como construirlo. Las métricas nos dicen qué tan precisas son nuestras predicciones y qué tan bien se ajusta el modelo a los datos.</p>
+                            <p>El <strong>R² (coeficiente de determinación)</strong> mide la proporción de la varianza de Y que es explicada por el modelo. Va de 0 a 1: un R² de 0.85 significa que el modelo explica el 85% de la variabilidad de los datos. No depende de la escala de los datos, lo que lo hace fácil de interpretar.</p>
+                            <div class="highlight-box">
+                                <i class="fa-solid fa-scale-balanced"></i> <strong>Comparación de métricas:</strong> <strong>MSE</strong> (Error Cuadrático Medio) penaliza fuertemente los outliers por elevar al cuadrado. <strong>RMSE</strong> (Raíz del MSE) está en las mismas unidades que Y, facilitando su interpretación. <strong>MAE</strong> (Error Absoluto Medio) es más robusto a outliers pero no es derivable. Elegí RMSE cuando los outliers importan, MAE cuando querés una interpretación directa del error promedio.
+                            </div>
+                            <p>Un R² cercano a 1 indica buen ajuste, pero cuidado: agregar variables siempre aumenta R² aunque no aporten valor real. Por eso existe el <strong>R² ajustado</strong>, que penaliza la inclusión de variables irrelevantes. Si el R² es bajo pero el RMSE es aceptable para tu dominio, el modelo puede ser útil igual.</p>
+                            <div class="lesson-duration"><i class="fa-regular fa-clock"></i> ⏱ 50 min</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="lesson-card" data-lesson="4">
+                    <div class="lesson-header" onclick="toggleLesson(this)">
+                        <div class="lesson-num">4</div>
+                        <div class="lesson-info">
+                            <div class="lesson-title">Regresión Múltiple</div>
+                            <div class="lesson-meta"><span class="tag">Avanzado</span> Extensión a n variables, notación matricial, multicolinealidad</div>
+                        </div>
+                        <div class="lesson-check" data-check="4"><i class="fa-solid fa-check"></i></div>
+                        <i class="fa-solid fa-chevron-right lesson-chevron"></i>
+                    </div>
+                    <div class="lesson-body">
+                        <div class="lesson-content">
+                            <p>La regresión múltiple extiende el modelo simple a <strong>n variables predictoras</strong>. Ahora la ecuación es Y = β₀ + β₁X₁ + β₂X₂ + ... + βₙXₙ, donde cada βᵢ representa el efecto de la variable Xᵢ manteniendo las demás constantes. Esto permite modelar relaciones mucho más realistas.</p>
+                            <p>Usamos <strong>notación matricial</strong> para resolver el sistema de forma eficiente: el vector de coeficientes β se calcula como β = (XᵀX)⁻¹Xᵀy, donde X es la matriz de diseño (n observaciones × p features, con una columna de unos para el intercepto) e y es el vector de valores observados.</p>
+                            <div class="highlight-box">
+                                <i class="fa-solid fa-triangle-exclamation"></i> <strong>Multicolinealidad:</strong> Ocurre cuando dos o más variables predictoras están altamente correlacionadas entre sí. Esto infla la varianza de los coeficientes, los vuelve inestables y difíciles de interpretar. Podés detectarla con el VIF (Factor de Inflación de la Varianza): un VIF > 10 indica multicolinealidad severa. Soluciones: eliminar una de las variables correlacionadas, usar regularización (Ridge) o aplicar PCA.
+                            </div>
+                            <div class="lesson-duration"><i class="fa-regular fa-clock"></i> ⏱ 55 min</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="lesson-card" data-lesson="5">
+                    <div class="lesson-header" onclick="toggleLesson(this)">
+                        <div class="lesson-num">5</div>
+                        <div class="lesson-info">
+                            <div class="lesson-title">Regularización</div>
+                            <div class="lesson-meta"><span class="tag">Optimización</span> Overfitting, Ridge (L2), Lasso (L1), validación cruzada</div>
+                        </div>
+                        <div class="lesson-check" data-check="5"><i class="fa-solid fa-check"></i></div>
+                        <i class="fa-solid fa-chevron-right lesson-chevron"></i>
+                    </div>
+                    <div class="lesson-body">
+                        <div class="lesson-content">
+                            <p>El <strong>overfitting</strong> (sobreajuste) ocurre cuando el modelo aprende el ruido de los datos de entrenamiento en vez de la señal subyacente. El modelo tiene un R² altísimo en entrenamiento pero predice pésimo con datos nuevos. La regularización es la técnica para combatirlo, añadiendo una penalización a los coeficientes grandes.</p>
+                            <p><strong>Ridge (L2)</strong> agrega una penalización proporcional al cuadrado de los coeficientes: minimiza Σ(yᵢ − ŷᵢ)² + λΣβⱼ². Esto encoge los coeficientes hacia cero pero sin eliminarlos completamente. Es ideal cuando todas las variables aportan algo de información y solo necesitás controlar la magnitud.</p>
+                            <p><strong>Lasso (L1)</strong> penaliza el valor absoluto de los coeficientes: minimiza Σ(yᵢ − ŷᵢ)² + λΣ|βⱼ|. La penalización L1 tiene la propiedad de llevar coeficientes exactamente a cero, realizando <strong>selección automática de variables</strong>. Es ideal cuando sospechás que muchas variables son irrelevantes.</p>
+                            <div class="highlight-box">
+                                <i class="fa-solid fa-lightbulb"></i> <strong>¿Cuándo usar cada uno?:</strong> Ridge cuando tenés muchas variables y todas potencialmente relevantes. Lasso cuando querés un modelo más simple e interpretable con menos variables. El parámetro λ (lambda) controla la intensidad de la regularización: elegilo mediante <strong>validación cruzada</strong>, dividiendo los datos en k folds, entrenando con k−1 y validando con el restante, y promediando el error. Valores típicos a probar: 0.001, 0.01, 0.1, 1, 10, 100.
+                            </div>
+                            <div class="lesson-duration"><i class="fa-regular fa-clock"></i> ⏱ 50 min</div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <h3>🤖 Campus<span>IA</span></h3>
+                    <p>Construido con Python, FastAPI y amor por el Machine Learning. Aprende IA de forma práctica con demos interactivas reales.</p>
+                </div>
+                <div class="footer-col">
+                    <h4>Cursos</h4>
+                    <a href="regresion-lineal.html">Regresión Lineal</a>
+                    <a href="algoritmos-geneticos.html">Algoritmo Genético</a>
+                    <a href="index.html#infra">Infraestructura y Despliegue</a>
+                </div>
+                <div class="footer-col">
+                    <h4>Recursos</h4>
+                    <a href="#">Documentación</a>
+                    <a href="#">API Reference</a>
+                    <a href="#">GitHub</a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <span>© 2026 Campus I.A. — Todos los derechos reservados.</span>
+                <div class="social-links">
+                    <a href="#" aria-label="GitHub"><i class="fa-brands fa-github"></i></a>
+                    <a href="#" aria-label="YouTube"><i class="fa-brands fa-youtube"></i></a>
+                    <a href="#" aria-label="Twitter"><i class="fa-brands fa-x-twitter"></i></a>
+                    <a href="#" aria-label="LinkedIn"><i class="fa-brands fa-linkedin-in"></i></a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // ============ PARTICLES BACKGROUND ============
+        const canvas = document.getElementById('bgCanvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [], mouse = { x: null, y: null };
+
+        function resize() { canvas.width = innerWidth; canvas.height = innerHeight }
+        resize(); addEventListener('resize', resize);
+        addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY });
+
+        class Particle {
+            constructor() { this.reset() }
+            reset() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.size = Math.random() * 1.8 + 0.5;
+                this.speedX = (Math.random() - 0.5) * 0.5;
+                this.speedY = (Math.random() - 0.5) * 0.5;
+                this.opacity = Math.random() * 0.5 + 0.1;
+                this.color = ['152,202,63','139,92,246','236,72,153','59,130,246'][Math.floor(Math.random()*4)];
+            }
+            update() {
+                this.x += this.speedX; this.y += this.speedY;
+                if (mouse.x != null) {
+                    const dx = mouse.x - this.x, dy = mouse.y - this.y, dist = Math.sqrt(dx*dx+dy*dy);
+                    if (dist < 150) { const f = (150-dist)/150; this.x -= (dx/dist)*f*1.2; this.y -= (dy/dist)*f*1.2 }
+                }
+                if (this.x < 0) this.x = canvas.width; if (this.x > canvas.width) this.x = 0;
+                if (this.y < 0) this.y = canvas.height; if (this.y > canvas.height) this.y = 0;
+            }
+            draw() { ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI*2); ctx.fillStyle = `rgba(${this.color},${this.opacity})`; ctx.fill() }
+        }
+
+        for (let i = 0; i < 80; i++) particles.push(new Particle());
+
+        function connect() {
+            for (let i = 0; i < particles.length; i++)
+                for (let j = i+1; j < particles.length; j++) {
+                    const dx = particles[i].x - particles[j].x, dy = particles[i].y - particles[j].y, dist = Math.sqrt(dx*dx+dy*dy);
+                    if (dist < 130) { ctx.beginPath(); ctx.strokeStyle = `rgba(152,202,63,${(1-dist/130)*0.08})`; ctx.lineWidth = 0.5; ctx.moveTo(particles[i].x, particles[i].y); ctx.lineTo(particles[j].x, particles[j].y); ctx.stroke() }
+                }
+        }
+        (function animate() { ctx.clearRect(0, 0, canvas.width, canvas.height); particles.forEach(p => { p.update(); p.draw() }); connect(); requestAnimationFrame(animate) })();
+
+        // ============ NAVBAR SCROLL ============
+        const navbar = document.getElementById('navbar');
+        addEventListener('scroll', () => { navbar.classList.toggle('scrolled', pageYOffset > 50) });
+
+        // ============ MOBILE TOGGLE ============
+        document.getElementById('navToggle').addEventListener('click', () => document.getElementById('navLinks').classList.toggle('open'));
+        document.querySelectorAll('.nav-links a').forEach(l => l.addEventListener('click', () => document.getElementById('navLinks').classList.remove('open')));
+
+        // ============ LESSON TOGGLE + PROGRESS ============
+        const COURSE_NAME = 'Regresión Lineal';
+        const TOTAL_LESSONS = 5;
+        const session = (() => { try { return JSON.parse(sessionStorage.getItem('ia_student_session')); } catch(e) { return null; } })();
+        const isAccepted = session && session.status === 'accepted'; if (session) { const adminLink = document.querySelector('.admin-link'); if (adminLink) adminLink.style.display = 'none'; }
+
+        if (!isAccepted) {
+            document.getElementById('lockBanner').classList.add('visible');
+            document.querySelectorAll('.lesson-card').forEach(item => {
+                item.classList.add('locked');
+                const lockMsg = document.createElement('div');
+                lockMsg.className = 'lesson-lock-msg';
+                lockMsg.innerHTML = '🔒 <strong>Contenido bloqueado.</strong> <a href="inscripcion.html">Inscribite</a> y esperá la aceptación para acceder a la teoría completa.';
+                item.appendChild(lockMsg);
+            });
+        }
+
+        const STORAGE_KEY = 'ia_course_progress';
+
+        function getProgress() {
+            try {
+                const data = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+                return data[COURSE_NAME] || [];
+            } catch(e) {
+                return [];
+            }
+        }
+
+        function saveProgress(lessonNum) {
+            const progress = getProgress();
+            if (!progress.includes(lessonNum)) {
+                progress.push(lessonNum);
+                const data = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+                data[COURSE_NAME] = progress;
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+            }
+            updateProgressUI();
+        }
+
+        function updateProgressUI() {
+            const completed = getProgress();
+            const pct = Math.round((completed.length / TOTAL_LESSONS) * 100);
+            document.getElementById('progressBarFill').style.width = pct + '%';
+
+            document.querySelectorAll('.lesson-check').forEach(el => {
+                const num = parseInt(el.dataset.check);
+                if (completed.includes(num)) {
+                    el.classList.add('done');
+                } else {
+                    el.classList.remove('done');
+                }
+            });
+        }
+
+        function toggleLesson(header) {
+            const card = header.parentElement;
+            if (card.classList.contains('locked')) {
+                card.classList.toggle('open');
+                return;
+            }
+            const lessonNum = parseInt(card.dataset.lesson);
+            const wasOpen = card.classList.contains('open');
+            card.classList.toggle('open');
+            if (!wasOpen) {
+                saveProgress(lessonNum);
+            }
+        }
+
+        updateProgressUI();
+
+        // ============ EXAM QUIZ ============
+        function toggleExamQuestion(header) {
+            const card = header.parentElement;
+            card.classList.toggle('open');
+        }
+
+        function checkExamAnswer(qNum, correctValue) {
+            const selected = document.querySelector(`input[name="q${qNum}"]:checked`);
+            const feedbackEl = document.getElementById(`feedback-q${qNum}`);
+            if (!selected) {
+                feedbackEl.textContent = '⚠️ Seleccioná una respuesta.';
+                feedbackEl.className = 'quiz-feedback visible incorrect';
+                return;
+            }
+            if (selected.value === correctValue) {
+                feedbackEl.textContent = '✅ ¡Correcto! Bien hecho.';
+                feedbackEl.className = 'quiz-feedback visible correct';
+            } else {
+                feedbackEl.textContent = '❌ Incorrecto. Revisá la teoría e intentá de nuevo.';
+                feedbackEl.className = 'quiz-feedback visible incorrect';
+            }
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <script src="supabase.js"></script>
+</body>
+</html>

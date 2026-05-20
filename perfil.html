@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Perfil | Campus I.A.</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        :root{--bg:#0a0a0f;--bg-card:rgba(15,15,25,0.7);--green:#98CA3F;--purple:#8B5CF6;--pink:#EC4899;--blue:#3B82F6;--text:#E2E8F0;--text-secondary:#94A3B8;--text-muted:#64748B;--border:rgba(255,255,255,0.08);--border-hover:rgba(255,255,255,0.18);--radius:14px;--radius-sm:10px;--shadow:0 4px 24px rgba(0,0,0,0.4);--transition:0.25s ease}
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;line-height:1.6}
+
+        /* LOGIN SCREEN */
+        .login-screen{position:fixed;top:0;left:0;width:100%;height:100%;background:radial-gradient(circle at center,#0f172a 0%,#020617 100%);display:flex;align-items:center;justify-content:center;z-index:100;padding:20px}
+        .login-card{background:var(--bg-card);backdrop-filter:blur(20px);border:1px solid var(--border);border-radius:24px;width:100%;max-width:420px;padding:40px;box-shadow:0 20px 60px rgba(0,0,0,0.5);animation:fadeInUp .5s ease}
+        @keyframes fadeInUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+        .login-logo{width:72px;height:72px;margin:0 auto 20px;background:rgba(152,202,63,0.1);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:2rem}
+        .login-card h1{font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:800;text-align:center;margin-bottom:6px}
+        .login-card h1 span{color:var(--green)}
+        .login-card .subtitle{color:var(--text-secondary);font-size:.85rem;text-align:center;margin-bottom:28px}
+        .login-card .field{margin-bottom:16px}
+        .login-card label{font-size:.8rem;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:6px}
+        .login-card input{width:100%;padding:11px 14px;background:rgba(0,0,0,0.3);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:.9rem;outline:none;transition:all .2s}
+        .login-card input:focus{border-color:var(--green);box-shadow:0 0 0 3px rgba(152,202,63,0.1)}
+        .login-error{color:#EF4444;font-size:.78rem;margin-top:8px;display:none;text-align:center}
+        .login-error.visible{display:block}
+        .login-btn{width:100%;padding:13px;background:var(--green);color:#0a0a0f;border:none;border-radius:var(--radius-sm);font-weight:700;font-size:.95rem;cursor:pointer;transition:all .2s;box-shadow:0 0 20px rgba(152,202,63,0.3);margin-top:8px}
+        .login-btn:hover{background:#a8da4f;transform:translateY(-1px)}
+        .login-footer{text-align:center;margin-top:20px;font-size:.82rem;color:var(--text-muted)}
+        .login-footer a{color:var(--green);text-decoration:none;font-weight:600}
+        .login-footer a:hover{text-decoration:underline}
+        .login-loading{display:flex;align-items:center;justify-content:center;gap:10px;padding:16px;background:rgba(152,202,63,0.05);border:1px solid rgba(152,202,63,0.15);border-radius:var(--radius-sm);color:var(--green);margin-bottom:16px}
+        .login-loading .spinner{width:20px;height:20px;border:2px solid rgba(152,202,63,0.2);border-top-color:var(--green);border-radius:50%;animation:spin .8s linear infinite}
+        @keyframes spin{to{transform:rotate(360deg)}}
+
+        /* DASHBOARD */
+        .dashboard{display:none;min-height:100vh}
+        .topbar{position:sticky;top:0;z-index:50;background:rgba(10,10,15,0.92);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);padding:12px 24px;display:flex;align-items:center;justify-content:space-between}
+        .topbar-brand{font-weight:800;font-size:1.1rem;color:#fff;text-decoration:none;display:flex;align-items:center;gap:8px}
+        .topbar-brand i{color:var(--green)}
+        .topbar-brand span{color:var(--green);font-family:'Syne',sans-serif}
+        .topbar-center{font-weight:700;font-size:.9rem;color:var(--text-secondary)}
+        .topbar-right{display:flex;gap:8px}
+        .topbar-btn{padding:7px 14px;border-radius:8px;font-size:.78rem;font-weight:600;cursor:pointer;transition:all .2s;text-decoration:none;border:none;color:var(--text-secondary);background:rgba(255,255,255,0.04)}
+        .topbar-btn:hover{background:rgba(255,255,255,0.1);color:#fff}
+        .topbar-btn.logout{background:rgba(239,68,68,0.1);color:#F87171}
+        .topbar-btn.logout:hover{background:rgba(239,68,68,0.2)}
+
+        .dashboard-layout{display:flex;max-width:1400px;margin:0 auto}
+        .sidebar{width:260px;background:var(--bg-card);backdrop-filter:blur(12px);border-right:1px solid var(--border);padding:24px 16px;display:flex;flex-direction:column;position:sticky;top:56px;height:calc(100vh - 56px);flex-shrink:0}
+        @media(max-width:900px){.sidebar{display:none}.main-content{padding:24px 16px!important}}
+        .sidebar-user{display:flex;align-items:center;gap:10px;padding-bottom:20px;border-bottom:1px solid var(--border);margin-bottom:20px}
+        .sidebar-avatar{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,var(--green),#7CB843);display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:1rem;flex-shrink:0}
+        .sidebar-user-info{overflow:hidden}
+        .sidebar-username{font-weight:600;font-size:.88rem;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        .sidebar-status{font-size:.7rem;color:var(--green)}
+        .sidebar-nav{display:flex;flex-direction:column;gap:2px;flex:1}
+        .sidebar-nav button{width:100%;text-align:left;padding:10px 14px;border-radius:8px;background:none;border:none;color:var(--text-secondary);font-size:.88rem;font-weight:500;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:10px}
+        .sidebar-nav button:hover{background:rgba(255,255,255,0.03);color:#fff}
+        .sidebar-nav button.active{background:rgba(152,202,63,0.08);color:var(--green);font-weight:600}
+        .sidebar-footer{border-top:1px solid var(--border);padding-top:14px;font-size:.7rem;color:var(--text-muted);text-align:center}
+
+        .main-content{flex:1;padding:32px 36px;overflow-y:auto}
+        .content-section{display:none;animation:fadeIn .3s ease}
+        .content-section.active{display:block}
+        @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+        /* CARDS & LAYOUT */
+        .welcome-card{background:var(--bg-card);border:1px solid var(--border);border-left:4px solid var(--green);border-radius:var(--radius);padding:24px;display:flex;align-items:center;gap:20px;margin-bottom:24px;box-shadow:var(--shadow)}
+        @media(max-width:600px){.welcome-card{flex-direction:column;text-align:center}}
+        .welcome-avatar{width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,var(--green),var(--purple));display:flex;align-items:center;justify-content:center;font-size:2rem;font-weight:800;color:#fff;flex-shrink:0}
+        .welcome-name{font-family:'Syne',sans-serif;font-size:1.4rem;font-weight:800;margin-bottom:4px}
+        .welcome-date{font-size:.78rem;color:var(--text-muted)}
+
+        .progress-box{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:24px;box-shadow:var(--shadow)}
+        .progress-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+        .progress-label{font-weight:600;font-size:.9rem}
+        .progress-bar{height:8px;background:rgba(255,255,255,0.04);border-radius:99px;overflow:hidden;border:1px solid var(--border)}
+        .progress-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--green),var(--purple));transition:width .8s ease}
+        .progress-steps{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}
+        .pstep{font-size:.76rem;font-weight:600;color:var(--text-muted);text-align:center;padding:8px;border-radius:8px;background:rgba(255,255,255,0.02);border:1px solid var(--border)}
+        .pstep.done{color:var(--green);background:rgba(152,202,63,0.08);border-color:var(--green)}
+        .pstep.active{color:#fff;background:var(--green);border-color:var(--green);box-shadow:0 0 15px rgba(152,202,63,0.2)}
+
+        .cards-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+        @media(max-width:768px){.cards-grid{grid-template-columns:1fr}}
+        .profile-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow)}
+        .profile-card-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+        .profile-card-title{font-weight:700;font-size:.95rem}
+        .profile-card-body{padding:20px;display:flex;flex-direction:column;gap:14px}
+        .pf-row{display:flex;justify-content:space-between;padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,0.03)}
+        .pf-row:last-child{border-bottom:none;padding-bottom:0}
+        .pf-label{font-size:.82rem;color:var(--text-secondary)}
+        .pf-value{font-size:.88rem;font-weight:600;text-align:right}
+
+        .course-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;cursor:pointer;transition:all .3s;box-shadow:var(--shadow);display:flex;gap:16px;align-items:center}
+        .course-card:hover{border-color:var(--border-hover);transform:translateY(-2px)}
+        .course-card-icon{width:52px;height:52px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0}
+        .course-card-icon.green{background:rgba(152,202,63,0.12);color:var(--green)}
+        .course-card-icon.purple{background:rgba(139,92,246,0.12);color:var(--purple)}
+        .course-card-icon.blue{background:rgba(59,130,246,0.12);color:var(--blue)}
+        .course-card-info{flex:1;min-width:0}
+        .course-card-info h3{font-weight:700;font-size:1rem;margin-bottom:2px}
+        .course-card-badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:.65rem;font-weight:700}
+        .course-card-badge.green{background:rgba(152,202,63,0.15);color:var(--green)}
+        .course-card-badge.purple{background:rgba(139,92,246,0.15);color:var(--purple)}
+        .course-card-badge.blue{background:rgba(59,130,246,0.15);color:var(--blue)}
+        .course-card-progress{text-align:right;flex-shrink:0}
+        .course-card-progress .pct{font-size:1.2rem;font-weight:800;color:var(--green)}
+        .course-card-progress .label{font-size:.68rem;color:var(--text-muted)}
+
+        .btn-sm{padding:6px 14px;border-radius:6px;font-weight:600;font-size:.78rem;cursor:pointer;transition:all .2s;border:1px solid var(--border);background:rgba(255,255,255,0.03);color:var(--text-secondary)}
+        .btn-sm:hover{border-color:var(--border-hover);color:#fff}
+        .btn-sm.green{border-color:var(--green);color:var(--green);background:rgba(152,202,63,0.05)}
+        .btn-sm.green:hover{background:var(--green);color:#0a0a0f}
+
+        .stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px}
+        @media(max-width:600px){.stats-grid{grid-template-columns:1fr}}
+        .stat-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;text-align:center;box-shadow:var(--shadow)}
+        .stat-card .val{font-size:2rem;font-weight:800;font-family:'Syne',sans-serif}
+        .stat-card .val.green{color:var(--green)}
+        .stat-card .val.purple{color:var(--purple)}
+        .stat-card .val.pink{color:var(--pink)}
+        .stat-card .lbl{font-size:.75rem;color:var(--text-muted);margin-top:4px}
+
+        ::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:rgba(152,202,63,0.2);border-radius:3px}
+    </style>
+</head>
+<body>
+
+<!-- LOGIN SCREEN -->
+<div class="login-screen" id="loginScreen">
+    <div class="login-card">
+        <div class="login-logo">🤖</div>
+        <h1>Acceso <span>Estudiante</span></h1>
+        <p class="subtitle">Ingresa con tus credenciales del curso</p>
+        <div class="login-loading" id="loginLoading" style="display:none">
+            <div class="spinner"></div> Verificando credenciales...
+        </div>
+        <form id="loginForm">
+            <div class="field">
+                <label>👤 Usuario</label>
+                <input type="text" id="loginUser" placeholder="Tu nombre de usuario" required>
+            </div>
+            <div class="field">
+                <label>🔑 Contraseña</label>
+                <input type="password" id="loginPass" placeholder="Tu contraseña" required>
+            </div>
+            <div class="login-error" id="loginError">Usuario o contraseña incorrectos</div>
+            <button type="submit" class="login-btn"><i class="fa-solid fa-right-to-bracket"></i> Ingresar</button>
+        </form>
+        <div class="login-footer">
+            ¿No tienes cuenta? <a href="inscripcion.html">Inscríbete aquí</a><br>
+            <a href="index.html">← Volver al inicio</a>
+        </div>
+    </div>
+</div>
+
+<!-- DASHBOARD -->
+<div class="dashboard" id="dashboard">
+    <div class="topbar">
+        <a href="index.html" class="topbar-brand"><i class="fa-solid fa-brain"></i>Campus<span>IA</span></a>
+        <div class="topbar-center" id="pageTitle">👤 Mi Perfil</div>
+        <div class="topbar-right">
+            <a href="index.html" class="topbar-btn"><i class="fa-solid fa-home"></i> Inicio</a>
+            <button class="topbar-btn logout" id="logoutBtn"><i class="fa-solid fa-right-from-bracket"></i> Salir</button>
+        </div>
+    </div>
+
+    <div class="dashboard-layout">
+        <aside class="sidebar">
+            <div class="sidebar-user">
+                <div class="sidebar-avatar" id="sidebarAvatar">?</div>
+                <div class="sidebar-user-info">
+                    <div class="sidebar-username" id="sidebarName">Estudiante</div>
+                    <div class="sidebar-status">🟢 En línea</div>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <button class="active" data-target="section-profile"><i class="fa-solid fa-user"></i> Mi Perfil</button>
+                <button data-target="section-courses"><i class="fa-solid fa-book"></i> Mis Cursos</button>
+                <button data-target="section-progress"><i class="fa-solid fa-chart-line"></i> Progreso</button>
+                <button data-target="section-settings"><i class="fa-solid fa-gear"></i> Configuración</button>
+            </nav>
+            <div class="sidebar-footer">© 2026 Campus I.A.</div>
+        </aside>
+
+        <main class="main-content">
+            <!-- SECCIÓN MI PERFIL -->
+            <section class="content-section active" id="section-profile">
+                <div class="welcome-card">
+                    <div class="welcome-avatar" id="welcomeAvatar">?</div>
+                    <div>
+                        <div class="welcome-name" id="welcomeName">Estudiante</div>
+                        <div class="welcome-date" id="welcomeDate">Miembro desde: —</div>
+                    </div>
+                </div>
+                <div class="cards-grid">
+                    <div class="profile-card">
+                        <div class="profile-card-header"><h3 class="profile-card-title">👤 Datos Personales</h3></div>
+                        <div class="profile-card-body">
+                            <div class="pf-row"><span class="pf-label">Nombre</span><span class="pf-value" id="pfName">—</span></div>
+                            <div class="pf-row"><span class="pf-label">Email</span><span class="pf-value" id="pfEmail">—</span></div>
+                            <div class="pf-row"><span class="pf-label">Teléfono</span><span class="pf-value" id="pfPhone">—</span></div>
+                            <div class="pf-row"><span class="pf-label">Usuario</span><span class="pf-value" id="pfUser">—</span></div>
+                        </div>
+                    </div>
+                    <div class="profile-card">
+                        <div class="profile-card-header"><h3 class="profile-card-title">🎓 Info Académica</h3></div>
+                        <div class="profile-card-body">
+                            <div class="pf-row"><span class="pf-label">Estudios</span><span class="pf-value" id="pfEducation">—</span></div>
+                            <div class="pf-row"><span class="pf-label">Experiencia IA</span><span class="pf-value" id="pfExperience">—</span></div>
+                            <div class="pf-row"><span class="pf-label">Curso inscrito</span><span class="pf-value" id="pfCourse" style="color:var(--green)">—</span></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECCIÓN MIS CURSOS -->
+            <section class="content-section" id="section-courses">
+                <h2 style="font-family:'Syne',sans-serif;font-size:1.5rem;margin-bottom:4px">Mis Cursos</h2>
+                <p style="color:var(--text-secondary);margin-bottom:24px">Cursos en los que estás inscrito</p>
+                <div id="coursesContainer" style="display:flex;flex-direction:column;gap:14px"></div>
+                <div id="noCourses" style="display:none;text-align:center;padding:60px;color:var(--text-muted)">
+                    <i class="fa-solid fa-book-open" style="font-size:3rem;display:block;margin-bottom:12px"></i>
+                    <p>Aún no estás inscrito en ningún curso.</p>
+                    <a href="inscripcion.html" class="btn-sm green" style="display:inline-block;margin-top:12px;text-decoration:none">Inscribirme ahora</a>
+                </div>
+            </section>
+
+            <!-- SECCIÓN PROGRESO -->
+            <section class="content-section" id="section-progress">
+                <h2 style="font-family:'Syne',sans-serif;font-size:1.5rem;margin-bottom:4px">Mi Progreso</h2>
+                <p style="color:var(--text-secondary);margin-bottom:24px">Resumen de tu avance académico</p>
+                <div class="stats-grid">
+                    <div class="stat-card"><div class="val green" id="statLessons">0</div><div class="lbl">Lecciones completadas</div></div>
+                    <div class="stat-card"><div class="val purple" id="statCourses">0</div><div class="lbl">Cursos inscritos</div></div>
+                    <div class="stat-card"><div class="val pink" id="statOverall">0%</div><div class="lbl">Progreso general</div></div>
+                </div>
+            </section>
+
+            <!-- SECCIÓN CONFIGURACIÓN -->
+            <section class="content-section" id="section-settings">
+                <h2 style="font-family:'Syne',sans-serif;font-size:1.5rem;margin-bottom:4px">Configuración</h2>
+                <p style="color:var(--text-secondary);margin-bottom:24px">Gestiona tu cuenta</p>
+                <div class="profile-card" style="max-width:500px">
+                    <div class="profile-card-header"><h3 class="profile-card-title">🔐 Seguridad</h3></div>
+                    <div class="profile-card-body">
+                        <div class="pf-row"><span class="pf-label">Contraseña</span><span class="pf-value">••••••••</span></div>
+                        <button class="btn-sm green" style="margin-top:8px"><i class="fa-solid fa-key"></i> Cambiar contraseña</button>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+</div>
+
+<script>
+    const STUDENT_KEY = 'ia_student_session';
+    const DEMO_STUDENTS = {
+        'maria': { username:'maria', password:'estudiante123', fullName:'María López', email:'maria@campusia.com', phone:'+57 300 123 4567', education:'universitario', experience:'intermedia', course:'Regresión Lineal', date:'2026-01-15', status:'accepted' },
+        'carlos': { username:'carlos', password:'estudiante123', fullName:'Carlos García', email:'carlos@campusia.com', phone:'+57 310 987 6543', education:'tecnico', experience:'basica', course:'Algoritmos Genéticos', date:'2026-02-20', status:'accepted' },
+    };
+
+    // Check existing session
+    const saved = sessionStorage.getItem(STUDENT_KEY);
+    if (saved) { try { showDashboard(JSON.parse(saved)); } catch(e) { sessionStorage.removeItem(STUDENT_KEY); } }
+
+    document.getElementById('loginForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const username = document.getElementById('loginUser').value.trim().toLowerCase();
+        const pass = document.getElementById('loginPass').value;
+        const form = document.getElementById('loginForm');
+        const loading = document.getElementById('loginLoading');
+        const error = document.getElementById('loginError');
+
+        form.style.display = 'none'; loading.style.display = 'flex'; error.classList.remove('visible');
+
+        // Intentar login con Supabase primero
+        if (window.supabase) {
+            try {
+                const { data: authData, error: authErr } = await window.supabase.auth.signInWithPassword({
+                    email: username.includes('@') ? username : username + '@campusia.com',
+                    password: pass,
+                });
+                if (authData.user && !authErr) {
+                    const { data: profile } = await window.supabase.from('profiles')
+                        .select('*').eq('id', authData.user.id).single();
+                        const user = {
+                            username: username,
+                            fullName: profile?.full_name || username,
+                            email: authData.user.email,
+                            phone: profile?.phone || '—',
+                            education: profile?.education || 'universitario',
+                            experience: profile?.experience || 'intermedia',
+                            course: profile?.course || 'Regresión Lineal',
+                            date: new Date(profile?.updated_at).toLocaleDateString('es-CO') || new Date().toLocaleDateString('es-CO'),
+                            supabaseId: authData.user.id,
+                            status: profile?.status || 'pending',
+                        };
+                    sessionStorage.setItem(STUDENT_KEY, JSON.stringify(user));
+                    showDashboard(user);
+                    return;
+                }
+            } catch (supaErr) {
+                console.warn('⚠️ Supabase no disponible, usando demo:', supaErr.message);
+            }
+        }
+
+        // Fallback: demo local
+        setTimeout(() => {
+            const student = DEMO_STUDENTS[username];
+            if (student && student.password === pass) {
+                sessionStorage.setItem(STUDENT_KEY, JSON.stringify(student));
+                showDashboard(student);
+            } else {
+                loading.style.display = 'none'; form.style.display = 'block';
+                error.classList.add('visible');
+                setTimeout(() => error.classList.remove('visible'), 3000);
+            }
+        }, 500);
+    });
+
+    function showDashboard(user) {
+        document.getElementById('loginScreen').style.display = 'none';
+        document.getElementById('dashboard').style.display = 'block';
+
+        const initials = user.fullName.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase();
+        ['sidebarAvatar','welcomeAvatar'].forEach(id => { const el = document.getElementById(id); if (el) el.textContent = initials });
+        document.getElementById('sidebarName').textContent = user.fullName.split(' ')[0];
+        document.getElementById('welcomeName').textContent = user.fullName;
+        document.getElementById('welcomeDate').textContent = 'Miembro desde: ' + user.date;
+        document.getElementById('pfName').textContent = user.fullName;
+        document.getElementById('pfEmail').textContent = user.email;
+        document.getElementById('pfPhone').textContent = user.phone;
+        document.getElementById('pfUser').textContent = user.username;
+        document.getElementById('pfEducation').textContent = user.education.charAt(0).toUpperCase() + user.education.slice(1);
+        document.getElementById('pfExperience').textContent = user.experience.charAt(0).toUpperCase() + user.experience.slice(1);
+        document.getElementById('pfCourse').textContent = '🤖 ' + user.course;
+
+        renderCourseCard(user.course);
+        updateProgressStats(user.course);
+        initNav();
+    }
+
+    function renderCourseCard(course) {
+        const container = document.getElementById('coursesContainer');
+        const noCourses = document.getElementById('noCourses');
+        const courseColors = {
+            'Regresión Lineal': { icon:'fa-solid fa-chart-line', color:'green', badge:'ML', page:'regresion-lineal.html' },
+            'Algoritmos Genéticos': { icon:'fa-solid fa-dna', color:'purple', badge:'IA Evolutiva', page:'algoritmos-geneticos.html' },
+            'Infraestructura y Despliegue': { icon:'fa-solid fa-cloud', color:'blue', badge:'Cloud & DevOps', page:'infraestructura.html' },
+            'Inteligencia Artificial (General)': { icon:'fa-solid fa-brain', color:'green', badge:'Fundamentos', page:'ia-general.html' },
+            'Redes Neuronales y Deep Learning': { icon:'fa-solid fa-circle-nodes', color:'purple', badge:'Deep Learning', page:'redes-neuronales.html' },
+            'Procesamiento de Lenguaje Natural (NLP)': { icon:'fa-solid fa-language', color:'blue', badge:'NLP', page:'nlp.html' },
+            'Árboles de Decisión y Random Forest': { icon:'fa-solid fa-tree', color:'green', badge:'ML Clásico', page:'arboles-decision.html' },
+            'Aprendizaje por Refuerzo': { icon:'fa-solid fa-gamepad', color:'purple', badge:'RL', page:'aprendizaje-por-refuerzo.html' },
+        };
+        const cfg = courseColors[course] || { icon:'fa-solid fa-book', color:'green', badge:'IA', page:'#' };
+        const progress = getCourseProgress(course);
+        container.innerHTML = `
+            <a href="${cfg.page}" class="course-card" style="text-decoration:none">
+                <div class="course-card-icon ${cfg.color}"><i class="${cfg.icon}"></i></div>
+                <div class="course-card-info">
+                    <h3>${course}</h3>
+                    <span class="course-card-badge ${cfg.color}">${cfg.badge}</span>
+                </div>
+                <div class="course-card-progress">
+                    <div class="pct">${progress}%</div>
+                    <div class="label">completado</div>
+                </div>
+            </a>
+        `;
+        container.style.display = 'flex'; noCourses.style.display = 'none';
+    }
+
+    function getCourseProgress(course) {
+        const saved = JSON.parse(localStorage.getItem('ia_course_progress') || '{}');
+        const lessons = saved[course] || [];
+        const total = { 'Regresión Lineal':5, 'Algoritmos Genéticos':4, 'Infraestructura y Despliegue':4, 'Inteligencia Artificial (General)':4, 'Redes Neuronales y Deep Learning':4, 'Procesamiento de Lenguaje Natural (NLP)':4, 'Árboles de Decisión y Random Forest':4, 'Aprendizaje por Refuerzo':4 }[course] || 4;
+        return Math.round((lessons.length / total) * 100);
+    }
+
+    function updateProgressStats(course) {
+        const saved = JSON.parse(localStorage.getItem('ia_course_progress') || '{}');
+        const lessons = saved[course] || [];
+        const total = { 'Regresión Lineal':5, 'Algoritmos Genéticos':4, 'Infraestructura y Despliegue':4, 'Inteligencia Artificial (General)':4, 'Redes Neuronales y Deep Learning':4, 'Procesamiento de Lenguaje Natural (NLP)':4, 'Árboles de Decisión y Random Forest':4, 'Aprendizaje por Refuerzo':4 }[course] || 4;
+        document.getElementById('statLessons').textContent = lessons.length;
+        document.getElementById('statCourses').textContent = '1';
+        document.getElementById('statOverall').textContent = total > 0 ? Math.round((lessons.length / total) * 100) + '%' : '0%';
+    }
+
+    function initNav() {
+        document.querySelectorAll('.sidebar-nav button').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.sidebar-nav button').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
+                document.getElementById(btn.dataset.target).classList.add('active');
+                document.getElementById('pageTitle').textContent = btn.textContent.trim();
+            });
+        });
+    }
+
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+        sessionStorage.removeItem(STUDENT_KEY);
+        document.getElementById('loginScreen').style.display = 'flex';
+        document.getElementById('dashboard').style.display = 'none';
+        document.getElementById('loginForm').style.display = 'block';
+        document.getElementById('loginLoading').style.display = 'none';
+    });
+</script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <script src="supabase.js"></script>
+</body>
+</html>

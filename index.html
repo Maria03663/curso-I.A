@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Campus I.A. — Cursos de Machine Learning</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        :root {
+            --bg: #0a0a0f; --bg-card: rgba(15,15,25,0.7); --bg-card-hover: rgba(20,20,35,0.85);
+            --green: #98CA3F; --green-glow: rgba(152,202,63,0.35);
+            --purple: #8B5CF6; --purple-glow: rgba(139,92,246,0.35);
+            --pink: #EC4899; --pink-glow: rgba(236,72,153,0.35);
+            --blue: #3B82F6; --blue-glow: rgba(59,130,246,0.35);
+            --text: #E2E8F0; --text-secondary: #94A3B8; --text-muted: #64748B;
+            --border: rgba(255,255,255,0.08); --border-hover: rgba(255,255,255,0.18);
+            --radius: 14px; --radius-sm: 10px;
+            --shadow: 0 4px 24px rgba(0,0,0,0.4);
+            --transition: 0.25s cubic-bezier(0.4,0,0.2,1);
+        }
+        * { margin:0;padding:0;box-sizing:border-box }
+        html { scroll-behavior:smooth }
+        body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; overflow-x:hidden; line-height:1.6 }
+        #bgCanvas { position:fixed; top:0; left:0; width:100%; height:100%; z-index:0; pointer-events:none }
+        .grid-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background-image:linear-gradient(rgba(152,202,63,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(152,202,63,0.03) 1px,transparent 1px); background-size:50px 50px; z-index:0; pointer-events:none }
+        .container { max-width:1200px; margin:0 auto; padding:0 24px; position:relative; z-index:1 }
+
+        /* NAVBAR */
+        .navbar { position:fixed; top:0; left:0; right:0; z-index:100; padding:14px 0; transition:all .25s; background:transparent }
+        .navbar.scrolled { background:rgba(10,10,15,0.92); backdrop-filter:blur(16px); border-bottom:1px solid var(--border); box-shadow:0 4px 20px rgba(0,0,0,0.3) }
+        .navbar .container { display:flex; align-items:center; justify-content:space-between }
+        .nav-logo { font-size:1.4rem; font-weight:800; color:#fff; text-decoration:none; display:flex; align-items:center; gap:10px }
+        .nav-logo i { color:var(--green); font-size:1.3rem }
+        .nav-logo span { color:var(--green); font-family:'Syne',sans-serif }
+        .nav-links { display:flex; align-items:center; gap:4px }
+        .nav-links a { color:var(--text-secondary); text-decoration:none; font-size:.88rem; font-weight:500; padding:8px 16px; border-radius:8px; transition:all .2s }
+        .nav-links a:hover { color:#fff; background:rgba(255,255,255,0.05) }
+        .nav-btn { padding:10px 22px; background:var(--green); color:#0a0a0f!important; border:none; border-radius:8px; font-weight:700; font-size:.88rem; cursor:pointer; transition:all .2s; text-decoration:none!important; box-shadow:0 0 20px var(--green-glow) }
+        .nav-btn:hover { background:#a8da4f!important; transform:translateY(-1px); box-shadow:0 0 30px rgba(152,202,63,0.5)!important }
+        .nav-toggle { display:none; background:none; border:1px solid var(--border); color:#fff; padding:8px 12px; border-radius:8px; cursor:pointer; font-size:1.2rem }
+        @media(max-width:768px) {
+            .nav-toggle{display:block}.nav-links{display:none;position:absolute;top:100%;left:0;right:0;background:rgba(10,10,15,0.96);backdrop-filter:blur(20px);flex-direction:column;padding:16px;gap:4px;border-bottom:1px solid var(--border)}
+            .nav-links.open{display:flex}.nav-btn{width:100%;text-align:center}
+        }
+
+        /* HERO */
+        .hero { min-height:100vh; display:flex; align-items:center; position:relative; z-index:1; padding:120px 0 80px }
+        .hero-content { max-width:680px; animation:fadeInUp .8s ease-out }
+        .hero-badge { display:inline-flex; align-items:center; gap:8px; padding:6px 16px; border-radius:20px; background:rgba(152,202,63,0.1); border:1px solid rgba(152,202,63,0.25); font-size:.78rem; color:var(--green); font-weight:600; margin-bottom:24px }
+        .hero-badge .dot { width:8px; height:8px; border-radius:50%; background:var(--green); animation:pulse-dot 2s infinite }
+        @keyframes pulse-dot { 0%,100%{box-shadow:0 0 0 0 rgba(152,202,63,0.6)} 50%{box-shadow:0 0 0 8px rgba(152,202,63,0)} }
+        .hero h1 { font-size:clamp(2.4rem,5.5vw,3.6rem); font-weight:900; line-height:1.15; margin-bottom:20px }
+        .hero h1 .gradient-text { background:linear-gradient(135deg,var(--green),var(--blue),var(--purple)); background-size:200%; -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; animation:gradientShift 4s ease infinite }
+        @keyframes gradientShift { 0%,100%{background-position:0% 50%} 50%{background-position:100% 50%} }
+        .hero p { font-size:1.08rem; color:var(--text-secondary); line-height:1.8; margin-bottom:32px; max-width:520px }
+        .hero-buttons { display:flex; gap:14px; flex-wrap:wrap }
+        .btn { display:inline-flex; align-items:center; gap:8px; padding:14px 28px; border-radius:10px; font-weight:700; font-size:.95rem; text-decoration:none; cursor:pointer; transition:all .25s; border:none }
+        .btn-primary { background:var(--green); color:#0a0a0f; box-shadow:0 0 25px var(--green-glow) }
+        .btn-primary:hover { background:#a8da4f; transform:translateY(-2px); box-shadow:0 0 40px rgba(152,202,63,0.5) }
+        .btn-outline { background:transparent; border:1px solid var(--border-hover); color:#fff }
+        .btn-outline:hover { border-color:var(--green); color:var(--green); transform:translateY(-2px) }
+        @keyframes fadeInUp { from{opacity:0;transform:translateY(30px)} to{opacity:1;transform:translateY(0)} }
+
+        /* SECTIONS */
+        .section { padding:80px 0; position:relative; z-index:1 }
+        .section-label { display:inline-block; font-size:.75rem; font-weight:700; color:var(--green); letter-spacing:3px; text-transform:uppercase; margin-bottom:12px }
+        .section-title { font-size:clamp(1.8rem,3.5vw,2.6rem); font-weight:800; margin-bottom:14px }
+        .section-title .highlight { color:var(--green) }
+        .section-subtitle { font-size:.95rem; color:var(--text-secondary); max-width:520px; margin-bottom:48px; line-height:1.7 }
+        .section-header { text-align:center }
+        .section-header .section-subtitle { margin-left:auto; margin-right:auto }
+
+        /* COURSES GRID */
+        .courses-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:24px }
+        @media(max-width:1024px){.courses-grid{grid-template-columns:1fr 1fr}}
+        @media(max-width:640px){.courses-grid{grid-template-columns:1fr}}
+
+        .course-card { background:var(--bg-card); backdrop-filter:blur(16px); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; transition:all .25s; box-shadow:var(--shadow) }
+        .course-card:hover { border-color:var(--border-hover); background:var(--bg-card-hover); transform:translateY(-2px) }
+        .course-card-header { display:flex; align-items:center; justify-content:space-between; padding:22px 24px; cursor:pointer; user-select:none; transition:background .2s }
+        .course-card-header:hover { background:rgba(255,255,255,0.02) }
+        .course-card-icon { width:48px; height:48px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:1.4rem; flex-shrink:0; margin-right:14px }
+        .course-card-icon.green { background:rgba(152,202,63,0.12); color:var(--green) }
+        .course-card-icon.purple { background:rgba(139,92,246,0.12); color:var(--purple) }
+        .course-card-icon.blue { background:rgba(59,130,246,0.12); color:var(--blue) }
+        .course-card-info { flex:1 }
+        .course-card-title { font-size:1.05rem; font-weight:700; color:#fff; margin-bottom:3px }
+        .course-card-meta { font-size:.78rem; color:var(--text-muted) }
+        .course-card-chevron { color:var(--text-muted); font-size:.8rem; transition:transform .3s }
+        .course-card.open .course-card-chevron { transform:rotate(90deg) }
+        .course-card-body { max-height:0; overflow:hidden; transition:max-height .4s ease; border-top:1px solid transparent }
+        .course-card.open .course-card-body { max-height:600px; border-top-color:var(--border) }
+        .course-section-item { display:flex; align-items:center; gap:12px; padding:14px 24px; cursor:pointer; transition:all .2s; color:var(--text-secondary); font-size:.9rem; border-bottom:1px solid rgba(255,255,255,0.03) }
+        .course-section-item:last-child { border-bottom:none }
+        .course-section-item:hover { background:rgba(255,255,255,0.03); color:#fff }
+        .course-section-item .sec-icon { font-size:1rem; width:24px; text-align:center }
+        .course-section-item .sec-arrow { margin-left:auto; font-size:.7rem; color:var(--text-muted) }
+        .course-card-badge { display:inline-block; padding:3px 10px; border-radius:12px; font-size:.68rem; font-weight:700 }
+        .course-card-badge.green { background:rgba(152,202,63,0.15); color:var(--green) }
+        .course-card-badge.purple { background:rgba(139,92,246,0.15); color:var(--purple) }
+        .course-card-badge.blue { background:rgba(59,130,246,0.15); color:var(--blue) }
+
+        .course-stats-row { display:flex; align-items:center; gap:14px; flex-wrap:wrap; margin-top:6px }
+        .course-stat { font-size:.7rem; color:var(--text-muted); display:flex; align-items:center; gap:4px }
+        .course-stat i { font-size:.65rem }
+        .difficulty-badge { display:inline-block; padding:2px 8px; border-radius:6px; font-size:.65rem; font-weight:700; letter-spacing:0.5px }
+        .difficulty-badge.beginner { background:rgba(152,202,63,0.12); color:var(--green); border:1px solid rgba(152,202,63,0.2) }
+        .difficulty-badge.intermediate { background:rgba(245,158,11,0.12); color:#F59E0B; border:1px solid rgba(245,158,11,0.2) }
+        .difficulty-badge.advanced { background:rgba(236,72,153,0.12); color:var(--pink); border:1px solid rgba(236,72,153,0.2) }
+        .stars { color:#F59E0B; font-size:.7rem; letter-spacing:1px }
+        .stars .empty { color:var(--text-muted); opacity:0.4 }
+        .course-objectives { padding:16px 24px; border-top:1px solid var(--border) }
+        .course-objectives h4 { font-size:.75rem; font-weight:700; color:var(--green); text-transform:uppercase; letter-spacing:1.5px; margin-bottom:10px }
+        .course-objectives ul { list-style:none; padding:0 }
+        .course-objectives li { font-size:.82rem; color:var(--text-secondary); padding:5px 0; display:flex; align-items:flex-start; gap:8px; line-height:1.5 }
+        .course-objectives li i { color:var(--green); font-size:.7rem; margin-top:4px; flex-shrink:0 }
+        .course-card-cta { padding:16px 24px; border-top:1px solid var(--border); display:flex; gap:10px }
+        .course-card-cta .btn-sm { padding:8px 16px; border-radius:8px; font-size:.78rem; font-weight:600; cursor:pointer; transition:all .2s; text-decoration:none; display:inline-flex; align-items:center; gap:6px; border:none }
+        .course-card-cta .btn-sm-primary { background:var(--green); color:#0a0a0f; box-shadow:0 0 14px var(--green-glow) }
+        .course-card-cta .btn-sm-primary:hover { background:#a8da4f; transform:translateY(-1px) }
+        .course-card-cta .btn-sm-outline { background:rgba(255,255,255,0.03); border:1px solid var(--border); color:var(--text) }
+        .course-card-cta .btn-sm-outline:hover { border-color:var(--green); color:var(--green) }
+
+        /* DEMO SECTION */
+        .demo-section { background:var(--bg-card); backdrop-filter:blur(16px); border:1px solid var(--border); border-radius:20px; padding:40px; box-shadow:var(--shadow) }
+        .demo-grid { display:grid; grid-template-columns:1fr 1fr; gap:32px; align-items:start }
+        @media(max-width:900px){.demo-grid{grid-template-columns:1fr}}
+        .dropzone { background:rgba(255,255,255,0.02); border:2px dashed var(--border); border-radius:14px; padding:40px; text-align:center; transition:all .3s; cursor:pointer; margin-bottom:20px }
+        .dropzone:hover,.dropzone.drag-over { border-color:var(--green); background:rgba(152,202,63,0.04) }
+        .dropzone i { font-size:2.5rem; color:var(--text-muted); margin-bottom:10px; display:block }
+        .dropzone p { font-size:.9rem; color:var(--text-secondary) }
+        .dropzone .file-name { color:var(--green); font-weight:600; margin-top:8px }
+        .csv-preview { background:rgba(0,0,0,0.3); border:1px solid var(--border); border-radius:var(--radius-sm); overflow:hidden; max-height:250px; overflow-y:auto }
+        .csv-preview table { width:100%; border-collapse:collapse; font-size:.82rem }
+        .csv-preview th { background:rgba(152,202,63,0.08); padding:10px 14px; text-align:left; font-weight:700; color:var(--green); font-size:.7rem; text-transform:uppercase; letter-spacing:1px; position:sticky; top:0; border-bottom:1px solid var(--border) }
+        .csv-preview td { padding:8px 14px; border-bottom:1px solid rgba(255,255,255,0.03); color:var(--text-secondary) }
+        .csv-preview tr:hover td { background:rgba(255,255,255,0.02) }
+        .csv-preview tr:last-child td { border-bottom:none }
+        .chart-container { background:rgba(0,0,0,0.2); border:1px solid var(--border); border-radius:var(--radius-sm); padding:20px; position:relative }
+        .chart-container canvas { max-height:320px }
+        .result-stats { display:flex; gap:12px; margin-top:16px }
+        .result-stat { flex:1; background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:var(--radius-sm); padding:14px; text-align:center }
+        .result-stat .stat-val { font-size:1.3rem; font-weight:800 }
+        .result-stat .stat-label { font-size:.7rem; color:var(--text-muted); margin-top:2px }
+        .stat-val.green { color:var(--green) }
+        .stat-val.purple { color:var(--purple) }
+        .stat-val.pink { color:var(--pink) }
+        .url-bar { display:flex; align-items:center; gap:10px; background:rgba(0,0,0,0.4); border:1px solid var(--border); border-radius:var(--radius-sm); padding:10px 16px; margin-top:14px }
+        .url-bar i { color:var(--green) }
+        .url-bar code { font-family:'Fira Code',monospace; font-size:.82rem; color:var(--text-secondary); flex:1 }
+        .url-bar .copy-btn { background:rgba(152,202,63,0.1); border:1px solid rgba(152,202,63,0.2); color:var(--green); padding:5px 12px; border-radius:6px; cursor:pointer; font-size:.75rem; font-weight:600; transition:all .2s }
+        .url-bar .copy-btn:hover { background:rgba(152,202,63,0.2) }
+
+        /* INFRA DEPLOY SECTION */
+        .deploy-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:24px }
+        @media(max-width:768px){.deploy-grid{grid-template-columns:1fr 1fr}}
+        @media(max-width:480px){.deploy-grid{grid-template-columns:1fr}}
+        .deploy-card { background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:var(--radius-sm); padding:20px; text-align:center; transition:all .25s }
+        .deploy-card:hover { border-color:var(--green); background:rgba(152,202,63,0.04); transform:translateY(-2px) }
+        .deploy-card i { font-size:1.8rem; margin-bottom:8px; display:block }
+        .deploy-card .provider { font-weight:700; font-size:.9rem; color:#fff; margin-bottom:4px }
+        .deploy-card .price { font-size:.75rem; color:var(--text-muted) }
+        .deploy-card.gcp i { color:#4285F4 } .deploy-card.do i { color:#0080FF }
+        .deploy-card.aws i { color:#FF9900 } .deploy-card.cf i { color:#F38020 }
+
+        /* WIREFRAME SECTION */
+        .wireframe-container { background:rgba(0,0,0,0.3); border:2px solid var(--border); border-radius:var(--radius); padding:32px; position:relative; overflow:hidden }
+        .wireframe-container::after { content:'WIREFRAME'; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%) rotate(-15deg); font-size:4rem; font-weight:900; color:rgba(152,202,63,0.04); pointer-events:none; font-family:'Syne',sans-serif; letter-spacing:10px }
+        .wf-top { display:flex; gap:8px; margin-bottom:16px }
+        .wf-input { flex:1; height:36px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); border-radius:6px }
+        .wf-separator { height:1px; background:var(--border); margin:20px 0 }
+        .wf-results-label { font-size:.75rem; font-weight:700; color:var(--green); letter-spacing:2px; margin-bottom:12px; text-transform:uppercase }
+        .wf-results { display:flex; flex-direction:column; gap:6px }
+        .wf-row { display:flex; gap:8px }
+        .wf-cell { flex:1; height:14px; background:rgba(152,202,63,0.06); border:1px solid rgba(152,202,63,0.1); border-radius:3px }
+
+        /* STEPS */
+        .steps-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:24px }
+        @media(max-width:768px){.steps-grid{grid-template-columns:1fr}}
+        .step-card { background:var(--bg-card); backdrop-filter:blur(16px); border:1px solid var(--border); border-radius:var(--radius); padding:32px 24px; text-align:center; transition:all .25s; box-shadow:var(--shadow) }
+        .step-card:hover { transform:translateY(-4px); border-color:var(--border-hover) }
+        .step-icon { width:64px; height:64px; border-radius:16px; display:flex; align-items:center; justify-content:center; margin:0 auto 18px; font-size:1.6rem }
+        .step-icon.green { background:rgba(152,202,63,0.12); color:var(--green) }
+        .step-icon.purple { background:rgba(139,92,246,0.12); color:var(--purple) }
+        .step-icon.pink { background:rgba(236,72,153,0.12); color:var(--pink) }
+        .step-card .step-num { font-size:.7rem; font-weight:700; color:var(--text-muted); letter-spacing:2px; margin-bottom:8px; text-transform:uppercase }
+        .step-card h4 { font-size:1.05rem; font-weight:700; margin-bottom:8px; color:#fff }
+        .step-card p { font-size:.85rem; color:var(--text-secondary); line-height:1.6 }
+
+        /* FOOTER */
+        .footer { border-top:1px solid var(--border); padding:40px 0 30px; position:relative; z-index:1 }
+        .footer-grid { display:grid; grid-template-columns:2fr 1fr 1fr; gap:30px; margin-bottom:30px }
+        @media(max-width:768px){.footer-grid{grid-template-columns:1fr}}
+        .footer-brand h3 { font-size:1.2rem; font-weight:800; margin-bottom:8px; font-family:'Syne',sans-serif }
+        .footer-brand h3 span { color:var(--green) }
+        .footer-brand p { font-size:.85rem; color:var(--text-secondary); line-height:1.6 }
+        .footer-col h4 { font-size:.78rem; text-transform:uppercase; letter-spacing:2px; color:var(--text-muted); margin-bottom:14px }
+        .footer-col a { display:block; color:var(--text-secondary); text-decoration:none; font-size:.85rem; margin-bottom:8px; transition:color .2s }
+        .footer-col a:hover { color:var(--green) }
+        .footer-bottom { border-top:1px solid var(--border); padding-top:20px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px }
+        .footer-bottom span { font-size:.82rem; color:var(--text-muted) }
+        .social-links { display:flex; gap:12px }
+        .social-links a { width:36px; height:36px; border-radius:50%; background:rgba(255,255,255,0.04); border:1px solid var(--border); color:var(--text-secondary); display:flex; align-items:center; justify-content:center; text-decoration:none; transition:all .2s; font-size:.9rem }
+        .social-links a:hover { background:rgba(152,202,63,0.1); border-color:var(--green); color:var(--green) }
+        .toast { position:fixed; bottom:24px; right:24px; z-index:1000; background:var(--bg-card); backdrop-filter:blur(16px); border:1px solid var(--green); border-left:3px solid var(--green); color:#fff; padding:14px 20px; border-radius:10px; font-size:.85rem; font-weight:500; animation:slideInRight .3s ease-out; box-shadow:0 8px 30px rgba(0,0,0,0.4) }
+        @keyframes slideInRight { from{opacity:0;transform:translateX(100px)} to{opacity:1;transform:translateX(0)} }
+        ::-webkit-scrollbar { width:6px }
+        ::-webkit-scrollbar-track { background:var(--bg) }
+        ::-webkit-scrollbar-thumb { background:rgba(152,202,63,0.2); border-radius:3px }
+        ::-webkit-scrollbar-thumb:hover { background:rgba(152,202,63,0.4) }
+    </style>
+</head>
+<body>
+    <canvas id="bgCanvas"></canvas>
+    <div class="grid-overlay"></div>
+
+    <!-- NAVBAR -->
+    <nav class="navbar" id="navbar">
+        <div class="container">
+            <a href="#" class="nav-logo"><i class="fa-solid fa-brain"></i>Campus<span>IA</span></a>
+            <button class="nav-toggle" id="navToggle" aria-label="Menú"><i class="fa-solid fa-bars"></i></button>
+            <div class="nav-links" id="navLinks">
+                <a href="#cursos">Cursos</a>
+                <a href="#demo">Demo</a>
+                <a href="#infra">Infraestructura</a>
+                <a href="perfil.html">👤 Mi Perfil</a>
+                <a href="admin.html">⚡ Admin</a>
+                <a href="inscripcion.html" class="nav-btn">Empezar ahora <i class="fa-solid fa-arrow-right"></i></a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- HERO -->
+    <section class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <div class="hero-badge"><span class="dot"></span> Cursos 2026 · Inteligencia Artificial</div>
+                <h1>Aprende <span class="gradient-text">Machine Learning</span> desde cero</h1>
+                <p>Cursos prácticos con demos interactivas, simuladores en vivo, despliegue en la nube y exámenes reales. Domina regresión lineal, algoritmos genéticos y lleva tus modelos a producción.</p>
+                <div class="hero-buttons">
+                    <a href="#cursos" class="btn btn-primary"><i class="fa-solid fa-book-open"></i> Ver Cursos</a>
+                    <a href="#demo" class="btn btn-outline"><i class="fa-solid fa-play"></i> Ver Demo</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CURSOS -->
+    <section class="section" id="cursos">
+        <div class="container">
+            <div class="section-header">
+                <div class="section-label">📚 Cursos</div>
+                <h2 class="section-title">Ocho <span class="highlight">cursos</span> completos</h2>
+                <p class="section-subtitle">Cada curso incluye teoría, ejemplos prácticos, demos interactivas y exámenes para validar tu conocimiento.</p>
+            </div>
+            <div class="courses-grid" id="coursesGrid">
+                <!-- Curso 1: Regresión Lineal -->
+                <div class="course-card" data-course="regresion">
+                    <div class="course-card-header" onclick="toggleCourse(this)">
+                        <div class="course-card-icon green"><i class="fa-solid fa-chart-line"></i></div>
+                        <div class="course-card-info">
+                            <div class="course-card-title">Regresión Lineal</div>
+                            <div class="course-card-meta"><span class="course-card-badge green">ML</span> 5 lecciones · 6h</div>
+                            <div class="course-stats-row">
+                                <span class="difficulty-badge beginner">PRINCIPIANTE</span>
+                                <span class="stars">★★★★<span class="empty">★</span></span>
+                                <span class="course-stat"><i class="fa-solid fa-user"></i> 2.4k</span>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-chevron-right course-card-chevron"></i>
+                    </div>
+                    <div class="course-card-body">
+                        <div class="course-objectives">
+                            <h4>Lo que aprenderás</h4>
+                            <ul>
+                                <li><i class="fa-solid fa-circle-check"></i> Modelar relaciones lineales con Mínimos Cuadrados Ordinarios</li>
+                                <li><i class="fa-solid fa-circle-check"></i> Evaluar modelos con R², MSE, RMSE y MAE</li>
+                                <li><i class="fa-solid fa-circle-check"></i> Aplicar regularización Ridge (L2) y Lasso (L1)</li>
+                                <li><i class="fa-solid fa-circle-check"></i> Implementar regresión múltiple y prevenir overfitting</li>
+                            </ul>
+                        </div>
+                        <div class="course-card-cta">
+                            <a href="regresion-lineal.html" class="btn-sm btn-sm-primary"><i class="fa-solid fa-book-open"></i> Ver curso</a>
+                            <a href="inscripcion.html" class="btn-sm btn-sm-outline"><i class="fa-solid fa-pen-to-square"></i> Inscribirme</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Curso 2: Algoritmo Genético -->
+                <div class="course-card" data-course="genetico">
+                    <div class="course-card-header" onclick="toggleCourse(this)">
+                        <div class="course-card-icon purple"><i class="fa-solid fa-dna"></i></div>
+                        <div class="course-card-info">
+                            <div class="course-card-title">Algoritmo Genético</div>
+                            <div class="course-card-meta"><span class="course-card-badge purple">IA Evolutiva</span> 4 lecciones · 5h</div>
+                            <div class="course-stats-row">
+                                <span class="difficulty-badge intermediate">INTERMEDIO</span>
+                                <span class="stars">★★★★<span class="empty">★</span></span>
+                                <span class="course-stat"><i class="fa-solid fa-user"></i> 1.6k</span>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-chevron-right course-card-chevron"></i>
+                    </div>
+                    <div class="course-card-body">
+                        <div class="course-objectives">
+                            <h4>Lo que aprenderás</h4>
+                            <ul>
+                                <li><i class="fa-solid fa-circle-check"></i> Comprender los fundamentos de la evolución biológica aplicada</li>
+                                <li><i class="fa-solid fa-circle-check"></i> Implementar selección, cruce y mutación desde cero</li>
+                                <li><i class="fa-solid fa-circle-check"></i> Diseñar funciones de fitness para problemas reales</li>
+                                <li><i class="fa-solid fa-circle-check"></i> Resolver problemas de optimización con AGs</li>
+                            </ul>
+                        </div>
+                        <div class="course-card-cta">
+                            <a href="algoritmos-geneticos.html" class="btn-sm btn-sm-primary"><i class="fa-solid fa-book-open"></i> Ver curso</a>
+                            <a href="inscripcion.html" class="btn-sm btn-sm-outline"><i class="fa-solid fa-pen-to-square"></i> Inscribirme</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Curso 3: Infraestructura y Despliegue -->
+                <div class="course-card" data-course="infra">
+                    <div class="course-card-header" onclick="toggleCourse(this)">
+                        <div class="course-card-icon blue"><i class="fa-solid fa-cloud"></i></div>
+                        <div class="course-card-info">
+                            <div class="course-card-title">Infraestructura y Despliegue</div>
+                            <div class="course-card-meta"><span class="course-card-badge blue">Cloud & DevOps</span> 4 lecciones · 8h</div>
+                            <div class="course-stats-row">
+                                <span class="difficulty-badge intermediate">INTERMEDIO</span>
+                                <span class="stars">★★★★★</span>
+                                <span class="course-stat"><i class="fa-solid fa-user"></i> 1.9k</span>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-chevron-right course-card-chevron"></i>
+                    </div>
+                    <div class="course-card-body">
+                        <div class="course-objectives">
+                            <h4>Lo que aprenderás</h4>
+                            <ul>
+                                <li><i class="fa-solid fa-circle-check"></i> Crear y configurar VMs en GCP, AWS y DigitalOcean</li>
+                                <li><i class="fa-solid fa-circle-check"></i> Construir APIs REST con FastAPI y modelos ML</li>
+                                <li><i class="fa-solid fa-circle-check"></i> Contenerizar aplicaciones con Docker y docker-compose</li>
+                                <li><i class="fa-solid fa-circle-check"></i> Automatizar CI/CD con GitHub Actions y monitoreo</li>
+                            </ul>
+                        </div>
+                        <div class="course-card-cta">
+                            <a href="infraestructura.html" class="btn-sm btn-sm-primary"><i class="fa-solid fa-book-open"></i> Ver curso</a>
+                            <a href="inscripcion.html" class="btn-sm btn-sm-outline"><i class="fa-solid fa-pen-to-square"></i> Inscribirme</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Curso 4: IA General -->
+                <div class="course-card" data-course="ia-general">
+                    <div class="course-card-header" onclick="toggleCourse(this)">
+                        <div class="course-card-icon green"><i class="fa-solid fa-brain"></i></div>
+                        <div class="course-card-info">
+                            <div class="course-card-title">Inteligencia Artificial</div>
+                            <div class="course-card-meta"><span class="course-card-badge green">Fundamentos</span> 4 lecciones · 4h</div>
+                            <div class="course-stats-row">
+                                <span class="difficulty-badge beginner">PRINCIPIANTE</span>
+                                <span class="stars">★★★★★</span>
+                                <span class="course-stat"><i class="fa-solid fa-user"></i> 3.2k</span>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-chevron-right course-card-chevron"></i>
+                    </div>
+                    <div class="course-card-body">
+                        <div class="course-objectives">
+                            <h4>Lo que aprenderás</h4>
+                            <ul>
+                                <li><i class="fa-solid fa-circle-check"></i> Comprender qué es la IA y su historia desde 1956</li>
+                                <li><i class="fa-solid fa-circle-check"></i> Diferenciar Machine Learning, Deep Learning y RL</li>
+                                <li><i class="fa-solid fa-circle-check"></i> Conocer arquitecturas modernas de redes neuronales</li>
+                                <li><i class="fa-solid fa-circle-check"></i> Evaluar el impacto ético y social de la IA</li>
+                            </ul>
+                        </div>
+                        <div class="course-card-cta">
+                            <a href="ia-general.html" class="btn-sm btn-sm-primary"><i class="fa-solid fa-book-open"></i> Ver curso</a>
+                            <a href="inscripcion.html" class="btn-sm btn-sm-outline"><i class="fa-solid fa-pen-to-square"></i> Inscribirme</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Curso 5: Redes Neuronales -->
+                <div class="course-card" data-course="redes">
+                    <div class="course-card-header" onclick="toggleCourse(this)">
+                        <div class="course-card-icon purple"><i class="fa-solid fa-circle-nodes"></i></div>
+                        <div class="course-card-info">
+                            <div class="course-card-title">Redes Neuronales y Deep Learning</div>
+                            <div class="course-card-meta"><span class="course-card-badge purple">Deep Learning</span> 4 lecciones · 7h</div>
+                            <div class="course-stats-row">
+                                <span class="difficulty-badge advanced">AVANZADO</span>
+                                <span class="stars">★★★★★</span>
+                                <span class="course-stat"><i class="fa-solid fa-user"></i> 2.7k</span>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-chevron-right course-card-chevron"></i>
+                    </div>
+                    <div class="course-card-body">
+                        <div class="course-objectives">
+                            <h4>Lo que aprenderás</h4>
+                            <ul>
+                                <li><i class="fa-solid fa-circle-check"></i> Construir perceptrones y redes feedforward desde cero</li>
+                                <li><i class="fa-solid fa-circle-check"></i> Dominar backpropagation y descenso por gradiente</li>
+                                <li><i class="fa-solid fa-circle-check"></i> Implementar CNNs con kernels, pooling y arquitecturas clásicas</li>
+                                <li><i class="fa-solid fa-circle-check"></i> Aplicar transfer learning con modelos pre-entrenados</li>
+                            </ul>
+                        </div>
+                        <div class="course-card-cta">
+                            <a href="redes-neuronales.html" class="btn-sm btn-sm-primary"><i class="fa-solid fa-book-open"></i> Ver curso</a>
+                            <a href="inscripcion.html" class="btn-sm btn-sm-outline"><i class="fa-solid fa-pen-to-square"></i> Inscribirme</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Curso 6: NLP -->
+                <div class="course-card" data-course="nlp">
+                    <div class="course-card-header" onclick="toggleCourse(this)">
+                        <div class="course-card-icon blue"><i class="fa-solid fa-language"></i></div>
+                        <div class="course-card-info">
+                            <div class="course-card-title">Procesamiento de Lenguaje Natural</div>
+                            <div class="course-card-meta"><span class="course-card-badge blue">NLP</span> 4 lecciones · 6h</div>
+                            <div class="course-stats-row">
+                                <span class="difficulty-badge intermediate">INTERMEDIO</span>
+                                <span class="stars">★★★★★</span>
+                                <span class="course-stat"><i class="fa-solid fa-user"></i> 2.1k</span>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-chevron-right course-card-chevron"></i>
+                    </div>
+                    <div class="course-card-body">
+                        <div class="course-objectives">
+                            <h4>Lo que aprenderás</h4>
+                            <ul>
+                                <li><i class="fa-solid fa-circle-check"></i> Aplicar tokenización, TF-IDF y Word2Vec</li>
+                                <li><i class="fa-solid fa-circle-check"></i> Comprender la arquitectura Transformer y self-attention</li>
+                                <li><i class="fa-solid fa-circle-check"></i> Usar BERT y GPT para tareas de NLP</li>
+                                <li><i class="fa-solid fa-circle-check"></i> Construir chatbots y sistemas de clasificación de texto</li>
+                            </ul>
+                        </div>
+                        <div class="course-card-cta">
+                            <a href="nlp.html" class="btn-sm btn-sm-primary"><i class="fa-solid fa-book-open"></i> Ver curso</a>
+                            <a href="inscripcion.html" class="btn-sm btn-sm-outline"><i class="fa-solid fa-pen-to-square"></i> Inscribirme</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Curso 7: Árboles de Decisión -->
+                <div class="course-card" data-course="arboles">
+                    <div class="course-card-header" onclick="toggleCourse(this)">
+                        <div class="course-card-icon green"><i class="fa-solid fa-tree"></i></div>
+                        <div class="course-card-info">
+                            <div class="course-card-title">Árboles de Decisión y Random Forest</div>
+                            <div class="course-card-meta"><span class="course-card-badge green">ML Clásico</span> 4 lecciones · 5h</div>
+                            <div class="course-stats-row">
+                                <span class="difficulty-badge intermediate">INTERMEDIO</span>
+                                <span class="stars">★★★★<span class="empty">★</span></span>
+                                <span class="course-stat"><i class="fa-solid fa-user"></i> 1.8k</span>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-chevron-right course-card-chevron"></i>
+                    </div>
+                    <div class="course-card-body">
+                        <div class="course-objectives">
+                            <h4>Lo que aprenderás</h4>
+                            <ul>
+                                <li><i class="fa-solid fa-circle-check"></i> Construir árboles con ID3, C4.5 y CART</li>
+                                <li><i class="fa-solid fa-circle-check"></i> Aplicar poda para combatir el overfitting</li>
+                                <li><i class="fa-solid fa-circle-check"></i> Implementar Random Forest y entender feature importance</li>
+                                <li><i class="fa-solid fa-circle-check"></i> Dominar XGBoost y Gradient Boosting Machines</li>
+                            </ul>
+                        </div>
+                        <div class="course-card-cta">
+                            <a href="arboles-decision.html" class="btn-sm btn-sm-primary"><i class="fa-solid fa-book-open"></i> Ver curso</a>
+                            <a href="inscripcion.html" class="btn-sm btn-sm-outline"><i class="fa-solid fa-pen-to-square"></i> Inscribirme</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Curso 8: Aprendizaje por Refuerzo -->
+                <div class="course-card" data-course="refuerzo">
+                    <div class="course-card-header" onclick="toggleCourse(this)">
+                        <div class="course-card-icon purple"><i class="fa-solid fa-gamepad"></i></div>
+                        <div class="course-card-info">
+                            <div class="course-card-title">Aprendizaje por Refuerzo</div>
+                            <div class="course-card-meta"><span class="course-card-badge purple">RL</span> 4 lecciones · 6h</div>
+                            <div class="course-stats-row">
+                                <span class="difficulty-badge advanced">AVANZADO</span>
+                                <span class="stars">★★★★★</span>
+                                <span class="course-stat"><i class="fa-solid fa-user"></i> 1.5k</span>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-chevron-right course-card-chevron"></i>
+                    </div>
+                    <div class="course-card-body">
+                        <div class="course-objectives">
+                            <h4>Lo que aprenderás</h4>
+                            <ul>
+                                <li><i class="fa-solid fa-circle-check"></i> Modelar problemas como MDPs con agentes y entornos</li>
+                                <li><i class="fa-solid fa-circle-check"></i> Implementar Q-Learning y SARSA tabular</li>
+                                <li><i class="fa-solid fa-circle-check"></i> Construir Deep Q-Networks con experience replay</li>
+                                <li><i class="fa-solid fa-circle-check"></i> Dominar Policy Gradients, A2C y PPO</li>
+                            </ul>
+                        </div>
+                        <div class="course-card-cta">
+                            <a href="aprendizaje-por-refuerzo.html" class="btn-sm btn-sm-primary"><i class="fa-solid fa-book-open"></i> Ver curso</a>
+                            <a href="inscripcion.html" class="btn-sm btn-sm-outline"><i class="fa-solid fa-pen-to-square"></i> Inscribirme</a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- DEMO EN VIVO -->
+    <section class="section" id="demo">
+        <div class="container">
+            <div class="section-header">
+                <div class="section-label">🖥️ Demo en vivo</div>
+                <h2 class="section-title">Regresión <span class="highlight">Lineal</span></h2>
+                <p class="section-subtitle">Sube un archivo CSV con tus datos y observa cómo el modelo de Machine Learning encuentra la recta óptima automáticamente.</p>
+            </div>
+            <div class="demo-section">
+                <div class="demo-grid">
+                    <div>
+                        <div class="dropzone" id="dropzone" onclick="document.getElementById('csvInput').click()">
+                            <i class="fa-solid fa-cloud-arrow-up"></i>
+                            <p>Arrastra tu archivo CSV aquí<br>o haz clic para seleccionar</p>
+                            <div class="file-name" id="fileName"></div>
+                            <input type="file" id="csvInput" accept=".csv" style="display:none" onchange="handleFile(event)">
+                        </div>
+                        <button class="btn btn-outline" style="width:100%" onclick="loadSampleData()"><i class="fa-solid fa-flask"></i> Cargar datos de prueba</button>
+                        <div class="csv-preview" id="csvPreview" style="display:none;margin-top:16px">
+                            <table><thead><tr><th>#</th><th>X (Área m²)</th><th>Y (Precio k$)</th></tr></thead><tbody id="csvTableBody"></tbody></table>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="chart-container"><canvas id="regressionChart"></canvas></div>
+                        <div class="result-stats">
+                            <div class="result-stat"><div class="stat-val green" id="statR2">—</div><div class="stat-label">R²</div></div>
+                            <div class="result-stat"><div class="stat-val purple" id="statEq">—</div><div class="stat-label">Ecuación</div></div>
+                            <div class="result-stat"><div class="stat-val pink" id="statMse">—</div><div class="stat-label">Error MSE</div></div>
+                        </div>
+                        <div class="url-bar">
+                            <i class="fa-solid fa-link"></i>
+                            <code id="apiUrl">http://tu-api.com/regresion/predict</code>
+                            <button class="copy-btn" onclick="copyUrl()"><i class="fa-solid fa-copy"></i> Copiar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- INFRAESTRUCTURA Y DESPLIEGUE -->
+    <section class="section" id="infra">
+        <div class="container">
+            <div class="section-header">
+                <div class="section-label">☁️ Infraestructura</div>
+                <h2 class="section-title">Despliegue en <span class="highlight">Máquinas Virtuales</span></h2>
+                <p class="section-subtitle">Lleva tus modelos de IA a producción. Despliega APIs en servidores reales con los mejores proveedores cloud.</p>
+            </div>
+            <div class="deploy-grid">
+                <div class="deploy-card gcp">
+                    <i class="fa-brands fa-google"></i>
+                    <div class="provider">Google Cloud</div>
+                    <div class="price">GCP Compute Engine</div>
+                </div>
+                <div class="deploy-card do">
+                    <i class="fa-brands fa-digital-ocean"></i>
+                    <div class="provider">DigitalOcean</div>
+                    <div class="price">Droplets desde $6/mes</div>
+                </div>
+                <div class="deploy-card aws">
+                    <i class="fa-brands fa-aws"></i>
+                    <div class="provider">Amazon Web Services</div>
+                    <div class="price">EC2 Instances</div>
+                </div>
+                <div class="deploy-card cf">
+                    <i class="fa-brands fa-cloudflare"></i>
+                    <div class="provider">Cloudflare</div>
+                    <div class="price">Workers & Pages</div>
+                </div>
+            </div>
+
+            <!-- WIREFRAME SECTION -->
+            <div class="wireframe-container">
+                <div class="wf-top">
+                    <div class="wf-input" style="flex:2"></div>
+                    <div class="wf-input"></div>
+                </div>
+                <div class="wf-top">
+                    <div class="wf-input" style="width:60%"></div>
+                </div>
+                <div class="wf-separator"></div>
+                <div class="wf-results-label">📊 Rsu — Resultados</div>
+                <div class="wf-results">
+                    <div class="wf-row">
+                        <div class="wf-cell" style="flex:3"></div>
+                        <div class="wf-cell" style="flex:1"></div>
+                        <div class="wf-cell" style="flex:2"></div>
+                    </div>
+                    <div class="wf-row">
+                        <div class="wf-cell" style="flex:2"></div>
+                        <div class="wf-cell" style="flex:2"></div>
+                        <div class="wf-cell" style="flex:1"></div>
+                    </div>
+                    <div class="wf-row">
+                        <div class="wf-cell" style="flex:1"></div>
+                        <div class="wf-cell" style="flex:3"></div>
+                        <div class="wf-cell" style="flex:1"></div>
+                    </div>
+                    <div class="wf-row">
+                        <div class="wf-cell" style="flex:2"></div>
+                        <div class="wf-cell" style="flex:1"></div>
+                        <div class="wf-cell" style="flex:2"></div>
+                    </div>
+                </div>
+            </div>
+            <p style="font-size:.72rem;color:var(--text-muted);margin-top:12px;text-align:center">Diagrama de interfaz (Wireframe) — Mockup estructural de la vista de resultados</p>
+        </div>
+    </section>
+
+    <!-- CÓMO FUNCIONA -->
+    <section class="section" id="ejemplos">
+        <div class="container">
+            <div class="section-header">
+                <div class="section-label">⚡ Proceso</div>
+                <h2 class="section-title">De los datos <span class="highlight">a producción</span></h2>
+            </div>
+            <div class="steps-grid">
+                <div class="step-card">
+                    <div class="step-icon green"><i class="fa-solid fa-file-csv"></i></div>
+                    <div class="step-num">Paso 01</div>
+                    <h4>Sube tu CSV</h4>
+                    <p>Arrastra tu archivo de datos con dos columnas numéricas. El sistema valida y procesa automáticamente.</p>
+                </div>
+                <div class="step-card">
+                    <div class="step-icon purple"><i class="fa-solid fa-robot"></i></div>
+                    <div class="step-num">Paso 02</div>
+                    <h4>El modelo entrena</h4>
+                    <p>El algoritmo de regresión lineal calcula los parámetros óptimos usando mínimos cuadrados ordinarios (OLS).</p>
+                </div>
+                <div class="step-card">
+                    <div class="step-icon pink"><i class="fa-solid fa-rocket"></i></div>
+                    <div class="step-num">Paso 03</div>
+                    <h4>Despliega en la nube</h4>
+                    <p>Empaqueta tu modelo en una API con FastAPI y súbelo a GCP, DigitalOcean, AWS o Cloudflare.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="footer" id="contacto">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <h3>🤖 Campus<span>IA</span></h3>
+                    <p>Construido con Python, FastAPI y amor por el Machine Learning. Aprende IA de forma práctica con demos interactivas reales.</p>
+                </div>
+                <div class="footer-col">
+                    <h4>Cursos</h4>
+                    <a href="#cursos">Regresión Lineal</a>
+                    <a href="#cursos">Algoritmo Genético</a>
+                    <a href="#infra">Infraestructura y Despliegue</a>
+                </div>
+                <div class="footer-col">
+                    <h4>Recursos</h4>
+                    <a href="#">Documentación</a>
+                    <a href="#">API Reference</a>
+                    <a href="#">GitHub</a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <span>© 2026 Campus I.A. — Todos los derechos reservados.</span>
+                <div class="social-links">
+                    <a href="#" aria-label="GitHub"><i class="fa-brands fa-github"></i></a>
+                    <a href="#" aria-label="YouTube"><i class="fa-brands fa-youtube"></i></a>
+                    <a href="#" aria-label="Twitter"><i class="fa-brands fa-x-twitter"></i></a>
+                    <a href="#" aria-label="LinkedIn"><i class="fa-brands fa-linkedin-in"></i></a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // ============ PARTICLES BACKGROUND ============
+        const canvas = document.getElementById('bgCanvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [], mouse = { x: null, y: null };
+
+        function resize() { canvas.width = innerWidth; canvas.height = innerHeight }
+        resize(); addEventListener('resize', resize);
+        addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY });
+
+        class Particle {
+            constructor() { this.reset() }
+            reset() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.size = Math.random() * 1.8 + 0.5;
+                this.speedX = (Math.random() - 0.5) * 0.5;
+                this.speedY = (Math.random() - 0.5) * 0.5;
+                this.opacity = Math.random() * 0.5 + 0.1;
+                this.color = ['152,202,63','139,92,246','236,72,153','59,130,246'][Math.floor(Math.random()*4)];
+            }
+            update() {
+                this.x += this.speedX; this.y += this.speedY;
+                if (mouse.x != null) {
+                    const dx = mouse.x - this.x, dy = mouse.y - this.y, dist = Math.sqrt(dx*dx+dy*dy);
+                    if (dist < 150) { const f = (150-dist)/150; this.x -= (dx/dist)*f*1.2; this.y -= (dy/dist)*f*1.2 }
+                }
+                if (this.x < 0) this.x = canvas.width; if (this.x > canvas.width) this.x = 0;
+                if (this.y < 0) this.y = canvas.height; if (this.y > canvas.height) this.y = 0;
+            }
+            draw() { ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI*2); ctx.fillStyle = `rgba(${this.color},${this.opacity})`; ctx.fill() }
+        }
+
+        for (let i = 0; i < 80; i++) particles.push(new Particle());
+
+        function connect() {
+            for (let i = 0; i < particles.length; i++)
+                for (let j = i+1; j < particles.length; j++) {
+                    const dx = particles[i].x - particles[j].x, dy = particles[i].y - particles[j].y, dist = Math.sqrt(dx*dx+dy*dy);
+                    if (dist < 130) { ctx.beginPath(); ctx.strokeStyle = `rgba(152,202,63,${(1-dist/130)*0.08})`; ctx.lineWidth = 0.5; ctx.moveTo(particles[i].x, particles[i].y); ctx.lineTo(particles[j].x, particles[j].y); ctx.stroke() }
+                }
+        }
+        (function animate() { ctx.clearRect(0, 0, canvas.width, canvas.height); particles.forEach(p => { p.update(); p.draw() }); connect(); requestAnimationFrame(animate) })();
+
+        // ============ NAVBAR SCROLL ============
+        const navbar = document.getElementById('navbar');
+        addEventListener('scroll', () => { navbar.classList.toggle('scrolled', pageYOffset > 50) });
+
+        // ============ MOBILE TOGGLE ============
+        document.getElementById('navToggle').addEventListener('click', () => document.getElementById('navLinks').classList.toggle('open'));
+        document.querySelectorAll('.nav-links a').forEach(l => l.addEventListener('click', () => document.getElementById('navLinks').classList.remove('open')));
+
+        // ============ ACCORDION ============
+        function toggleCourse(header) {
+            const card = header.parentElement, wasOpen = card.classList.contains('open');
+            document.querySelectorAll('.course-card.open').forEach(c => c.classList.remove('open'));
+            if (!wasOpen) card.classList.add('open');
+        }
+        function scrollToDemo() { document.getElementById('demo').scrollIntoView({ behavior: 'smooth' }) }
+        function scrollToInfra() { document.getElementById('infra').scrollIntoView({ behavior: 'smooth' }) }
+
+        // ============ CSV DROP ZONE ============
+        const dropzone = document.getElementById('dropzone');
+        dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('drag-over') });
+        dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag-over'));
+        dropzone.addEventListener('drop', e => { e.preventDefault(); dropzone.classList.remove('drag-over'); if (e.dataTransfer.files[0]) processFile(e.dataTransfer.files[0]) });
+        function handleFile(e) { if (e.target.files[0]) processFile(e.target.files[0]) }
+
+        function processFile(file) {
+            if (!file.name.endsWith('.csv')) return showToast('Sube un archivo .csv');
+            document.getElementById('fileName').textContent = '📄 ' + file.name;
+            const r = new FileReader(); r.onload = e => parseCSV(e.target.result); r.readAsText(file);
+        }
+
+        function parseCSV(text) {
+            const lines = text.split('\n').filter(l => l.trim()), data = [];
+            lines.forEach(l => { const cols = l.split(','); if (cols.length >= 2) { const x = parseFloat(cols[0].trim()), y = parseFloat(cols[1].trim()); if (!isNaN(x) && !isNaN(y)) data.push({ x, y }) } });
+            if (data.length < 3) return showToast('El CSV necesita al menos 3 filas con 2 columnas numéricas');
+            renderResults(data);
+        }
+
+        function loadSampleData() {
+            document.getElementById('fileName').textContent = '📊 datos_prueba.csv';
+            renderResults([{x:45,y:110},{x:55,y:135},{x:68,y:160},{x:80,y:195},{x:92,y:215},{x:105,y:240},{x:120,y:285},{x:135,y:310},{x:150,y:345}]);
+        }
+
+        function renderResults(data) {
+            const n = data.length;
+            let sx = 0, sy = 0, sxy = 0, sxx = 0;
+            data.forEach(d => { sx += d.x; sy += d.y; sxy += d.x*d.y; sxx += d.x*d.x });
+            const m = (n*sxy - sx*sy) / (n*sxx - sx*sx);
+            const b = (sy - m*sx) / n, meanY = sy/n;
+            let ssr = 0, sst = 0;
+            data.forEach(d => { const pred = m*d.x + b; ssr += (d.y-pred)**2; sst += (d.y-meanY)**2 });
+            const r2 = sst !== 0 ? 1 - ssr/sst : 1;
+
+            document.getElementById('statR2').textContent = r2.toFixed(4);
+            document.getElementById('statEq').textContent = `Y = ${m.toFixed(2)}X + ${b.toFixed(2)}`;
+            document.getElementById('statMse').textContent = (ssr/n).toFixed(2);
+            const tbody = document.getElementById('csvTableBody');
+            tbody.innerHTML = data.map((d, i) => `<tr><td>${i+1}</td><td>${d.x}</td><td style="color:var(--green);font-weight:600">${d.y}</td></tr>`).join('');
+            document.getElementById('csvPreview').style.display = 'block';
+            drawChart(data, m, b);
+            showToast('✅ Regresión calculada con éxito');
+        }
+
+        // ============ CHART.JS ============
+        let chartInstance = null;
+        function drawChart(points, slope, intercept) {
+            const chartCtx = document.getElementById('regressionChart').getContext('2d');
+            if (chartInstance) chartInstance.destroy();
+            const xs = points.map(p => p.x), minX = Math.min(...xs)*0.9, maxX = Math.max(...xs)*1.1;
+            const line = []; for (let x = minX; x <= maxX; x += (maxX-minX)/100) line.push({ x, y: slope*x + intercept });
+            chartInstance = new Chart(chartCtx, {
+                type: 'scatter',
+                data: { datasets: [
+                    { label:'Datos', data:points, backgroundColor:'rgba(236,72,153,0.8)', borderColor:'#EC4899', pointRadius:6, pointHoverRadius:10 },
+                    { label:'Regresión', data:line, type:'line', borderColor:'#98CA3F', borderWidth:3, pointRadius:0, fill:false, tension:0 }
+                ]},
+                options: {
+                    responsive:true, maintainAspectRatio:true,
+                    plugins: { legend: { labels: { color:'#94A3B8', font:{family:'Inter',size:12}, usePointStyle:true, boxWidth:8 } } },
+                    scales: {
+                        x: { title:{display:true,text:'X',color:'#64748B',font:{family:'Inter',weight:'bold'}}, grid:{color:'rgba(255,255,255,0.04)'}, ticks:{color:'#94A3B8'} },
+                        y: { title:{display:true,text:'Y',color:'#64748B',font:{family:'Inter',weight:'bold'}}, grid:{color:'rgba(255,255,255,0.04)'}, ticks:{color:'#94A3B8'} }
+                    }
+                }
+            });
+        }
+        loadSampleData();
+
+        // ============ UTILS ============
+        function copyUrl() { navigator.clipboard.writeText(document.getElementById('apiUrl').textContent).then(() => showToast('📋 URL copiada')) }
+        function showToast(msg) { const old = document.querySelector('.toast'); if (old) old.remove(); const t = document.createElement('div'); t.className = 'toast'; t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 3000) }
+        document.querySelectorAll('a[href^="#"]').forEach(a => a.addEventListener('click', function(e) { if (this.getAttribute('href') === '#') return; e.preventDefault(); document.querySelector(this.getAttribute('href')).scrollIntoView({ behavior:'smooth' }) }));
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <script src="supabase.js"></script>
+</body>
+</html>

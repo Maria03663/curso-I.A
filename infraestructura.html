@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infraestructura y Despliegue | Campus I.A.</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        :root {
+            --bg: #0a0a0f; --bg-card: rgba(15,15,25,0.7); --bg-card-hover: rgba(20,20,35,0.85);
+            --green: #98CA3F; --green-glow: rgba(152,202,63,0.35);
+            --purple: #8B5CF6; --purple-glow: rgba(139,92,246,0.35);
+            --pink: #EC4899; --pink-glow: rgba(236,72,153,0.35);
+            --blue: #3B82F6; --blue-glow: rgba(59,130,246,0.35);
+            --text: #E2E8F0; --text-secondary: #94A3B8; --text-muted: #64748B;
+            --border: rgba(255,255,255,0.08); --border-hover: rgba(255,255,255,0.18);
+            --radius: 14px; --radius-sm: 10px;
+            --shadow: 0 4px 24px rgba(0,0,0,0.4);
+            --transition: 0.25s cubic-bezier(0.4,0,0.2,1);
+        }
+        * { margin:0;padding:0;box-sizing:border-box }
+        html { scroll-behavior:smooth }
+        body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; overflow-x:hidden; line-height:1.6 }
+        #bgCanvas { position:fixed; top:0; left:0; width:100%; height:100%; z-index:0; pointer-events:none }
+        .grid-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background-image:linear-gradient(rgba(152,202,63,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(152,202,63,0.03) 1px,transparent 1px); background-size:50px 50px; z-index:0; pointer-events:none }
+        .container { max-width:1200px; margin:0 auto; padding:0 24px; position:relative; z-index:1 }
+
+        /* NAVBAR */
+        .navbar { position:fixed; top:0; left:0; right:0; z-index:100; padding:14px 0; transition:all .25s; background:transparent }
+        .navbar.scrolled { background:rgba(10,10,15,0.92); backdrop-filter:blur(16px); border-bottom:1px solid var(--border); box-shadow:0 4px 20px rgba(0,0,0,0.3) }
+        .navbar .container { display:flex; align-items:center; justify-content:space-between }
+        .nav-logo { font-size:1.4rem; font-weight:800; color:#fff; text-decoration:none; display:flex; align-items:center; gap:10px }
+        .nav-logo i { color:var(--green); font-size:1.3rem }
+        .nav-logo span { color:var(--green); font-family:'Syne',sans-serif }
+        .nav-links { display:flex; align-items:center; gap:4px }
+        .nav-links a { color:var(--text-secondary); text-decoration:none; font-size:.88rem; font-weight:500; padding:8px 16px; border-radius:8px; transition:all .2s }
+        .nav-links a:hover { color:#fff; background:rgba(255,255,255,0.05) }
+        .nav-toggle { display:none; background:none; border:1px solid var(--border); color:#fff; padding:8px 12px; border-radius:8px; cursor:pointer; font-size:1.2rem }
+        @media(max-width:768px) {
+            .nav-toggle{display:block}.nav-links{display:none;position:absolute;top:100%;left:0;right:0;background:rgba(10,10,15,0.96);backdrop-filter:blur(20px);flex-direction:column;padding:16px;gap:4px;border-bottom:1px solid var(--border)}
+            .nav-links.open{display:flex}
+        }
+
+        /* PROGRESS BAR */
+        .progress-bar-wrapper { position:fixed; top:0; left:0; right:0; height:3px; z-index:101; background:rgba(255,255,255,0.04) }
+        .progress-bar-fill { height:100%; background:linear-gradient(90deg,var(--purple),var(--pink)); transition:width .5s ease; border-radius:0 2px 2px 0 }
+
+        /* COURSE HEADER */
+        .course-hero { padding:120px 0 50px; position:relative; z-index:1 }
+        .course-hero .container { max-width:800px }
+        .course-badge { display:inline-flex; align-items:center; gap:8px; padding:6px 16px; border-radius:20px; background:rgba(139,92,246,0.1); border:1px solid rgba(139,92,246,0.25); font-size:.78rem; color:var(--purple); font-weight:600; margin-bottom:20px }
+        .course-hero h1 { font-size:clamp(2rem,4.5vw,3rem); font-weight:900; line-height:1.2; margin-bottom:16px; font-family:'Syne',sans-serif }
+        .course-hero .desc { font-size:1.05rem; color:var(--text-secondary); line-height:1.8; max-width:620px }
+
+        /* ============ COURSE LAYOUT (SIDEBAR + MAIN) ============ */
+        .course-layout { display:flex; gap:30px; position:relative; z-index:1; max-width:1200px; margin:0 auto; padding:0 24px 60px }
+        @media(max-width:900px) { .course-layout { flex-direction:column } }
+
+        /* SIDEBAR */
+        .course-sidebar { width:340px; flex-shrink:0; position:sticky; top:90px; align-self:flex-start }
+        @media(max-width:900px) { .course-sidebar { width:100%; position:static } }
+
+        .sidebar-card { background:var(--bg-card); backdrop-filter:blur(16px); border:1px solid var(--border); border-radius:var(--radius); padding:24px; box-shadow:var(--shadow) }
+        .sidebar-card h3 { font-size:.72rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:2px; margin-bottom:16px }
+        .sidebar-stat { display:flex; align-items:center; gap:12px; padding:8px 0; border-bottom:1px solid var(--border); font-size:.88rem; color:var(--text-secondary) }
+        .sidebar-stat:last-child { border-bottom:none }
+        .sidebar-stat i { width:20px; text-align:center; color:var(--purple); font-size:.85rem }
+        .sidebar-stat strong { color:#fff; margin-left:auto }
+        .sidebar-stars { color:#F59E0B; margin-left:auto }
+        .sidebar-price { font-size:1.8rem; font-weight:800; color:var(--green); font-family:'Syne',sans-serif; margin-bottom:4px }
+        .sidebar-price-sub { font-size:.75rem; color:var(--text-muted); margin-bottom:16px }
+        .sidebar-cert-badge { display:flex; align-items:center; gap:10px; padding:12px 16px; border-radius:10px; background:rgba(152,202,63,0.08); border:1px solid rgba(152,202,63,0.2); margin-bottom:16px; font-size:.82rem; color:var(--green); font-weight:600 }
+        .sidebar-cert-badge i { font-size:1.2rem }
+        .btn-enroll { display:block; width:100%; padding:14px; border-radius:10px; background:linear-gradient(135deg,var(--purple),var(--pink)); color:#fff; border:none; font-size:.95rem; font-weight:700; cursor:pointer; font-family:'Inter',sans-serif; transition:all .25s; text-align:center; text-decoration:none }
+        .btn-enroll:hover { box-shadow:0 0 30px rgba(139,92,246,0.5); transform:translateY(-1px) }
+        .btn-enroll-outline { display:block; width:100%; padding:12px; border-radius:10px; background:transparent; color:var(--text-secondary); border:1px solid var(--border); font-size:.88rem; font-weight:600; cursor:pointer; font-family:'Inter',sans-serif; margin-top:10px; text-align:center; text-decoration:none; transition:all .2s }
+        .btn-enroll-outline:hover { border-color:var(--purple); color:#fff }
+
+        /* SKILLS GRID */
+        .skills-section { padding:0 0 50px; position:relative; z-index:1 }
+        .skills-section .container { max-width:1200px }
+        .section-title { font-size:1.3rem; font-weight:800; margin-bottom:8px; font-family:'Syne',sans-serif }
+        .section-subtitle { font-size:.88rem; color:var(--text-secondary); margin-bottom:24px }
+        .skills-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px }
+        @media(max-width:600px) { .skills-grid { grid-template-columns:1fr } }
+        .skill-item { display:flex; align-items:flex-start; gap:12px; padding:14px 18px; background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:var(--radius-sm); transition:all .25s }
+        .skill-item:hover { background:rgba(255,255,255,0.04); border-color:var(--border-hover) }
+        .skill-item i { color:var(--green); font-size:.9rem; margin-top:2px; flex-shrink:0 }
+        .skill-item span { font-size:.88rem; color:var(--text-secondary); line-height:1.5 }
+
+        /* INSTRUCTOR */
+        .instructor-section { padding:0 0 50px; position:relative; z-index:1 }
+        .instructor-section .container { max-width:1200px }
+        .instructor-card { display:flex; gap:24px; align-items:center; background:var(--bg-card); backdrop-filter:blur(16px); border:1px solid var(--border); border-radius:var(--radius); padding:28px; box-shadow:var(--shadow) }
+        @media(max-width:600px) { .instructor-card { flex-direction:column; text-align:center } }
+        .instructor-avatar { width:80px; height:80px; border-radius:50%; background:linear-gradient(135deg,var(--purple),var(--pink)); display:flex; align-items:center; justify-content:center; font-size:2rem; color:#fff; flex-shrink:0; font-weight:700; font-family:'Syne',sans-serif }
+        .instructor-info h3 { font-size:1.1rem; font-weight:700; margin-bottom:2px }
+        .instructor-info .role { font-size:.8rem; color:var(--purple); font-weight:600; margin-bottom:8px }
+        .instructor-info .bio { font-size:.85rem; color:var(--text-secondary); line-height:1.65 }
+
+        /* PROJECT SECTION */
+        .project-section { padding:0 0 50px; position:relative; z-index:1 }
+        .project-section .container { max-width:1200px }
+        .project-card { background:var(--bg-card); backdrop-filter:blur(16px); border:1px solid rgba(236,72,153,0.2); border-radius:var(--radius); padding:28px; box-shadow:var(--shadow); position:relative; overflow:hidden }
+        .project-card::before { content:''; position:absolute; top:-60px; right:-60px; width:180px; height:180px; border-radius:50%; background:rgba(236,72,153,0.06); pointer-events:none }
+        .project-badge { display:inline-flex; align-items:center; gap:6px; padding:4px 12px; border-radius:16px; background:rgba(236,72,153,0.1); border:1px solid rgba(236,72,153,0.2); font-size:.7rem; color:var(--pink); font-weight:700; margin-bottom:14px; text-transform:uppercase; letter-spacing:1px }
+        .project-card h3 { font-size:1.2rem; font-weight:800; margin-bottom:10px; font-family:'Syne',sans-serif }
+        .project-card p { font-size:.88rem; color:var(--text-secondary); line-height:1.7; max-width:700px }
+
+        /* RESOURCES */
+        .resources-section { padding:0 0 50px; position:relative; z-index:1 }
+        .resources-section .container { max-width:1200px }
+        .resources-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px }
+        @media(max-width:900px) { .resources-grid { grid-template-columns:1fr 1fr } }
+        @media(max-width:500px) { .resources-grid { grid-template-columns:1fr } }
+        .resource-card { background:var(--bg-card); backdrop-filter:blur(16px); border:1px solid var(--border); border-radius:var(--radius); padding:22px; text-align:center; transition:all .25s; box-shadow:var(--shadow) }
+        .resource-card:hover { border-color:var(--border-hover); background:var(--bg-card-hover); transform:translateY(-2px) }
+        .resource-card .res-icon { width:48px; height:48px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:1.2rem; margin:0 auto 12px }
+        .resource-card h4 { font-size:.9rem; font-weight:700; margin-bottom:4px }
+        .resource-card p { font-size:.76rem; color:var(--text-muted) }
+        .res-purple .res-icon { background:rgba(139,92,246,0.1); color:var(--purple); border:1px solid rgba(139,92,246,0.2) }
+        .res-blue .res-icon { background:rgba(59,130,246,0.1); color:var(--blue); border:1px solid rgba(59,130,246,0.2) }
+        .res-green .res-icon { background:rgba(152,202,63,0.1); color:var(--green); border:1px solid rgba(152,202,63,0.2) }
+        .res-pink .res-icon { background:rgba(236,72,153,0.1); color:var(--pink); border:1px solid rgba(236,72,153,0.2) }
+
+        /* QUIZ */
+        .quiz-section { padding:0 0 50px; position:relative; z-index:1 }
+        .quiz-section .container { max-width:800px }
+        .quiz-card { background:var(--bg-card); backdrop-filter:blur(16px); border:1px solid var(--border); border-radius:var(--radius); padding:28px; box-shadow:var(--shadow) }
+        .quiz-card .quiz-header { display:flex; align-items:center; gap:12px; margin-bottom:20px }
+        .quiz-card .quiz-header i { font-size:1.3rem; color:var(--green) }
+        .quiz-card .quiz-header h3 { font-size:1.05rem; font-weight:700 }
+        .quiz-question { margin-bottom:20px; padding-bottom:18px; border-bottom:1px solid var(--border) }
+        .quiz-question:last-child { margin-bottom:0; padding-bottom:0; border-bottom:none }
+        .quiz-question .q-text { font-size:.9rem; font-weight:600; color:#fff; margin-bottom:10px }
+        .quiz-options { display:flex; flex-direction:column; gap:6px }
+        .quiz-option { display:flex; align-items:center; gap:10px; padding:10px 14px; border-radius:8px; border:1px solid var(--border); background:rgba(255,255,255,0.01); cursor:pointer; font-size:.84rem; color:var(--text-secondary); transition:all .2s }
+        .quiz-option:hover { border-color:rgba(139,92,246,0.3); background:rgba(139,92,246,0.04) }
+        .quiz-option.correct { border-color:rgba(152,202,63,0.4); background:rgba(152,202,63,0.08); color:var(--green) }
+        .quiz-option.wrong { border-color:rgba(236,72,153,0.4); background:rgba(236,72,153,0.08); color:var(--pink) }
+        .quiz-option.selected { border-color:rgba(139,92,246,0.5); background:rgba(139,92,246,0.08) }
+        .quiz-feedback { font-size:.78rem; margin-top:8px; display:none; font-weight:600 }
+        .quiz-feedback.show { display:block }
+        .quiz-feedback.correct { color:var(--green) }
+        .quiz-feedback.wrong { color:var(--pink) }
+
+        /* RELATED COURSES */
+        .related-section { padding:0 0 50px; position:relative; z-index:1 }
+        .related-section .container { max-width:1200px }
+        .related-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:16px }
+        @media(max-width:768px) { .related-grid { grid-template-columns:1fr } }
+        .related-card { background:var(--bg-card); backdrop-filter:blur(16px); border:1px solid var(--border); border-radius:var(--radius); padding:22px; text-decoration:none; color:inherit; transition:all .25s; box-shadow:var(--shadow); display:flex; align-items:center; gap:16px }
+        .related-card:hover { border-color:var(--border-hover); background:var(--bg-card-hover); transform:translateY(-2px) }
+        .related-icon { width:46px; height:46px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:1.1rem; flex-shrink:0 }
+        .related-card:nth-child(1) .related-icon { background:rgba(59,130,246,0.1); color:var(--blue); border:1px solid rgba(59,130,246,0.2) }
+        .related-card:nth-child(2) .related-icon { background:rgba(236,72,153,0.1); color:var(--pink); border:1px solid rgba(236,72,153,0.2) }
+        .related-card:nth-child(3) .related-icon { background:rgba(152,202,63,0.1); color:var(--green); border:1px solid rgba(152,202,63,0.2) }
+        .related-info h4 { font-size:.88rem; font-weight:700; margin-bottom:2px }
+        .related-info span { font-size:.74rem; color:var(--text-muted) }
+
+        /* CERTIFICATION */
+        .cert-section { padding:0 0 50px; position:relative; z-index:1 }
+        .cert-section .container { max-width:800px }
+        .cert-card { background:linear-gradient(135deg,rgba(152,202,63,0.06),rgba(139,92,246,0.06)); backdrop-filter:blur(16px); border:1px solid rgba(152,202,63,0.15); border-radius:var(--radius); padding:32px; text-align:center; box-shadow:var(--shadow); position:relative; overflow:hidden }
+        .cert-card::before { content:''; position:absolute; top:-40px; right:-40px; width:140px; height:140px; border-radius:50%; background:rgba(152,202,63,0.05); pointer-events:none }
+        .cert-card .cert-icon { font-size:2.4rem; color:var(--green); margin-bottom:14px }
+        .cert-card h3 { font-size:1.3rem; font-weight:800; margin-bottom:8px; font-family:'Syne',sans-serif }
+        .cert-card p { font-size:.88rem; color:var(--text-secondary); line-height:1.7; max-width:550px; margin:0 auto 16px }
+        .cert-features { display:flex; gap:24px; justify-content:center; flex-wrap:wrap; margin-bottom:18px }
+        .cert-feature { display:flex; align-items:center; gap:6px; font-size:.8rem; color:var(--text-secondary) }
+        .cert-feature i { color:var(--green); font-size:.7rem }
+
+        /* LESSONS */
+        .lessons-section { padding:20px 0 80px; position:relative; z-index:1 }
+        .lessons-section .container { max-width:900px }
+        .section-heading { font-size:.75rem; font-weight:700; color:var(--purple); letter-spacing:3px; text-transform:uppercase; margin-bottom:20px }
+        .lessons-list { display:flex; flex-direction:column; gap:14px }
+        .lesson-card { background:var(--bg-card); backdrop-filter:blur(16px); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; transition:all .25s; box-shadow:var(--shadow) }
+        .lesson-card.open { border-color:rgba(139,92,246,0.3); background:rgba(20,20,35,0.85) }
+        .lesson-header { display:flex; align-items:center; gap:16px; padding:20px 24px; cursor:pointer; user-select:none; transition:background .2s }
+        .lesson-header:hover { background:rgba(255,255,255,0.02) }
+        .lesson-num { width:40px; height:40px; border-radius:10px; background:rgba(139,92,246,0.1); border:1px solid rgba(139,92,246,0.2); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:.9rem; color:var(--purple); flex-shrink:0; transition:all .3s }
+        .lesson-card.open .lesson-num { background:var(--purple); color:#fff; border-color:var(--purple); box-shadow:0 0 16px rgba(139,92,246,0.4) }
+        .lesson-info { flex:1; min-width:0 }
+        .lesson-title { font-weight:700; font-size:1.02rem; color:#fff; margin-bottom:3px }
+        .lesson-meta { font-size:.78rem; color:var(--text-muted); display:flex; align-items:center; gap:8px; flex-wrap:wrap }
+        .lesson-meta .tag { display:inline-block; padding:2px 8px; border-radius:8px; background:rgba(139,92,246,0.1); color:var(--purple); font-size:.68rem; font-weight:600 }
+        .lesson-chevron { color:var(--text-muted); font-size:.85rem; transition:transform .3s; flex-shrink:0 }
+        .lesson-card.open .lesson-chevron { transform:rotate(90deg) }
+        .lesson-check { width:24px; height:24px; border-radius:50%; border:2px solid var(--border); display:flex; align-items:center; justify-content:center; font-size:.6rem; color:transparent; transition:all .3s; flex-shrink:0; margin-left:4px }
+        .lesson-check.done { background:var(--purple); border-color:var(--purple); color:#fff }
+        .lesson-body { max-height:0; overflow:hidden; transition:max-height .45s ease; border-top:1px solid transparent }
+        .lesson-card.open .lesson-body { max-height:600px; border-top-color:var(--border) }
+        .lesson-content { padding:20px 24px 24px; display:flex; flex-direction:column; gap:14px }
+        .lesson-content p { font-size:.9rem; color:var(--text-secondary); line-height:1.75 }
+        .lesson-content .highlight-box { background:rgba(139,92,246,0.06); border:1px solid rgba(139,92,246,0.15); border-radius:var(--radius-sm); padding:14px 18px; font-size:.84rem; color:var(--text-secondary); line-height:1.7 }
+        .lesson-content .highlight-box i { color:var(--purple); margin-right:6px }
+        .lesson-duration { display:inline-flex; align-items:center; gap:4px; font-size:.76rem; color:var(--text-muted); padding:4px 10px; border-radius:8px; background:rgba(255,255,255,0.02); border:1px solid var(--border); align-self:flex-start }
+        .lesson-duration i { color:var(--purple) }
+
+        /* FOOTER */
+        .footer { border-top:1px solid var(--border); padding:40px 0 30px; position:relative; z-index:1 }
+        .footer-grid { display:grid; grid-template-columns:2fr 1fr 1fr; gap:30px; margin-bottom:30px }
+        @media(max-width:768px){.footer-grid{grid-template-columns:1fr}}
+        .footer-brand h3 { font-size:1.2rem; font-weight:800; margin-bottom:8px; font-family:'Syne',sans-serif }
+        .footer-brand h3 span { color:var(--green) }
+        .footer-brand p { font-size:.85rem; color:var(--text-secondary); line-height:1.6 }
+        .footer-col h4 { font-size:.78rem; text-transform:uppercase; letter-spacing:2px; color:var(--text-muted); margin-bottom:14px }
+        .footer-col a { display:block; color:var(--text-secondary); text-decoration:none; font-size:.85rem; margin-bottom:8px; transition:color .2s }
+        .footer-col a:hover { color:var(--green) }
+        .footer-bottom { border-top:1px solid var(--border); padding-top:20px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px }
+        .footer-bottom span { font-size:.82rem; color:var(--text-muted) }
+        .social-links { display:flex; gap:12px }
+        .social-links a { width:36px; height:36px; border-radius:50%; background:rgba(255,255,255,0.04); border:1px solid var(--border); color:var(--text-secondary); display:flex; align-items:center; justify-content:center; text-decoration:none; transition:all .2s; font-size:.9rem }
+        .social-links a:hover { background:rgba(152,202,63,0.1); border-color:var(--green); color:var(--green) }
+
+        ::-webkit-scrollbar { width:6px }
+        ::-webkit-scrollbar-track { background:var(--bg) }
+        ::-webkit-scrollbar-thumb { background:rgba(152,202,63,0.2); border-radius:3px }
+        ::-webkit-scrollbar-thumb:hover { background:rgba(152,202,63,0.4) }
+
+        .lock-banner{display:none;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.25);border-radius:var(--radius-sm);padding:14px 20px;margin-bottom:20px;font-size:.85rem;color:#F59E0B;text-align:center}
+        .lock-banner.visible{display:block}
+        .lock-banner a{color:#FBBF24;font-weight:700}
+        .lesson-card.locked .lesson-body{max-height:0!important;border-top-color:transparent!important}
+        .lesson-card.locked .lesson-header{cursor:default}
+        .lesson-card.locked .lesson-chevron{color:rgba(245,158,11,0.4)}
+        .lesson-card.locked:hover{border-color:rgba(245,158,11,0.3)}
+        .lesson-lock-msg{display:none;padding:14px 18px 14px 60px;font-size:.82rem;color:#F59E0B}
+        .lesson-card.locked.open .lesson-lock-msg{display:block}
+        .lesson-card.locked.open .lesson-body{display:none}
+    </style>
+</head>
+<body>
+    <canvas id="bgCanvas"></canvas>
+    <div class="grid-overlay"></div>
+
+    <div class="progress-bar-wrapper">
+        <div class="progress-bar-fill" id="progressBarFill" style="width:0%"></div>
+    </div>
+
+    <!-- NAVBAR -->
+    <nav class="navbar" id="navbar">
+        <div class="container">
+            <a href="index.html" class="nav-logo"><i class="fa-solid fa-brain"></i>Campus<span>IA</span></a>
+            <button class="nav-toggle" id="navToggle" aria-label="Menú"><i class="fa-solid fa-bars"></i></button>
+            <div class="nav-links" id="navLinks">
+                <a href="index.html#cursos">Cursos</a>
+                <a href="index.html#demo">Demo</a>
+                <a href="index.html#infra">Infraestructura</a>
+                <a href="perfil.html">👤 Mi Perfil</a>
+                <a href="admin.html" class="admin-link">⚡ Admin</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- COURSE HEADER -->
+    <section class="course-hero">
+        <div class="container">
+            <div class="course-badge"><i class="fa-solid fa-cloud"></i> Cloud & DevOps · 4 lecciones · 8h</div>
+            <h1>Infraestructura y Despliegue</h1>
+            <p class="desc">Llevá tus modelos de Machine Learning a producción. Aprendé a desplegar APIs con FastAPI en servidores reales usando los mejores proveedores cloud.</p>
+            <div class="lock-banner" id="lockBanner">🔒 <strong>Vista previa.</strong> El contenido completo solo está disponible para estudiantes aceptados. <a href="inscripcion.html">Inscribite aquí</a></div>
+        </div>
+    </section>
+
+    <!-- COURSE CONTENT LAYOUT (Sidebar + What You'll Learn) -->
+    <div class="course-layout">
+        <!-- SIDEBAR -->
+        <aside class="course-sidebar">
+            <div class="sidebar-card">
+                <div class="sidebar-price">Gratis</div>
+                <div class="sidebar-price-sub">Acceso completo al inscribirte</div>
+                <div class="sidebar-stat"><i class="fa-solid fa-signal"></i> Dificultad <strong>Intermedio</strong></div>
+                <div class="sidebar-stat"><i class="fa-regular fa-clock"></i> Duración <strong>8h</strong></div>
+                <div class="sidebar-stat"><i class="fa-solid fa-book-open"></i> Lecciones <strong>4 lecciones</strong></div>
+                <div class="sidebar-stat"><i class="fa-solid fa-users"></i> Estudiantes <strong>1,900 inscritos</strong></div>
+                <div class="sidebar-stat"><i class="fa-solid fa-star"></i> Rating <span class="sidebar-stars">★ 4.9/5</span></div>
+                <div class="sidebar-stat"><i class="fa-solid fa-calendar-check"></i> Actualizado <strong>Mayo 2026</strong></div>
+                <div class="sidebar-stat"><i class="fa-solid fa-language"></i> Idioma <strong>Español</strong></div>
+                <div style="margin-top:16px">
+                    <div class="sidebar-cert-badge">
+                        <i class="fa-solid fa-certificate"></i> Incluye certificado de finalización
+                    </div>
+                    <a href="inscripcion.html" class="btn-enroll">Inscribirme ahora</a>
+                    <a href="#" class="btn-enroll-outline"><i class="fa-solid fa-share-nodes"></i> Compartir curso</a>
+                </div>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT AREA -->
+        <div style="flex:1;min-width:0">
+
+            <!-- LO QUE APRENDERÁS -->
+            <section class="skills-section">
+                <div class="container" style="padding:0">
+                    <div class="section-title">🎯 Lo que aprenderás</div>
+                    <div class="section-subtitle">Al finalizar este curso dominarás cada una de estas habilidades prácticas.</div>
+                    <div class="skills-grid">
+                        <div class="skill-item"><i class="fa-solid fa-check-circle"></i><span>Crear y configurar VMs en GCP, AWS y DigitalOcean</span></div>
+                        <div class="skill-item"><i class="fa-solid fa-check-circle"></i><span>Construir APIs REST con FastAPI y modelos de ML</span></div>
+                        <div class="skill-item"><i class="fa-solid fa-check-circle"></i><span>Contenerizar aplicaciones con Docker y docker-compose</span></div>
+                        <div class="skill-item"><i class="fa-solid fa-check-circle"></i><span>Automatizar CI/CD con GitHub Actions</span></div>
+                        <div class="skill-item"><i class="fa-solid fa-check-circle"></i><span>Implementar health checks y monitoreo</span></div>
+                        <div class="skill-item"><i class="fa-solid fa-check-circle"></i><span>Configurar balanceadores de carga y auto-scaling</span></div>
+                        <div class="skill-item"><i class="fa-solid fa-check-circle"></i><span>Desplegar con Docker Hub y GitHub Container Registry</span></div>
+                        <div class="skill-item"><i class="fa-solid fa-check-circle"></i><span>Estrategias de rollback y zero-downtime deployment</span></div>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </div>
+
+    <!-- INSTRUCTOR -->
+    <section class="instructor-section">
+        <div class="container">
+            <div class="section-title">👨‍🏫 Instructor</div>
+            <div class="section-subtitle">Aprendé de profesionales con experiencia real en la industria.</div>
+            <div class="instructor-card">
+                <div class="instructor-avatar">MR</div>
+                <div class="instructor-info">
+                    <h3>Ing. Mateo Ríos</h3>
+                    <div class="role">DevOps & Cloud Architect</div>
+                    <p class="bio">Ingeniero de software con más de 8 años de experiencia desplegando sistemas de Machine Learning en producción. Ha liderado equipos de infraestructura en startups y empresas Fortune 500, diseñando pipelines de CI/CD para modelos que sirven millones de predicciones diarias. Certificado en GCP Professional Cloud Architect y Docker Certified Associate. Apasionado por enseñar DevOps aplicado al mundo real del ML.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- PROYECTO DEL CURSO -->
+    <section class="project-section">
+        <div class="container">
+            <div class="section-title">🚀 Proyecto del curso</div>
+            <div class="section-subtitle">Aplicá todo lo aprendido en un proyecto real de principio a fin.</div>
+            <div class="project-card">
+                <div class="project-badge"><i class="fa-solid fa-rocket"></i> Proyecto práctico</div>
+                <h3>Despliegue de una API de ML en producción</h3>
+                <p>Desplegarás una API REST completa con FastAPI que sirve un modelo de Machine Learning entrenado, corriendo sobre Google Cloud Platform. El proyecto cubre el pipeline completo: crear una VM en GCP, contenerizar la aplicación con Docker, configurar CI/CD con GitHub Actions para despliegues automáticos en cada push, implementar health checks y monitoreo con logs centralizados, y configurar estrategias de rollback para zero-downtime deployments. Al finalizar, tendrás un endpoint público listo para integrarse en aplicaciones reales.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- RECURSOS INCLUIDOS -->
+    <section class="resources-section">
+        <div class="container">
+            <div class="section-title">📦 Recursos incluidos</div>
+            <div class="section-subtitle">Todo el material descargable que necesitás para seguir el curso.</div>
+            <div class="resources-grid">
+                <div class="resource-card res-purple">
+                    <div class="res-icon"><i class="fa-solid fa-file-code"></i></div>
+                    <h4>Scripts de Terraform</h4>
+                    <p>Infraestructura como código lista para ejecutar</p>
+                </div>
+                <div class="resource-card res-blue">
+                    <div class="res-icon"><i class="fa-brands fa-docker"></i></div>
+                    <h4>Dockerfiles de ejemplo</h4>
+                    <p>Imágenes optimizadas con multi-stage builds</p>
+                </div>
+                <div class="resource-card res-green">
+                    <div class="res-icon"><i class="fa-brands fa-github"></i></div>
+                    <h4>Workflows de GitHub Actions</h4>
+                    <p>Pipelines CI/CD listos para producción</p>
+                </div>
+                <div class="resource-card res-pink">
+                    <div class="res-icon"><i class="fa-solid fa-file-pdf"></i></div>
+                    <h4>Guías de troubleshooting PDF</h4>
+                    <p>Soluciones a errores comunes en despliegues</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- EXAMEN DEL CURSO -->
+    <section class="quiz-section">
+        <div class="container">
+            <div class="section-title">📝 Examen del curso</div>
+            <div class="section-subtitle">Poné a prueba tus conocimientos antes de avanzar.</div>
+            <div class="quiz-card">
+                <div class="quiz-header">
+                    <i class="fa-solid fa-circle-question"></i>
+                    <h3>Quiz rápido — 3 preguntas</h3>
+                </div>
+
+                <div class="quiz-question" data-question="1">
+                    <div class="q-text">1. ¿Cuál es la principal ventaja de los contenedores sobre las VMs?</div>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-answer="wrong" onclick="selectQuizOption(this, 1)">Son más seguros porque virtualizan el hardware</div>
+                        <div class="quiz-option" data-answer="correct" onclick="selectQuizOption(this, 1)">Arrancan en segundos y comparten el kernel del host</div>
+                        <div class="quiz-option" data-answer="wrong" onclick="selectQuizOption(this, 1)">Requieren más memoria RAM pero son más rápidos</div>
+                    </div>
+                    <div class="quiz-feedback" id="feedback1"></div>
+                </div>
+
+                <div class="quiz-question" data-question="2">
+                    <div class="q-text">2. ¿Qué framework usamos para la API?</div>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-answer="wrong" onclick="selectQuizOption(this, 2)">Flask</div>
+                        <div class="quiz-option" data-answer="wrong" onclick="selectQuizOption(this, 2)">Django REST</div>
+                        <div class="quiz-option" data-answer="correct" onclick="selectQuizOption(this, 2)">FastAPI</div>
+                    </div>
+                    <div class="quiz-feedback" id="feedback2"></div>
+                </div>
+
+                <div class="quiz-question" data-question="3">
+                    <div class="q-text">3. ¿Qué herramienta automatiza despliegues en cada push?</div>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-answer="wrong" onclick="selectQuizOption(this, 3)">Jenkins</div>
+                        <div class="quiz-option" data-answer="correct" onclick="selectQuizOption(this, 3)">GitHub Actions</div>
+                        <div class="quiz-option" data-answer="wrong" onclick="selectQuizOption(this, 3)">CircleCI</div>
+                    </div>
+                    <div class="quiz-feedback" id="feedback3"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CURSOS RELACIONADOS -->
+    <section class="related-section">
+        <div class="container">
+            <div class="section-title">🔗 Cursos relacionados</div>
+            <div class="section-subtitle">Seguí ampliando tu formación en Machine Learning e IA.</div>
+            <div class="related-grid">
+                <a href="regresion-lineal.html" class="related-card">
+                    <div class="related-icon"><i class="fa-solid fa-chart-line"></i></div>
+                    <div class="related-info">
+                        <h4>Regresión Lineal</h4>
+                        <span>Fundamentos de ML supervisado</span>
+                    </div>
+                </a>
+                <a href="redes-neuronales.html" class="related-card">
+                    <div class="related-icon"><i class="fa-solid fa-network-wired"></i></div>
+                    <div class="related-info">
+                        <h4>Redes Neuronales</h4>
+                        <span>Deep Learning desde cero</span>
+                    </div>
+                </a>
+                <a href="aprendizaje-por-refuerzo.html" class="related-card">
+                    <div class="related-icon"><i class="fa-solid fa-robot"></i></div>
+                    <div class="related-info">
+                        <h4>Aprendizaje por Refuerzo</h4>
+                        <span>Agentes inteligentes y Q-Learning</span>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- CERTIFICACIÓN -->
+    <section class="cert-section">
+        <div class="container">
+            <div class="cert-card">
+                <div class="cert-icon">📜</div>
+                <h3>Certificación de finalización</h3>
+                <p>Al completar todas las lecciones y aprobar el examen del curso, recibirás un certificado digital verificable de Campus I.A. que podrás agregar a tu perfil de LinkedIn, CV y portafolio profesional.</p>
+                <div class="cert-features">
+                    <div class="cert-feature"><i class="fa-solid fa-check"></i> Certificado digital verificable</div>
+                    <div class="cert-feature"><i class="fa-solid fa-check"></i> Compatible con LinkedIn</div>
+                    <div class="cert-feature"><i class="fa-solid fa-check"></i> Código QR de validación</div>
+                    <div class="cert-feature"><i class="fa-solid fa-check"></i> Descarga en PDF de alta calidad</div>
+                </div>
+                <a href="inscripcion.html" class="btn-enroll" style="max-width:280px;margin:0 auto">Obtener certificación</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- LESSONS -->
+    <section class="lessons-section">
+        <div class="container">
+            <div class="section-heading">📚 Contenido del curso</div>
+            <div class="lessons-list" id="lessonsList">
+
+                <div class="lesson-card open" data-lesson="1">
+                    <div class="lesson-header" onclick="toggleLesson(this)">
+                        <div class="lesson-num">1</div>
+                        <div class="lesson-info">
+                            <div class="lesson-title">Máquinas Virtuales y Cloud</div>
+                            <div class="lesson-meta"><span class="tag">Infraestructura</span> GCP, AWS, DigitalOcean, Cloudflare, costos, creación de VM</div>
+                        </div>
+                        <div class="lesson-check" data-check="1"><i class="fa-solid fa-check"></i></div>
+                        <i class="fa-solid fa-chevron-right lesson-chevron"></i>
+                    </div>
+                    <div class="lesson-body">
+                        <div class="lesson-content">
+                            <p>Una <strong>máquina virtual (VM)</strong> es un entorno de computación virtualizado que emula un servidor físico completo, permitiéndote ejecutar tu propio sistema operativo y aplicaciones en la nube. Es el bloque fundamental para desplegar modelos de ML en producción.</p>
+                            <p>Cada proveedor cloud tiene sus ventajas: <strong>GCP</strong> ofrece $300 en créditos gratuitos y excelente integración con Vertex AI; <strong>AWS</strong> es el más maduro con EC2 y SageMaker; <strong>DigitalOcean</strong> es simple y económico para proyectos chicos; <strong>Cloudflare</strong> destaca en edge computing con Workers. La elección depende de tu presupuesto, escala y familiaridad.</p>
+                            <div class="highlight-box">
+                                <i class="fa-solid fa-lightbulb"></i> <strong>Costos estimados:</strong> Una VM básica (2 vCPU, 4 GB RAM) cuesta ~$25-40/mes en GCP/AWS, ~$12-24/mes en DigitalOcean. Siempre configurá alertas de presupuesto para evitar sorpresas. El free tier de GCP incluye una instancia e2-micro gratuita de por vida.
+                            </div>
+                            <p>Crearemos una VM en GCP paso a paso: desde la consola, seleccionamos Compute Engine → Crear instancia, elegimos región (us-east1 por latencia), tipo e2-medium (2 vCPU, 4 GB), Ubuntu 22.04 LTS, permitimos tráfico HTTP/HTTPS, y generamos una clave SSH para conectarnos.</p>
+                            <div class="lesson-duration"><i class="fa-regular fa-clock"></i> ⏱ 60 min</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="lesson-card" data-lesson="2">
+                    <div class="lesson-header" onclick="toggleLesson(this)">
+                        <div class="lesson-num">2</div>
+                        <div class="lesson-info">
+                            <div class="lesson-title">FastAPI desde Cero</div>
+                            <div class="lesson-meta"><span class="tag">Backend</span> Instalación, endpoints, Pydantic, Swagger, predicción ML</div>
+                        </div>
+                        <div class="lesson-check" data-check="2"><i class="fa-solid fa-check"></i></div>
+                        <i class="fa-solid fa-chevron-right lesson-chevron"></i>
+                    </div>
+                    <div class="lesson-body">
+                        <div class="lesson-content">
+                            <p><strong>FastAPI</strong> es uno de los frameworks web más rápidos de Python, ideal para servir modelos de ML gracias a su alto rendimiento asíncrono, validación automática con Pydantic y documentación interactiva con Swagger UI. Se instala con <code>pip install fastapi uvicorn</code>.</p>
+                            <p>Creamos endpoints básicos: un <code>GET /health</code> que devuelve <code>{"status": "ok"}</code>, y un <code>POST /predict</code> que recibe features de entrada y retorna la predicción del modelo. Usamos <strong>modelos Pydantic</strong> para definir esquemas de request/response con tipos estrictos — si los datos no coinciden, FastAPI devuelve error 422 automáticamente.</p>
+                            <div class="highlight-box">
+                                <i class="fa-solid fa-code"></i> <strong>Ejemplo de código:</strong><br>
+                                <code style="font-size:0.78rem;">from fastapi import FastAPI<br>
+                                from pydantic import BaseModel<br>
+                                import joblib<br><br>
+                                app = FastAPI()<br>
+                                model = joblib.load("modelo_entrenado.pkl")<br><br>
+                                class Features(BaseModel):<br>
+                                &nbsp;&nbsp;&nbsp;&nbsp;sepal_length: float<br>
+                                &nbsp;&nbsp;&nbsp;&nbsp;sepal_width: float<br>
+                                &nbsp;&nbsp;&nbsp;&nbsp;petal_length: float<br>
+                                &nbsp;&nbsp;&nbsp;&nbsp;petal_width: float<br><br>
+                                @app.post("/predict")<br>
+                                def predict(features: Features):<br>
+                                &nbsp;&nbsp;&nbsp;&nbsp;X = [[features.sepal_length, features.sepal_width, features.petal_length, features.petal_width]]<br>
+                                &nbsp;&nbsp;&nbsp;&nbsp;pred = model.predict(X)[0]<br>
+                                &nbsp;&nbsp;&nbsp;&nbsp;return {"prediction": int(pred)}</code>
+                            </div>
+                            <p>Al correr <code>uvicorn main:app --reload</code>, visitás <code>http://localhost:8000/docs</code> y ves Swagger UI con todos tus endpoints documentados automáticamente, listos para probar.</p>
+                            <div class="lesson-duration"><i class="fa-regular fa-clock"></i> ⏱ 75 min</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="lesson-card" data-lesson="3">
+                    <div class="lesson-header" onclick="toggleLesson(this)">
+                        <div class="lesson-num">3</div>
+                        <div class="lesson-info">
+                            <div class="lesson-title">Docker y Contenedores</div>
+                            <div class="lesson-meta"><span class="tag">Contenedores</span> Dockerfile para FastAPI, build, run, docker-compose</div>
+                        </div>
+                        <div class="lesson-check" data-check="3"><i class="fa-solid fa-check"></i></div>
+                        <i class="fa-solid fa-chevron-right lesson-chevron"></i>
+                    </div>
+                    <div class="lesson-body">
+                        <div class="lesson-content">
+                            <p><strong>Contenedores vs VMs:</strong> una VM virtualiza hardware completo e incluye su propio sistema operativo huésped, lo que la hace pesada (varios GB). Un contenedor comparte el kernel del host y solo empaqueta la aplicación y sus dependencias (cientos de MB). Los contenedores arrancan en segundos, las VMs en minutos.</p>
+                            <p>El <strong>Dockerfile</strong> define cómo construir la imagen de tu app de FastAPI. Partimos de <code>python:3.11-slim</code>, copiamos <code>requirements.txt</code>, instalamos dependencias, copiamos el código fuente, y definimos el comando de inicio con <code>CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]</code>. Cada instrucción genera una capa cacheable para builds más rápidos.</p>
+                            <div class="highlight-box">
+                                <i class="fa-solid fa-lightbulb"></i> <strong>Ejemplo práctico:</strong> <code>docker build -t ml-api:v1 .</code> construye la imagen. <code>docker run -d -p 8000:8000 --name ml-api ml-api:v1</code> la ejecuta en segundo plano mapeando el puerto. <code>docker-compose</code> permite definir múltiples servicios (API + Redis + PostgreSQL) en un solo archivo YAML y levantarlos con <code>docker-compose up -d</code>.
+                            </div>
+                            <p>Buenas prácticas: usá <code>.dockerignore</code> para excluir <code>__pycache__</code>, <code>.git</code> y archivos grandes; mantené las imágenes livianas con <code>slim</code> o <code>alpine</code>; nunca almacenes secretos en la imagen; usá variables de entorno para configuración.</p>
+                            <div class="lesson-duration"><i class="fa-regular fa-clock"></i> ⏱ 70 min</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="lesson-card" data-lesson="4">
+                    <div class="lesson-header" onclick="toggleLesson(this)">
+                        <div class="lesson-num">4</div>
+                        <div class="lesson-info">
+                            <div class="lesson-title">CI/CD y Monitoreo</div>
+                            <div class="lesson-meta"><span class="tag">DevOps</span> GitHub Actions, deploy automático, health checks, logs, rollback</div>
+                        </div>
+                        <div class="lesson-check" data-check="4"><i class="fa-solid fa-check"></i></div>
+                        <i class="fa-solid fa-chevron-right lesson-chevron"></i>
+                    </div>
+                    <div class="lesson-body">
+                        <div class="lesson-content">
+                            <p><strong>GitHub Actions</strong> permite automatizar el pipeline de CI/CD directamente desde tu repositorio. Definimos un workflow en <code>.github/workflows/deploy.yml</code> que se dispara con cada push a main: corre tests, construye la imagen Docker, la pushea a un container registry (Docker Hub o GitHub Container Registry), y hace SSH a la VM para actualizar el contenedor.</p>
+                            <p>El <strong>deploy automático</strong> funciona así: GitHub Actions se conecta por SSH a tu VM en GCP usando secretos (<code>SSH_PRIVATE_KEY</code>, <code>HOST</code>, <code>USERNAME</code>), pullea la nueva imagen con <code>docker pull</code>, detiene el contenedor viejo, y levanta el nuevo con <code>docker run</code>. El downtime es de solo 2-3 segundos si usás la estrategia correcta.</p>
+                            <div class="highlight-box">
+                                <i class="fa-solid fa-triangle-exclamation"></i> <strong>Estrategias de rollback:</strong> Siempre tagueá tus imágenes con el SHA del commit (<code>ml-api:abc123</code>). Si el deploy falla, volvés a la imagen anterior con <code>docker run ml-api:def456</code>. Implementá <strong>health checks</strong> (<code>GET /health</code>) que el balanceador consulta cada 10s; si fallan 3 veces seguidas, marcá la instancia como unhealthy y redirigí tráfico.
+                            </div>
+                            <p>Configurá <strong>logs centralizados</strong> con <code>docker logs</code> + journald o Cloud Logging de GCP. Para monitoreo, Prometheus + Grafana te dan dashboards en tiempo real de latencia, tasa de errores y uso de recursos.</p>
+                            <div class="lesson-duration"><i class="fa-regular fa-clock"></i> ⏱ 65 min</div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <h3>🤖 Campus<span>IA</span></h3>
+                    <p>Construido con Python, FastAPI y amor por el Machine Learning. Aprende IA de forma práctica con demos interactivas reales.</p>
+                </div>
+                <div class="footer-col">
+                    <h4>Cursos</h4>
+                    <a href="index.html#cursos">Regresión Lineal</a>
+                    <a href="algoritmos-geneticos.html">Algoritmo Genético</a>
+                    <a href="infraestructura.html">Infraestructura y Despliegue</a>
+                </div>
+                <div class="footer-col">
+                    <h4>Recursos</h4>
+                    <a href="#">Documentación</a>
+                    <a href="#">API Reference</a>
+                    <a href="#">GitHub</a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <span>© 2026 Campus I.A. — Todos los derechos reservados.</span>
+                <div class="social-links">
+                    <a href="#" aria-label="GitHub"><i class="fa-brands fa-github"></i></a>
+                    <a href="#" aria-label="YouTube"><i class="fa-brands fa-youtube"></i></a>
+                    <a href="#" aria-label="Twitter"><i class="fa-brands fa-x-twitter"></i></a>
+                    <a href="#" aria-label="LinkedIn"><i class="fa-brands fa-linkedin-in"></i></a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // ============ PARTICLES BACKGROUND ============
+        const canvas = document.getElementById('bgCanvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [], mouse = { x: null, y: null };
+
+        function resize() { canvas.width = innerWidth; canvas.height = innerHeight }
+        resize(); addEventListener('resize', resize);
+        addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY });
+
+        class Particle {
+            constructor() { this.reset() }
+            reset() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.size = Math.random() * 1.8 + 0.5;
+                this.speedX = (Math.random() - 0.5) * 0.5;
+                this.speedY = (Math.random() - 0.5) * 0.5;
+                this.opacity = Math.random() * 0.5 + 0.1;
+                this.color = ['152,202,63','139,92,246','236,72,153','59,130,246'][Math.floor(Math.random()*4)];
+            }
+            update() {
+                this.x += this.speedX; this.y += this.speedY;
+                if (mouse.x != null) {
+                    const dx = mouse.x - this.x, dy = mouse.y - this.y, dist = Math.sqrt(dx*dx+dy*dy);
+                    if (dist < 150) { const f = (150-dist)/150; this.x -= (dx/dist)*f*1.2; this.y -= (dy/dist)*f*1.2 }
+                }
+                if (this.x < 0) this.x = canvas.width; if (this.x > canvas.width) this.x = 0;
+                if (this.y < 0) this.y = canvas.height; if (this.y > canvas.height) this.y = 0;
+            }
+            draw() { ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI*2); ctx.fillStyle = `rgba(${this.color},${this.opacity})`; ctx.fill() }
+        }
+
+        for (let i = 0; i < 80; i++) particles.push(new Particle());
+
+        function connect() {
+            for (let i = 0; i < particles.length; i++)
+                for (let j = i+1; j < particles.length; j++) {
+                    const dx = particles[i].x - particles[j].x, dy = particles[i].y - particles[j].y, dist = Math.sqrt(dx*dx+dy*dy);
+                    if (dist < 130) { ctx.beginPath(); ctx.strokeStyle = `rgba(152,202,63,${(1-dist/130)*0.08})`; ctx.lineWidth = 0.5; ctx.moveTo(particles[i].x, particles[i].y); ctx.lineTo(particles[j].x, particles[j].y); ctx.stroke() }
+                }
+        }
+        (function animate() { ctx.clearRect(0, 0, canvas.width, canvas.height); particles.forEach(p => { p.update(); p.draw() }); connect(); requestAnimationFrame(animate) })();
+
+        // ============ NAVBAR SCROLL ============
+        const navbar = document.getElementById('navbar');
+        addEventListener('scroll', () => { navbar.classList.toggle('scrolled', pageYOffset > 50) });
+
+        // ============ MOBILE TOGGLE ============
+        document.getElementById('navToggle').addEventListener('click', () => document.getElementById('navLinks').classList.toggle('open'));
+        document.querySelectorAll('.nav-links a').forEach(l => l.addEventListener('click', () => document.getElementById('navLinks').classList.remove('open')));
+
+        // ============ QUIZ LOGIC ============
+        function selectQuizOption(el, questionNum) {
+            const questionDiv = el.parentElement.parentElement;
+            if (questionDiv.dataset.answered === 'true') return;
+            questionDiv.dataset.answered = 'true';
+
+            const isCorrect = el.dataset.answer === 'correct';
+            const feedback = document.getElementById('feedback' + questionNum);
+
+            questionDiv.querySelectorAll('.quiz-option').forEach(opt => opt.style.pointerEvents = 'none');
+
+            if (isCorrect) {
+                el.classList.add('correct');
+                feedback.className = 'quiz-feedback show correct';
+                feedback.textContent = '✓ ¡Correcto!';
+            } else {
+                el.classList.add('wrong');
+                feedback.className = 'quiz-feedback show wrong';
+                feedback.textContent = '✗ Incorrecto. Intentalo de nuevo.';
+                const correctOpt = questionDiv.querySelector('.quiz-option[data-answer="correct"]');
+                if (correctOpt) correctOpt.classList.add('correct');
+            }
+        }
+
+        // ============ LESSON TOGGLE + PROGRESS ============
+        const COURSE_NAME = 'Infraestructura y Despliegue';
+        const TOTAL_LESSONS = 4;
+        const session = (() => { try { return JSON.parse(sessionStorage.getItem('ia_student_session')); } catch(e) { return null; } })();
+        const isAccepted = session && session.status === 'accepted'; if (session) { const adminLink = document.querySelector('.admin-link'); if (adminLink) adminLink.style.display = 'none'; }
+
+        if (!isAccepted) {
+            document.getElementById('lockBanner').classList.add('visible');
+            document.querySelectorAll('.lesson-card').forEach(item => {
+                item.classList.add('locked');
+                const lockMsg = document.createElement('div');
+                lockMsg.className = 'lesson-lock-msg';
+                lockMsg.innerHTML = '🔒 <strong>Contenido bloqueado.</strong> <a href="inscripcion.html">Inscribite</a> y esperá la aceptación para acceder a la teoría completa.';
+                item.appendChild(lockMsg);
+            });
+        }
+
+        const STORAGE_KEY = 'ia_course_progress';
+
+        function getProgress() {
+            try {
+                const data = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+                return data[COURSE_NAME] || [];
+            } catch(e) {
+                return [];
+            }
+        }
+
+        function saveProgress(lessonNum) {
+            const progress = getProgress();
+            if (!progress.includes(lessonNum)) {
+                progress.push(lessonNum);
+                const data = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+                data[COURSE_NAME] = progress;
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+            }
+            updateProgressUI();
+        }
+
+        function updateProgressUI() {
+            const completed = getProgress();
+            const pct = Math.round((completed.length / TOTAL_LESSONS) * 100);
+            document.getElementById('progressBarFill').style.width = pct + '%';
+
+            document.querySelectorAll('.lesson-check').forEach(el => {
+                const num = parseInt(el.dataset.check);
+                if (completed.includes(num)) {
+                    el.classList.add('done');
+                } else {
+                    el.classList.remove('done');
+                }
+            });
+        }
+
+        function toggleLesson(header) {
+            const card = header.parentElement;
+            if (card.classList.contains('locked')) {
+                card.classList.toggle('open');
+                return;
+            }
+            const lessonNum = parseInt(card.dataset.lesson);
+            const wasOpen = card.classList.contains('open');
+            card.classList.toggle('open');
+            if (!wasOpen) {
+                saveProgress(lessonNum);
+            }
+        }
+
+        updateProgressUI();
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <script src="supabase.js"></script>
+</body>
+</html>

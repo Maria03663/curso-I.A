@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inscripción | Campus I.A.</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        :root{--bg:#0a0a0f;--bg-card:rgba(15,15,25,0.7);--green:#98CA3F;--purple:#8B5CF6;--pink:#EC4899;--blue:#3B82F6;--text:#E2E8F0;--text-secondary:#94A3B8;--text-muted:#64748B;--border:rgba(255,255,255,0.08);--border-hover:rgba(255,255,255,0.18);--radius:14px;--radius-sm:10px;--shadow:0 4px 24px rgba(0,0,0,0.4);--transition:0.25s ease}
+        *{margin:0;padding:0;box-sizing:border-box}
+        html{scroll-behavior:smooth}
+        body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;line-height:1.6}
+        #bgCanvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none}
+        .grid-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background-image:linear-gradient(rgba(152,202,63,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(152,202,63,0.03) 1px,transparent 1px);background-size:50px 50px;z-index:0;pointer-events:none}
+        .container{max-width:1200px;margin:0 auto;padding:0 24px;position:relative;z-index:1}
+
+        .navbar{position:fixed;top:0;left:0;right:0;z-index:100;padding:14px 0;background:rgba(10,10,15,0.92);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);box-shadow:0 4px 20px rgba(0,0,0,0.3)}
+        .navbar .container{display:flex;align-items:center;justify-content:space-between}
+        .nav-logo{font-size:1.4rem;font-weight:800;color:#fff;text-decoration:none;display:flex;align-items:center;gap:10px}
+        .nav-logo i{color:var(--green);font-size:1.3rem}
+        .nav-logo span{color:var(--green);font-family:'Syne',sans-serif}
+        .nav-links{display:flex;align-items:center;gap:4px}
+        .nav-links a{color:var(--text-secondary);text-decoration:none;font-size:.88rem;font-weight:500;padding:8px 16px;border-radius:8px;transition:all .2s}
+        .nav-links a:hover{color:#fff;background:rgba(255,255,255,0.05)}
+
+        .inscripcion-wrapper{padding:120px 0 80px;position:relative;z-index:1}
+        .form-container{max-width:700px;margin:0 auto}
+        .form-card{background:var(--bg-card);backdrop-filter:blur(16px);border:1px solid var(--border);border-radius:20px;padding:40px;box-shadow:var(--shadow)}
+        .form-header{text-align:center;margin-bottom:36px}
+        .form-header h1{font-family:'Syne',sans-serif;font-size:2rem;font-weight:800;margin-bottom:8px}
+        .form-header h1 span{color:var(--green)}
+        .form-header p{color:var(--text-secondary);font-size:.9rem}
+        .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:28px}
+        @media(max-width:600px){.form-grid{grid-template-columns:1fr}}
+        .form-group{display:flex;flex-direction:column}
+        .form-group.full{grid-column:1/-1}
+        .form-group label{font-size:.8rem;font-weight:600;color:var(--text-secondary);margin-bottom:6px;display:flex;align-items:center;gap:6px}
+        .form-group input,.form-group select,.form-group textarea{width:100%;padding:11px 14px;background:rgba(0,0,0,0.3);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:'Inter',sans-serif;font-size:.9rem;outline:none;transition:all .2s}
+        .form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--green);box-shadow:0 0 0 3px rgba(152,202,63,0.1)}
+        .form-group input.error{border-color:#EF4444;box-shadow:0 0 0 3px rgba(239,68,68,0.08)}
+        .form-group input.success{border-color:var(--green)}
+        .form-group select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%236B7280' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;cursor:pointer}
+        .form-group select option{background:#1a1a2e;color:var(--text)}
+        .form-group textarea{resize:vertical;min-height:100px;max-height:200px}
+        .field-error{font-size:.72rem;color:#EF4444;margin-top:4px;display:none}
+        .field-error.visible{display:block}
+
+        .submit-btn{display:block;width:100%;padding:15px;background:var(--green);color:#0a0a0f;border:none;border-radius:var(--radius-sm);font-weight:700;font-size:1rem;cursor:pointer;transition:all .2s;box-shadow:0 0 25px rgba(152,202,63,0.3);display:flex;align-items:center;justify-content:center;gap:8px}
+        .submit-btn:hover{background:#a8da4f;transform:translateY(-1px);box-shadow:0 0 40px rgba(152,202,63,0.5)}
+        .submit-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+        .spinner{width:20px;height:20px;border:2px solid rgba(0,0,0,0.2);border-top-color:#000;border-radius:50%;animation:spin .8s linear infinite;display:none}
+        @keyframes spin{to{transform:rotate(360deg)}}
+
+        .success-box{display:none;text-align:center;padding:40px}
+        .success-box .icon{font-size:4rem;margin-bottom:16px;display:block}
+        .success-box h2{font-family:'Syne',sans-serif;font-size:1.5rem;color:var(--green);margin-bottom:8px}
+        .success-box p{color:var(--text-secondary);font-size:.9rem;margin-bottom:24px}
+        .btn-back{display:inline-block;padding:12px 28px;background:var(--bg-card);border:1px solid var(--green);color:var(--green);border-radius:var(--radius-sm);font-weight:700;font-size:.9rem;text-decoration:none;transition:all .2s}
+        .btn-back:hover{background:rgba(152,202,63,0.1);transform:translateY(-1px)}
+
+        .toast{position:fixed;bottom:24px;right:24px;z-index:1000;background:var(--bg-card);border:1px solid var(--green);border-left:3px solid var(--green);color:#fff;padding:14px 20px;border-radius:10px;font-size:.85rem;animation:slideIn .3s ease-out;box-shadow:0 8px 30px rgba(0,0,0,0.4)}
+        @keyframes slideIn{from{opacity:0;transform:translateX(100px)}to{opacity:1;transform:translateX(0)}}
+
+        .footer{border-top:1px solid var(--border);padding:40px 0 30px;position:relative;z-index:1}
+        .footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr;gap:30px;margin-bottom:30px}
+        @media(max-width:768px){.footer-grid{grid-template-columns:1fr}}
+        .footer-brand h3{font-size:1.2rem;font-weight:800;margin-bottom:8px;font-family:'Syne',sans-serif}
+        .footer-brand h3 span{color:var(--green)}
+        .footer-brand p{font-size:.85rem;color:var(--text-secondary);line-height:1.6}
+        .footer-col h4{font-size:.78rem;text-transform:uppercase;letter-spacing:2px;color:var(--text-muted);margin-bottom:14px}
+        .footer-col a{display:block;color:var(--text-secondary);text-decoration:none;font-size:.85rem;margin-bottom:8px;transition:color .2s}
+        .footer-col a:hover{color:var(--green)}
+        .footer-bottom{border-top:1px solid var(--border);padding-top:20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
+        .footer-bottom span{font-size:.82rem;color:var(--text-muted)}
+        .social-links{display:flex;gap:12px}
+        .social-links a{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.04);border:1px solid var(--border);color:var(--text-secondary);display:flex;align-items:center;justify-content:center;text-decoration:none;transition:all .2s;font-size:.9rem}
+        .social-links a:hover{background:rgba(152,202,63,0.1);border-color:var(--green);color:var(--green)}
+        ::-webkit-scrollbar{width:6px}
+        ::-webkit-scrollbar-track{background:var(--bg)}
+        ::-webkit-scrollbar-thumb{background:rgba(152,202,63,0.2);border-radius:3px}
+    </style>
+</head>
+<body>
+    <canvas id="bgCanvas"></canvas>
+    <div class="grid-overlay"></div>
+
+    <nav class="navbar">
+        <div class="container">
+            <a href="index.html" class="nav-logo"><i class="fa-solid fa-brain"></i>Campus<span>IA</span></a>
+            <div class="nav-links">
+                <a href="index.html">Inicio</a>
+                <a href="index.html#cursos">Cursos</a>
+                <a href="perfil.html">Mi Perfil</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="inscripcion-wrapper">
+        <div class="container">
+            <div class="form-container">
+                <div class="form-card">
+                    <div class="form-header" id="formHeader">
+                        <h1>Inscripción al <span>Curso de I.A.</span></h1>
+                        <p>Completa tus datos para matricularte y acceder al contenido completo.</p>
+                    </div>
+
+                    <form id="enrollmentForm" novalidate>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label><i class="fa-solid fa-user"></i> Nombre completo</label>
+                                <input type="text" id="fullName" placeholder="Tu nombre y apellido" required>
+                                <span class="field-error" id="err-fullName">Mínimo 3 caracteres</span>
+                            </div>
+                            <div class="form-group">
+                                <label><i class="fa-solid fa-envelope"></i> Correo electrónico</label>
+                                <input type="email" id="email" placeholder="tu@email.com" required>
+                                <span class="field-error" id="err-email">Ingresa un email válido</span>
+                            </div>
+                            <div class="form-group">
+                                <label><i class="fa-solid fa-phone"></i> Teléfono</label>
+                                <input type="tel" id="phone" placeholder="+57 300 000 0000" required>
+                                <span class="field-error" id="err-phone">Mínimo 7 dígitos</span>
+                            </div>
+                            <div class="form-group">
+                                <label><i class="fa-solid fa-id-card"></i> Documento</label>
+                                <input type="text" id="document" placeholder="Número de identificación" required>
+                                <span class="field-error" id="err-document">Mínimo 5 caracteres</span>
+                            </div>
+                            <div class="form-group">
+                                <label><i class="fa-solid fa-graduation-cap"></i> Nivel de estudios</label>
+                                <select id="education" required>
+                                    <option value="">Selecciona tu nivel</option>
+                                    <option value="bachillerato">Bachillerato</option>
+                                    <option value="tecnico">Técnico / Tecnólogo</option>
+                                    <option value="universitario">Universitario</option>
+                                    <option value="posgrado">Posgrado</option>
+                                    <option value="otro">Otro</option>
+                                </select>
+                                <span class="field-error" id="err-education">Selecciona una opción</span>
+                            </div>
+                            <div class="form-group">
+                                <label><i class="fa-solid fa-chart-simple"></i> Experiencia en IA</label>
+                                <select id="experience" required>
+                                    <option value="">Selecciona tu nivel</option>
+                                    <option value="ninguna">Principiante</option>
+                                    <option value="basica">Básica</option>
+                                    <option value="intermedia">Intermedia</option>
+                                    <option value="avanzada">Avanzada</option>
+                                </select>
+                                <span class="field-error" id="err-experience">Selecciona una opción</span>
+                            </div>
+                            <div class="form-group">
+                                <label><i class="fa-solid fa-book"></i> Curso de interés</label>
+                                <select id="selectedCourse" required>
+                                    <option value="">Selecciona un curso</option>
+                                    <option value="Regresión Lineal">Regresión Lineal</option>
+                                    <option value="Algoritmos Genéticos">Algoritmos Genéticos</option>
+                                    <option value="Infraestructura y Despliegue">Infraestructura y Despliegue</option>
+                                    <option value="Inteligencia Artificial (General)">Inteligencia Artificial (General)</option>
+                                    <option value="Redes Neuronales y Deep Learning">Redes Neuronales y Deep Learning</option>
+                                    <option value="Procesamiento de Lenguaje Natural (NLP)">Procesamiento de Lenguaje Natural (NLP)</option>
+                                    <option value="Árboles de Decisión y Random Forest">Árboles de Decisión y Random Forest</option>
+                                    <option value="Aprendizaje por Refuerzo">Aprendizaje por Refuerzo</option>
+                                </select>
+                                <span class="field-error" id="err-course">Selecciona un curso</span>
+                            </div>
+                            <div class="form-group full">
+                                <label><i class="fa-solid fa-lightbulb"></i> ¿Por qué quieres aprender IA?</label>
+                                <textarea id="motivation" placeholder="Cuéntanos tus metas y motivaciones..." required></textarea>
+                                <span class="field-error" id="err-motivation">Mínimo 10 caracteres</span>
+                            </div>
+                        </div>
+                        <button type="submit" class="submit-btn" id="submitBtn">
+                            <span class="spinner" id="btnSpinner"></span>
+                            <span id="btnText"><i class="fa-solid fa-paper-plane"></i> Enviar inscripción</span>
+                        </button>
+                    </form>
+
+                    <div class="success-box" id="successMessage">
+                        <span class="icon">✅</span>
+                        <h2>¡Inscripción exitosa!</h2>
+                        <p>Revisa tu correo para las instrucciones de acceso. También puedes iniciar sesión en tu perfil.</p>
+                        <a href="perfil.html" class="btn-back"><i class="fa-solid fa-user"></i> Ir a Mi Perfil</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-brand"><h3>🤖 Campus<span>IA</span></h3><p>Construido con Python, FastAPI y amor por el Machine Learning.</p></div>
+                <div class="footer-col"><h4>Cursos</h4><a href="index.html#cursos">Regresión Lineal</a><a href="index.html#cursos">Algoritmo Genético</a><a href="index.html#infra">Infraestructura</a></div>
+                <div class="footer-col"><h4>Recursos</h4><a href="inscripcion.html">Inscripción</a><a href="perfil.html">Mi Perfil</a></div>
+            </div>
+            <div class="footer-bottom"><span>© 2026 Campus I.A.</span></div>
+        </div>
+    </footer>
+
+    <script>
+        // Particles
+        const canvas=document.getElementById('bgCanvas'),ctx=canvas.getContext('2d');let particles=[],mouse={x:null,y:null};
+        function rs(){canvas.width=innerWidth;canvas.height=innerHeight}rs();addEventListener('resize',rs);
+        addEventListener('mousemove',e=>{mouse.x=e.clientX;mouse.y=e.clientY});
+        class P{constructor(){this.r()}r(){this.x=Math.random()*canvas.width;this.y=Math.random()*canvas.height;this.size=Math.random()*1.8+.5;this.sx=(Math.random()-.5)*.5;this.sy=(Math.random()-.5)*.5;this.opacity=Math.random()*.5+.1;this.color=['152,202,63','139,92,246','236,72,153','59,130,246'][Math.floor(Math.random()*4)]}u(){this.x+=this.sx;this.y+=this.sy;if(mouse.x!==null){const dx=mouse.x-this.x,dy=mouse.y-this.y,dist=Math.sqrt(dx*dx+dy*dy);if(dist<150){const f=(150-dist)/150;this.x-=(dx/dist)*f*1.2;this.y-=(dy/dist)*f*1.2}}if(this.x<0)this.x=canvas.width;if(this.x>canvas.width)this.x=0;if(this.y<0)this.y=canvas.height;if(this.y>canvas.height)this.y=0}d(){ctx.beginPath();ctx.arc(this.x,this.y,this.size,0,Math.PI*2);ctx.fillStyle=`rgba(${this.color},${this.opacity})`;ctx.fill()}}
+        for(let i=0;i<60;i++)particles.push(new P());
+        function cn(){for(let i=0;i<particles.length;i++)for(let j=i+1;j<particles.length;j++){const dx=particles[i].x-particles[j].x,dy=particles[i].y-particles[j].y,dist=Math.sqrt(dx*dx+dy*dy);if(dist<130){ctx.beginPath();ctx.strokeStyle=`rgba(152,202,63,${(1-dist/130)*.06})`;ctx.lineWidth=.5;ctx.moveTo(particles[i].x,particles[i].y);ctx.lineTo(particles[j].x,particles[j].y);ctx.stroke()}}}
+        (function a(){ctx.clearRect(0,0,canvas.width,canvas.height);particles.forEach(p=>{p.u();p.d()});cn();requestAnimationFrame(a)})();
+
+        // Toast
+        function toast(msg){const old=document.querySelector('.toast');if(old)old.remove();const t=document.createElement('div');t.className='toast';t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),3000)}
+
+        // Form validation
+        const fields=[
+            {id:'fullName',errId:'err-fullName',validate:v=>v.trim().length>=3},
+            {id:'email',errId:'err-email',validate:v=>/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)},
+            {id:'phone',errId:'err-phone',validate:v=>/^[\d\s+\-()]{7,15}$/.test(v)},
+            {id:'document',errId:'err-document',validate:v=>v.trim().length>=5},
+            {id:'education',errId:'err-education',validate:v=>v!==''},
+            {id:'experience',errId:'err-experience',validate:v=>v!==''},
+            {id:'selectedCourse',errId:'err-course',validate:v=>v!==''},
+            {id:'motivation',errId:'err-motivation',validate:v=>v.trim().length>=10},
+        ];
+
+        fields.forEach(f=>{
+            const el=document.getElementById(f.id);if(!el)return;
+            const validate=()=>{const err=document.getElementById(f.errId);const v=el.value;if(v===''||v===null){el.classList.remove('error','success');if(err)err.classList.remove('visible');return}f.validate(v)?(el.classList.remove('error'),el.classList.add('success'),err&&err.classList.remove('visible')):(el.classList.add('error'),el.classList.remove('success'),err&&err.classList.add('visible'))};
+            el.addEventListener('input',validate);el.addEventListener('change',validate);el.addEventListener('blur',validate);
+        });
+
+        document.getElementById('enrollmentForm').addEventListener('submit',async e=>{
+            e.preventDefault();
+            let valid=true;
+            fields.forEach(f=>{const el=document.getElementById(f.id);if(!el)return;if(!f.validate(el.value)){valid=false;el.classList.add('error');el.classList.remove('success');const err=document.getElementById(f.errId);if(err)err.classList.add('visible')}});
+            if(!valid){toast('❌ Corrige los campos marcados en rojo');return}
+
+            const btn=document.getElementById('submitBtn'),spinner=document.getElementById('btnSpinner'),btnText=document.getElementById('btnText');
+            btn.disabled=true;spinner.style.display='block';btnText.textContent='Conectando con Supabase...';
+
+            const formData={
+                fullName:document.getElementById('fullName').value.trim(),
+                email:document.getElementById('email').value.trim(),
+                phone:document.getElementById('phone').value.trim(),
+                document:document.getElementById('document').value.trim(),
+                education:document.getElementById('education').value,
+                experience:document.getElementById('experience').value,
+                course:document.getElementById('selectedCourse').value,
+                motivation:document.getElementById('motivation').value.trim(),
+                date:new Date().toLocaleString('es-CO'),
+            };
+            console.log('📝 Datos del formulario:', formData);
+            console.log('🔌 Supabase disponible:', !!window.supabase);
+
+            if (!window.supabase) {
+                btn.disabled=false;spinner.style.display='none';btnText.textContent='Enviar inscripción';
+                toast('❌ Error: Supabase no está conectado. Revisá supabase.js.');
+                console.error('❌ window.supabase es undefined. ¿Está bien configurado supabase.js?');
+                return;
+            }
+
+            try {
+                const tempPassword = 'CampusIA' + Math.random().toString(36).slice(2, 10);
+                console.log('🔐 Registrando en Supabase Auth...');
+
+                const { data: authData, error: authError } = await window.supabase.auth.signUp({
+                    email: formData.email,
+                    password: tempPassword,
+                });
+
+                if (authError) {
+                    if (authError.status === 429) {
+                        throw new Error('Demasiados intentos. Desactivá "Confirm email" en Supabase (Auth > Settings) o esperá 1 hora.');
+                    }
+                    if (authError.message?.includes('already registered') || authError.message?.includes('already exists')) {
+                        throw new Error('Este email ya está registrado. Revisá tu bandeja de entrada.');
+                    }
+                    throw new Error(authError.message || 'Error al crear la cuenta');
+                }
+
+                if (!authData?.user) {
+                    throw new Error('No se pudo crear el usuario. Verificá que "Confirm email" esté desactivado en Supabase.');
+                }
+
+                console.log('✅ Usuario Auth listo:', authData.user.id);
+
+                // 2. Insertar perfil en la tabla profiles
+                console.log('📥 Insertando en tabla profiles...');
+                const { error: insertError } = await window.supabase
+                    .from('profiles')
+                    .insert({
+                        id: authData.user.id,
+                        full_name: formData.fullName,
+                        email: formData.email,
+                        phone: formData.phone,
+                        document: formData.document,
+                        education: formData.education,
+                        experience: formData.experience,
+                        course: formData.course,
+                        motivation: formData.motivation,
+                        role: 'student',
+                        status: 'pending',
+                        temp_password: tempPassword,
+                    });
+
+                // Si el perfil ya existe (duplicate key), no es un error fatal
+                if (insertError && insertError.code === '23505') {
+                    console.log('ℹ️ El perfil ya existía en la base de datos');
+                } else if (insertError) {
+                    console.error('❌ Error en insert:', insertError);
+                    throw new Error(insertError.message || 'Error al guardar el perfil');
+                }
+
+                console.log('✅ Perfil guardado en Supabase');
+
+                // 3. Guardar también en localStorage como backup
+                const inscripciones = JSON.parse(localStorage.getItem('ia_inscripciones') || '[]');
+                inscripciones.push(formData);
+                localStorage.setItem('ia_inscripciones', JSON.stringify(inscripciones));
+
+                // 4. Mostrar éxito SOLO si todo funcionó
+                document.getElementById('enrollmentForm').style.display='none';
+                document.getElementById('formHeader').style.display='none';
+                document.getElementById('successMessage').style.display='block';
+                toast('✅ ¡Registro exitoso! Revisá tu correo.');
+
+                // 5. Enviar correo de bienvenida (no bloquea el éxito)
+                if (window.enviarCorreoBienvenida) {
+                    try {
+                        await window.enviarCorreoBienvenida(formData.fullName, formData.email, formData.course);
+                        console.log('📧 Correo enviado a', formData.email);
+                    } catch (mailErr) {
+                        console.warn('⚠️ Correo no enviado:', mailErr.message);
+                    }
+                }
+
+            } catch (err) {
+                console.error('❌ Falló el registro:', err.message);
+                btn.disabled=false;spinner.style.display='none';btnText.textContent='Enviar inscripción';
+                toast('❌ ' + (err.message || 'No se pudo completar el registro'));
+            }
+        });
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <script src="supabase.js"></script>
+    <script src="sheets.js"></script>
+</body>
+</html>

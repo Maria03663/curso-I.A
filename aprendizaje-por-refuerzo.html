@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aprendizaje por Refuerzo | Campus I.A.</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        :root {
+            --bg: #0a0a0f; --bg-card: rgba(15,15,25,0.7); --bg-card-hover: rgba(20,20,35,0.85);
+            --green: #98CA3F; --green-glow: rgba(152,202,63,0.35);
+            --purple: #8B5CF6; --purple-glow: rgba(139,92,246,0.35);
+            --pink: #EC4899; --pink-glow: rgba(236,72,153,0.35);
+            --blue: #3B82F6; --blue-glow: rgba(59,130,246,0.35);
+            --text: #E2E8F0; --text-secondary: #94A3B8; --text-muted: #64748B;
+            --border: rgba(255,255,255,0.08); --border-hover: rgba(255,255,255,0.18);
+            --radius: 14px; --radius-sm: 10px;
+            --shadow: 0 4px 24px rgba(0,0,0,0.4);
+            --transition: 0.25s cubic-bezier(0.4,0,0.2,1);
+        }
+        * { margin:0;padding:0;box-sizing:border-box }
+        html { scroll-behavior:smooth }
+        body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; overflow-x:hidden; line-height:1.6 }
+        #bgCanvas { position:fixed; top:0; left:0; width:100%; height:100%; z-index:0; pointer-events:none }
+        .grid-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background-image:linear-gradient(rgba(152,202,63,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(152,202,63,0.03) 1px,transparent 1px); background-size:50px 50px; z-index:0; pointer-events:none }
+        .container { max-width:1200px; margin:0 auto; padding:0 24px; position:relative; z-index:1 }
+
+        /* NAVBAR */
+        .navbar { position:fixed; top:0; left:0; right:0; z-index:100; padding:14px 0; transition:all .25s; background:transparent }
+        .navbar.scrolled { background:rgba(10,10,15,0.92); backdrop-filter:blur(16px); border-bottom:1px solid var(--border); box-shadow:0 4px 20px rgba(0,0,0,0.3) }
+        .navbar .container { display:flex; align-items:center; justify-content:space-between }
+        .nav-logo { font-size:1.4rem; font-weight:800; color:#fff; text-decoration:none; display:flex; align-items:center; gap:10px }
+        .nav-logo i { color:var(--green); font-size:1.3rem }
+        .nav-logo span { color:var(--green); font-family:'Syne',sans-serif }
+        .nav-links { display:flex; align-items:center; gap:4px }
+        .nav-links a { color:var(--text-secondary); text-decoration:none; font-size:.88rem; font-weight:500; padding:8px 16px; border-radius:8px; transition:all .2s }
+        .nav-links a:hover { color:#fff; background:rgba(255,255,255,0.05) }
+        .nav-toggle { display:none; background:none; border:1px solid var(--border); color:#fff; padding:8px 12px; border-radius:8px; cursor:pointer; font-size:1.2rem }
+        @media(max-width:768px) {
+            .nav-toggle{display:block}.nav-links{display:none;position:absolute;top:100%;left:0;right:0;background:rgba(10,10,15,0.96);backdrop-filter:blur(20px);flex-direction:column;padding:16px;gap:4px;border-bottom:1px solid var(--border)}
+            .nav-links.open{display:flex}
+        }
+
+        /* PROGRESS BAR */
+        .progress-bar-wrapper { position:fixed; top:0; left:0; right:0; height:3px; z-index:101; background:rgba(255,255,255,0.04) }
+        .progress-bar-fill { height:100%; background:linear-gradient(90deg,var(--purple),var(--pink)); transition:width .5s ease; border-radius:0 2px 2px 0 }
+
+        /* COURSE HEADER */
+        .course-hero { padding:120px 0 50px; position:relative; z-index:1 }
+        .course-hero .container { max-width:800px }
+        .course-badge { display:inline-flex; align-items:center; gap:8px; padding:6px 16px; border-radius:20px; background:rgba(139,92,246,0.1); border:1px solid rgba(139,92,246,0.25); font-size:.78rem; color:var(--purple); font-weight:600; margin-bottom:20px }
+        .course-hero h1 { font-size:clamp(2rem,4.5vw,3rem); font-weight:900; line-height:1.2; margin-bottom:16px; font-family:'Syne',sans-serif }
+        .course-hero .desc { font-size:1.05rem; color:var(--text-secondary); line-height:1.8; max-width:620px }
+
+        /* LESSONS */
+        .lessons-section { padding:20px 0 80px; position:relative; z-index:1 }
+        .lessons-section .container { max-width:900px }
+        .section-heading { font-size:.75rem; font-weight:700; color:var(--purple); letter-spacing:3px; text-transform:uppercase; margin-bottom:20px }
+        .lessons-list { display:flex; flex-direction:column; gap:14px }
+        .lesson-card { background:var(--bg-card); backdrop-filter:blur(16px); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; transition:all .25s; box-shadow:var(--shadow) }
+        .lesson-card.open { border-color:rgba(139,92,246,0.3); background:rgba(20,20,35,0.85) }
+        .lesson-header { display:flex; align-items:center; gap:16px; padding:20px 24px; cursor:pointer; user-select:none; transition:background .2s }
+        .lesson-header:hover { background:rgba(255,255,255,0.02) }
+        .lesson-num { width:40px; height:40px; border-radius:10px; background:rgba(139,92,246,0.1); border:1px solid rgba(139,92,246,0.2); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:.9rem; color:var(--purple); flex-shrink:0; transition:all .3s }
+        .lesson-card.open .lesson-num { background:var(--purple); color:#fff; border-color:var(--purple); box-shadow:0 0 16px rgba(139,92,246,0.4) }
+        .lesson-info { flex:1; min-width:0 }
+        .lesson-title { font-weight:700; font-size:1.02rem; color:#fff; margin-bottom:3px }
+        .lesson-meta { font-size:.78rem; color:var(--text-muted); display:flex; align-items:center; gap:8px; flex-wrap:wrap }
+        .lesson-meta .tag { display:inline-block; padding:2px 8px; border-radius:8px; background:rgba(139,92,246,0.1); color:var(--purple); font-size:.68rem; font-weight:600 }
+        .lesson-chevron { color:var(--text-muted); font-size:.85rem; transition:transform .3s; flex-shrink:0 }
+        .lesson-card.open .lesson-chevron { transform:rotate(90deg) }
+        .lesson-check { width:24px; height:24px; border-radius:50%; border:2px solid var(--border); display:flex; align-items:center; justify-content:center; font-size:.6rem; color:transparent; transition:all .3s; flex-shrink:0; margin-left:4px }
+        .lesson-check.done { background:var(--purple); border-color:var(--purple); color:#fff }
+        .lesson-body { max-height:0; overflow:hidden; transition:max-height .45s ease; border-top:1px solid transparent }
+        .lesson-card.open .lesson-body { max-height:600px; border-top-color:var(--border) }
+        .lesson-content { padding:20px 24px 24px; display:flex; flex-direction:column; gap:14px }
+        .lesson-content p { font-size:.9rem; color:var(--text-secondary); line-height:1.75 }
+        .lesson-content .highlight-box { background:rgba(139,92,246,0.06); border:1px solid rgba(139,92,246,0.15); border-radius:var(--radius-sm); padding:14px 18px; font-size:.84rem; color:var(--text-secondary); line-height:1.7 }
+        .lesson-content .highlight-box i { color:var(--purple); margin-right:6px }
+        .lesson-duration { display:inline-flex; align-items:center; gap:4px; font-size:.76rem; color:var(--text-muted); padding:4px 10px; border-radius:8px; background:rgba(255,255,255,0.02); border:1px solid var(--border); align-self:flex-start }
+        .lesson-duration i { color:var(--purple) }
+
+        /* FOOTER */
+        .footer { border-top:1px solid var(--border); padding:40px 0 30px; position:relative; z-index:1 }
+        .footer-grid { display:grid; grid-template-columns:2fr 1fr 1fr; gap:30px; margin-bottom:30px }
+        @media(max-width:768px){.footer-grid{grid-template-columns:1fr}}
+        .footer-brand h3 { font-size:1.2rem; font-weight:800; margin-bottom:8px; font-family:'Syne',sans-serif }
+        .footer-brand h3 span { color:var(--green) }
+        .footer-brand p { font-size:.85rem; color:var(--text-secondary); line-height:1.6 }
+        .footer-col h4 { font-size:.78rem; text-transform:uppercase; letter-spacing:2px; color:var(--text-muted); margin-bottom:14px }
+        .footer-col a { display:block; color:var(--text-secondary); text-decoration:none; font-size:.85rem; margin-bottom:8px; transition:color .2s }
+        .footer-col a:hover { color:var(--green) }
+        .footer-bottom { border-top:1px solid var(--border); padding-top:20px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px }
+        .footer-bottom span { font-size:.82rem; color:var(--text-muted) }
+        .social-links { display:flex; gap:12px }
+        .social-links a { width:36px; height:36px; border-radius:50%; background:rgba(255,255,255,0.04); border:1px solid var(--border); color:var(--text-secondary); display:flex; align-items:center; justify-content:center; text-decoration:none; transition:all .2s; font-size:.9rem }
+        .social-links a:hover { background:rgba(152,202,63,0.1); border-color:var(--green); color:var(--green) }
+
+        ::-webkit-scrollbar { width:6px }
+        ::-webkit-scrollbar-track { background:var(--bg) }
+        ::-webkit-scrollbar-thumb { background:rgba(152,202,63,0.2); border-radius:3px }
+        ::-webkit-scrollbar-thumb:hover { background:rgba(152,202,63,0.4) }
+.lock-banner{display:none;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.25);border-radius:var(--radius-sm);padding:14px 20px;margin-bottom:20px;font-size:.85rem;color:#F59E0B;text-align:center}
+.lock-banner.visible{display:block}
+.lock-banner a{color:#FBBF24;font-weight:700}
+.lesson-card.locked .lesson-body{max-height:0!important;border-top-color:transparent!important}
+.lesson-card.locked .lesson-header{cursor:default}
+.lesson-card.locked .lesson-chevron{color:rgba(245,158,11,0.4)}
+.lesson-card.locked:hover{border-color:rgba(245,158,11,0.3)}
+.lesson-lock-msg{display:none;padding:14px 18px 14px 60px;font-size:.82rem;color:#F59E0B}
+.lesson-card.locked.open .lesson-lock-msg{display:block}
+.lesson-card.locked.open .lesson-body{display:none}
+    </style>
+</head>
+<body>
+    <canvas id="bgCanvas"></canvas>
+    <div class="grid-overlay"></div>
+
+    <div class="progress-bar-wrapper">
+        <div class="progress-bar-fill" id="progressBarFill" style="width:0%"></div>
+    </div>
+
+    <!-- NAVBAR -->
+    <nav class="navbar" id="navbar">
+        <div class="container">
+            <a href="index.html" class="nav-logo"><i class="fa-solid fa-brain"></i>Campus<span>IA</span></a>
+            <button class="nav-toggle" id="navToggle" aria-label="Menú"><i class="fa-solid fa-bars"></i></button>
+            <div class="nav-links" id="navLinks">
+                <a href="index.html#cursos">Cursos</a>
+                <a href="index.html#demo">Demo</a>
+                <a href="index.html#infra">Infraestructura</a>
+                <a href="perfil.html">👤 Mi Perfil</a>
+                <a href="admin.html" class="admin-link">⚡ Admin</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- COURSE HEADER -->
+    <section class="course-hero">
+        <div class="container">
+            <div class="course-badge"><i class="fa-solid fa-robot"></i> RL · 4 lecciones · 6h</div>
+            <h1>Aprendizaje por Refuerzo</h1>
+            <p class="desc">Aprendé cómo los agentes toman decisiones óptimas mediante prueba y error. Desde Q-Learning hasta políticas profundas con Deep RL.</p>
+            <div class="lock-banner" id="lockBanner">🔒 <strong>Vista previa.</strong> El contenido completo solo está disponible para estudiantes aceptados. <a href="inscripcion.html">Inscribite aquí</a></div>
+        </div>
+    </section>
+
+    <!-- LESSONS -->
+    <section class="lessons-section">
+        <div class="container">
+            <div class="section-heading">📚 Contenido del curso</div>
+            <div class="lessons-list" id="lessonsList">
+
+                <div class="lesson-card open" data-lesson="1">
+                    <div class="lesson-header" onclick="toggleLesson(this)">
+                        <div class="lesson-num">1</div>
+                        <div class="lesson-info">
+                            <div class="lesson-title">Fundamentos del RL</div>
+                            <div class="lesson-meta"><span class="tag">Teoría</span> MDP, agente, entorno, recompensa, política</div>
+                        </div>
+                        <div class="lesson-check" data-check="1"><i class="fa-solid fa-check"></i></div>
+                        <i class="fa-solid fa-chevron-right lesson-chevron"></i>
+                    </div>
+                    <div class="lesson-body">
+                        <div class="lesson-content">
+                            <p>El aprendizaje por refuerzo (RL) es un paradigma donde un agente aprende a tomar decisiones interactuando con un entorno. A diferencia del aprendizaje supervisado (donde tenés ejemplos etiquetados) o el no supervisado (donde buscás patrones sin etiquetas), en RL el agente descubre qué acciones maximizan una señal de recompensa a través de prueba y error.</p>
+                            <p>El marco formal es el <strong>Markov Decision Process (MDP)</strong>, compuesto por: <strong>estados</strong> (situación del agente), <strong>acciones</strong> (lo que puede hacer), <strong>recompensas</strong> (feedback numérico inmediato), <strong>política</strong> (la estrategia que mapea estados a acciones), y el factor de descuento que balancea recompensas inmediatas vs futuras.</p>
+                            <div class="highlight-box">
+                                <i class="fa-solid fa-lightbulb"></i> <strong>Ejemplos concretos:</strong> Un robot aprendiendo a caminar (estado = ángulos de articulaciones, acción = torque en motores, recompensa = distancia avanzada), un agente jugando ajedrez (estado = tablero, acción = movimiento, recompensa = ganar/perder), o un sistema de recomendación (estado = historial del usuario, acción = ítem recomendado, recompensa = click/compra).
+                            </div>
+                            <div class="lesson-duration"><i class="fa-regular fa-clock"></i> Duración estimada: 55 min</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="lesson-card" data-lesson="2">
+                    <div class="lesson-header" onclick="toggleLesson(this)">
+                        <div class="lesson-num">2</div>
+                        <div class="lesson-info">
+                            <div class="lesson-title">Q-Learning y SARSA</div>
+                            <div class="lesson-meta"><span class="tag">Algoritmo</span> Bellman, Q-table, epsilon-greedy, FrozenLake</div>
+                        </div>
+                        <div class="lesson-check" data-check="2"><i class="fa-solid fa-check"></i></div>
+                        <i class="fa-solid fa-chevron-right lesson-chevron"></i>
+                    </div>
+                    <div class="lesson-body">
+                        <div class="lesson-content">
+                            <p>La <strong>ecuación de Bellman</strong> es la base matemática del RL: descompone el valor de un estado en la recompensa inmediata más el valor descontado del siguiente estado. A partir de ella se derivan los algoritmos de <strong>Q-Learning</strong> (off-policy) y <strong>SARSA</strong> (on-policy), que aprenden una tabla Q que estima el valor de cada par estado-acción.</p>
+                            <div class="highlight-box">
+                                <i class="fa-solid fa-code"></i> <strong>Q-Learning vs SARSA:</strong> Q-Learning actualiza usando la mejor acción posible del siguiente estado (max), sin importar qué acción tomará realmente la política — es off-policy y tiende a encontrar políticas óptimas más agresivas. SARSA actualiza usando la acción que realmente se toma según la política actual — es on-policy, más conservador y evita riesgos. La diferencia es clave en entornos con penalizaciones fuertes.
+                            </div>
+                            <p>El dilema <strong>exploración vs explotación</strong> se maneja típicamente con <strong>epsilon-greedy</strong>: con probabilidad ε el agente explora (acción aleatoria) y con probabilidad 1-ε explota (mejor acción conocida). ε suele decaer con el tiempo (empezás explorando mucho y vas explotando cada vez más). Implementaremos Q-Learning sobre el entorno clásico <strong>FrozenLake</strong> de OpenAI Gym.</p>
+                            <div class="lesson-duration"><i class="fa-regular fa-clock"></i> Duración estimada: 65 min</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="lesson-card" data-lesson="3">
+                    <div class="lesson-header" onclick="toggleLesson(this)">
+                        <div class="lesson-num">3</div>
+                        <div class="lesson-info">
+                            <div class="lesson-title">Deep Q-Networks (DQN)</div>
+                            <div class="lesson-meta"><span class="tag">Deep RL</span> Redes neuronales, experience replay, Atari</div>
+                        </div>
+                        <div class="lesson-check" data-check="3"><i class="fa-solid fa-check"></i></div>
+                        <i class="fa-solid fa-chevron-right lesson-chevron"></i>
+                    </div>
+                    <div class="lesson-body">
+                        <div class="lesson-content">
+                            <p>El Q-Learning tabular colapsa cuando el espacio de estados es enorme o continuo (imaginá una tabla para cada posible frame de Atari). La solución es la <strong>aproximación de funciones</strong>: usamos una red neuronal que toma el estado como entrada y predice el valor Q de cada acción posible. Esto escala a problemas del mundo real con alta dimensionalidad.</p>
+                            <p>Dos innovaciones hicieron posible el DQN: <strong>experience replay</strong> almacena transiciones (estado, acción, recompensa, siguiente estado) en un buffer y entrena con mini-batches aleatorios, rompiendo la correlación temporal entre muestras y reutilizando experiencias pasadas. Las <strong>target networks</strong> mantienen una copia congelada de la red Q para calcular los targets de Bellman, evitando que el objetivo se mueva mientras el agente aprende.</p>
+                            <div class="highlight-box">
+                                <i class="fa-solid fa-rocket"></i> <strong>Mejoras modernas:</strong> <strong>Double DQN</strong> separa la selección de la acción de su evaluación para reducir sobreestimación. <strong>Dueling DQN</strong> descompone Q en valor del estado + ventaja de cada acción, aprendiendo cuáles estados son valiosos sin necesidad de evaluar cada acción. <strong>Prioritized Experience Replay</strong> muestrea transiciones con mayor error TD (sorpresa) con más frecuencia, acelerando el aprendizaje significativamente.
+                            </div>
+                            <div class="lesson-duration"><i class="fa-regular fa-clock"></i> Duración estimada: 70 min</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="lesson-card" data-lesson="4">
+                    <div class="lesson-header" onclick="toggleLesson(this)">
+                        <div class="lesson-num">4</div>
+                        <div class="lesson-info">
+                            <div class="lesson-title">Policy Gradients y Actor-Critic</div>
+                            <div class="lesson-meta"><span class="tag">Avanzado</span> REINFORCE, A2C, PPO, Gym, Unity ML-Agents</div>
+                        </div>
+                        <div class="lesson-check" data-check="4"><i class="fa-solid fa-check"></i></div>
+                        <i class="fa-solid fa-chevron-right lesson-chevron"></i>
+                    </div>
+                    <div class="lesson-body">
+                        <div class="lesson-content">
+                            <p>Los métodos basados en valor (como DQN) aprenden Q y derivan una política greedy. Los <strong>métodos basados en política</strong> aprenden directamente la política óptima π(a|s) sin pasar por una función de valor. Esto es especialmente útil cuando el espacio de acciones es continuo o la política óptima es estocástica.</p>
+                            <p><strong>REINFORCE</strong> es el algoritmo fundamental de policy gradient: recolecta trayectorias completas, calcula el retorno acumulado para cada paso, y ajusta los parámetros de la política para aumentar la probabilidad de acciones que llevaron a buenos resultados. Sin embargo, sufre de alta varianza en las estimaciones del gradiente.</p>
+                            <div class="highlight-box">
+                                <i class="fa-solid fa-bolt"></i> <strong>De A2C a PPO:</strong> <strong>Advantage Actor-Critic (A2C)</strong> combina lo mejor de ambos mundos: un actor (política) que decide qué hacer y un crítico (función de valor) que evalúa qué tan buena fue la decisión. La ventaja (advantage) reduce la varianza al comparar la recompensa obtenida contra la esperada. <strong>PPO (Proximal Policy Optimization)</strong> mejora esto limitando cuánto puede cambiar la política en cada actualización, logrando entrenamiento estable y eficiente. PPO es el estándar actual en robótica simulada con OpenAI Gym y Unity ML-Agents.
+                            </div>
+                            <div class="lesson-duration"><i class="fa-regular fa-clock"></i> Duración estimada: 60 min</div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <h3>🤖 Campus<span>IA</span></h3>
+                    <p>Construido con Python, FastAPI y amor por el Machine Learning. Aprende IA de forma práctica con demos interactivas reales.</p>
+                </div>
+                <div class="footer-col">
+                    <h4>Cursos</h4>
+                    <a href="index.html#cursos">Regresión Lineal</a>
+                    <a href="algoritmos-geneticos.html">Algoritmo Genético</a>
+                    <a href="index.html#infra">Infraestructura y Despliegue</a>
+                </div>
+                <div class="footer-col">
+                    <h4>Recursos</h4>
+                    <a href="#">Documentación</a>
+                    <a href="#">API Reference</a>
+                    <a href="#">GitHub</a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <span>© 2026 Campus I.A. — Todos los derechos reservados.</span>
+                <div class="social-links">
+                    <a href="#" aria-label="GitHub"><i class="fa-brands fa-github"></i></a>
+                    <a href="#" aria-label="YouTube"><i class="fa-brands fa-youtube"></i></a>
+                    <a href="#" aria-label="Twitter"><i class="fa-brands fa-x-twitter"></i></a>
+                    <a href="#" aria-label="LinkedIn"><i class="fa-brands fa-linkedin-in"></i></a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // ============ PARTICLES BACKGROUND ============
+        const canvas = document.getElementById('bgCanvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [], mouse = { x: null, y: null };
+
+        function resize() { canvas.width = innerWidth; canvas.height = innerHeight }
+        resize(); addEventListener('resize', resize);
+        addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY });
+
+        class Particle {
+            constructor() { this.reset() }
+            reset() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.size = Math.random() * 1.8 + 0.5;
+                this.speedX = (Math.random() - 0.5) * 0.5;
+                this.speedY = (Math.random() - 0.5) * 0.5;
+                this.opacity = Math.random() * 0.5 + 0.1;
+                this.color = ['152,202,63','139,92,246','236,72,153','59,130,246'][Math.floor(Math.random()*4)];
+            }
+            update() {
+                this.x += this.speedX; this.y += this.speedY;
+                if (mouse.x != null) {
+                    const dx = mouse.x - this.x, dy = mouse.y - this.y, dist = Math.sqrt(dx*dx+dy*dy);
+                    if (dist < 150) { const f = (150-dist)/150; this.x -= (dx/dist)*f*1.2; this.y -= (dy/dist)*f*1.2 }
+                }
+                if (this.x < 0) this.x = canvas.width; if (this.x > canvas.width) this.x = 0;
+                if (this.y < 0) this.y = canvas.height; if (this.y > canvas.height) this.y = 0;
+            }
+            draw() { ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI*2); ctx.fillStyle = `rgba(${this.color},${this.opacity})`; ctx.fill() }
+        }
+
+        for (let i = 0; i < 80; i++) particles.push(new Particle());
+
+        function connect() {
+            for (let i = 0; i < particles.length; i++)
+                for (let j = i+1; j < particles.length; j++) {
+                    const dx = particles[i].x - particles[j].x, dy = particles[i].y - particles[j].y, dist = Math.sqrt(dx*dx+dy*dy);
+                    if (dist < 130) { ctx.beginPath(); ctx.strokeStyle = `rgba(152,202,63,${(1-dist/130)*0.08})`; ctx.lineWidth = 0.5; ctx.moveTo(particles[i].x, particles[i].y); ctx.lineTo(particles[j].x, particles[j].y); ctx.stroke() }
+                }
+        }
+        (function animate() { ctx.clearRect(0, 0, canvas.width, canvas.height); particles.forEach(p => { p.update(); p.draw() }); connect(); requestAnimationFrame(animate) })();
+
+        // ============ NAVBAR SCROLL ============
+        const navbar = document.getElementById('navbar');
+        addEventListener('scroll', () => { navbar.classList.toggle('scrolled', pageYOffset > 50) });
+
+        // ============ MOBILE TOGGLE ============
+        document.getElementById('navToggle').addEventListener('click', () => document.getElementById('navLinks').classList.toggle('open'));
+        document.querySelectorAll('.nav-links a').forEach(l => l.addEventListener('click', () => document.getElementById('navLinks').classList.remove('open')));
+
+        // ============ LESSON TOGGLE + PROGRESS ============
+        const COURSE_NAME = 'Aprendizaje por Refuerzo';
+        const TOTAL_LESSONS = 4;
+        const session = (() => { try { return JSON.parse(sessionStorage.getItem('ia_student_session')); } catch(e) { return null; } })();
+        const isAccepted = session && session.status === 'accepted'; if (session) { const adminLink = document.querySelector('.admin-link'); if (adminLink) adminLink.style.display = 'none'; }
+
+        if (!isAccepted) {
+            document.getElementById('lockBanner').classList.add('visible');
+            document.querySelectorAll('.lesson-card').forEach(item => {
+                item.classList.add('locked');
+                const lockMsg = document.createElement('div');
+                lockMsg.className = 'lesson-lock-msg';
+                lockMsg.innerHTML = '🔒 <strong>Contenido bloqueado.</strong> <a href="inscripcion.html">Inscribite</a> y esperá la aceptación para acceder a la teoría completa.';
+                item.appendChild(lockMsg);
+            });
+        }
+        const STORAGE_KEY = 'ia_course_progress';
+
+        function getProgress() {
+            try {
+                const data = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+                return data[COURSE_NAME] || [];
+            } catch(e) {
+                return [];
+            }
+        }
+
+        function saveProgress(lessonNum) {
+            const progress = getProgress();
+            if (!progress.includes(lessonNum)) {
+                progress.push(lessonNum);
+                const data = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+                data[COURSE_NAME] = progress;
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+            }
+            updateProgressUI();
+        }
+
+        function updateProgressUI() {
+            const completed = getProgress();
+            const pct = Math.round((completed.length / TOTAL_LESSONS) * 100);
+            document.getElementById('progressBarFill').style.width = pct + '%';
+
+            document.querySelectorAll('.lesson-check').forEach(el => {
+                const num = parseInt(el.dataset.check);
+                if (completed.includes(num)) {
+                    el.classList.add('done');
+                } else {
+                    el.classList.remove('done');
+                }
+            });
+        }
+
+        function toggleLesson(header) {
+            const card = header.parentElement;
+            if (card.classList.contains('locked')) {
+                card.classList.toggle('open');
+                return;
+            }
+            const lessonNum = parseInt(card.dataset.lesson);
+            const wasOpen = card.classList.contains('open');
+            card.classList.toggle('open');
+            if (!wasOpen) {
+                saveProgress(lessonNum);
+            }
+        }
+
+        updateProgressUI();
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <script src="supabase.js"></script>
+</body>
+</html>

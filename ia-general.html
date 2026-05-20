@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inteligencia Artificial (General) | Campus I.A.</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        :root {
+            --bg: #0a0a0f; --bg-card: rgba(15,15,25,0.7); --bg-card-hover: rgba(20,20,35,0.85);
+            --green: #98CA3F; --green-glow: rgba(152,202,63,0.35);
+            --purple: #8B5CF6; --purple-glow: rgba(139,92,246,0.35);
+            --pink: #EC4899; --pink-glow: rgba(236,72,153,0.35);
+            --blue: #3B82F6; --blue-glow: rgba(59,130,246,0.35);
+            --text: #E2E8F0; --text-secondary: #94A3B8; --text-muted: #64748B;
+            --border: rgba(255,255,255,0.08); --border-hover: rgba(255,255,255,0.18);
+            --radius: 14px; --radius-sm: 10px;
+            --shadow: 0 4px 24px rgba(0,0,0,0.4);
+            --transition: 0.25s cubic-bezier(0.4,0,0.2,1);
+        }
+        * { margin:0;padding:0;box-sizing:border-box }
+        html { scroll-behavior:smooth }
+        body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; overflow-x:hidden; line-height:1.6 }
+        #bgCanvas { position:fixed; top:0; left:0; width:100%; height:100%; z-index:0; pointer-events:none }
+        .grid-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background-image:linear-gradient(rgba(152,202,63,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(152,202,63,0.03) 1px,transparent 1px); background-size:50px 50px; z-index:0; pointer-events:none }
+        .container { max-width:1200px; margin:0 auto; padding:0 24px; position:relative; z-index:1 }
+
+        /* NAVBAR */
+        .navbar { position:fixed; top:0; left:0; right:0; z-index:100; padding:14px 0; transition:all .25s; background:transparent }
+        .navbar.scrolled { background:rgba(10,10,15,0.92); backdrop-filter:blur(16px); border-bottom:1px solid var(--border); box-shadow:0 4px 20px rgba(0,0,0,0.3) }
+        .navbar .container { display:flex; align-items:center; justify-content:space-between }
+        .nav-logo { font-size:1.4rem; font-weight:800; color:#fff; text-decoration:none; display:flex; align-items:center; gap:10px }
+        .nav-logo i { color:var(--green); font-size:1.3rem }
+        .nav-logo span { color:var(--green); font-family:'Syne',sans-serif }
+        .nav-links { display:flex; align-items:center; gap:4px }
+        .nav-links a { color:var(--text-secondary); text-decoration:none; font-size:.88rem; font-weight:500; padding:8px 16px; border-radius:8px; transition:all .2s }
+        .nav-links a:hover { color:#fff; background:rgba(255,255,255,0.05) }
+        .nav-btn { padding:10px 22px; background:var(--green); color:#0a0a0f!important; border:none; border-radius:8px; font-weight:700; font-size:.88rem; cursor:pointer; transition:all .2s; text-decoration:none!important; box-shadow:0 0 20px var(--green-glow) }
+        .nav-btn:hover { background:#a8da4f!important; transform:translateY(-1px); box-shadow:0 0 30px rgba(152,202,63,0.5)!important }
+        .nav-toggle { display:none; background:none; border:1px solid var(--border); color:#fff; padding:8px 12px; border-radius:8px; cursor:pointer; font-size:1.2rem }
+        @media(max-width:768px) {
+            .nav-toggle{display:block}.nav-links{display:none;position:absolute;top:100%;left:0;right:0;background:rgba(10,10,15,0.96);backdrop-filter:blur(20px);flex-direction:column;padding:16px;gap:4px;border-bottom:1px solid var(--border)}
+            .nav-links.open{display:flex}.nav-btn{width:100%;text-align:center}
+        }
+
+        /* COURSE HEADER */
+        .page-content { padding:120px 0 40px; position:relative; z-index:1 }
+        .course-header { margin-bottom:48px }
+        .course-breadcrumb { font-size:.78rem; color:var(--text-muted); margin-bottom:16px; display:flex; align-items:center; gap:8px; flex-wrap:wrap }
+        .course-breadcrumb a { color:var(--text-secondary); text-decoration:none; transition:color .2s }
+        .course-breadcrumb a:hover { color:var(--green) }
+        .course-badge-row { display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:14px }
+        .course-badge-tag { display:inline-flex; align-items:center; gap:6px; padding:5px 14px; border-radius:20px; background:rgba(152,202,63,0.1); border:1px solid rgba(152,202,63,0.25); font-size:.76rem; color:var(--green); font-weight:600 }
+        .course-title { font-family:'Syne',sans-serif; font-size:clamp(1.8rem,4vw,2.8rem); font-weight:800; margin-bottom:16px; line-height:1.2 }
+        .course-title .highlight { background:linear-gradient(135deg,var(--green),var(--blue),var(--purple)); background-size:200%; -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; animation:gradientShift 4s ease infinite }
+        @keyframes gradientShift { 0%,100%{background-position:0% 50%} 50%{background-position:100% 50%} }
+        .course-desc { font-size:1.05rem; color:var(--text-secondary); line-height:1.8; max-width:680px }
+
+        /* ============ COURSE LAYOUT: SIDEBAR + MAIN ============ */
+        .course-layout { display:grid; grid-template-columns:340px 1fr; gap:28px; margin-bottom:48px; align-items:start }
+        @media(max-width:900px) { .course-layout { grid-template-columns:1fr } }
+
+        /* STATS SIDEBAR */
+        .sidebar-stats { background:var(--bg-card); backdrop-filter:blur(16px); border:1px solid var(--border); border-radius:var(--radius); padding:24px; box-shadow:var(--shadow); position:sticky; top:100px }
+        .sidebar-stats-title { font-family:'Syne',sans-serif; font-size:1.1rem; font-weight:700; margin-bottom:20px; color:#fff }
+        .stat-item { display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid var(--border); font-size:.88rem }
+        .stat-item:last-child { border-bottom:none }
+        .stat-icon { width:36px; height:36px; border-radius:10px; background:rgba(152,202,63,0.1); border:1px solid rgba(152,202,63,0.2); display:flex; align-items:center; justify-content:center; font-size:.9rem; flex-shrink:0 }
+        .stat-icon.green { color:var(--green) }
+        .stat-icon.purple { color:var(--purple); background:rgba(139,92,246,0.1); border-color:rgba(139,92,246,0.2) }
+        .stat-icon.blue { color:var(--blue); background:rgba(59,130,246,0.1); border-color:rgba(59,130,246,0.2) }
+        .stat-icon.pink { color:var(--pink); background:rgba(236,72,153,0.1); border-color:rgba(236,72,153,0.2) }
+        .stat-label { flex:1; min-width:0; color:var(--text-secondary) }
+        .stat-value { font-weight:700; color:#fff; font-size:.85rem; text-align:right }
+        .stat-badge { display:inline-block; padding:3px 10px; border-radius:12px; background:rgba(152,202,63,0.12); color:var(--green); font-size:.72rem; font-weight:700 }
+        .stat-badge.popular { background:rgba(236,72,153,0.12); color:var(--pink) }
+        .stat-rating { color:#F59E0B; font-weight:700 }
+        .sidebar-enroll-btn { display:block; width:100%; margin-top:20px; padding:14px; background:var(--green); color:#0a0a0f; border:none; border-radius:10px; font-weight:700; font-size:.92rem; cursor:pointer; text-align:center; text-decoration:none; transition:all .2s; box-shadow:0 0 20px var(--green-glow) }
+        .sidebar-enroll-btn:hover { background:#a8da4f; transform:translateY(-1px); box-shadow:0 0 30px rgba(152,202,63,0.5) }
+        .cert-badge-row { display:flex; align-items:center; gap:10px; margin-top:16px; padding-top:14px; border-top:1px solid var(--border); font-size:.82rem; color:var(--text-secondary) }
+        .cert-badge-row i { font-size:1.3rem; color:#F59E0B }
+
+        /* MAIN CONTENT AREA */
+        .main-content-area { display:flex; flex-direction:column; gap:28px }
+
+        /* SECTION TITLES */
+        .section-title { font-family:'Syne',sans-serif; font-size:1.3rem; font-weight:800; color:#fff; margin-bottom:6px }
+        .section-subtitle { font-size:.85rem; color:var(--text-secondary); margin-bottom:20px }
+
+        /* SKILLS GRID */
+        .skills-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px }
+        @media(max-width:600px) { .skills-grid { grid-template-columns:1fr } }
+        .skill-card { background:var(--bg-card); backdrop-filter:blur(16px); border:1px solid var(--border); border-radius:var(--radius-sm); padding:16px 18px; display:flex; align-items:flex-start; gap:12px; transition:all .25s }
+        .skill-card:hover { border-color:var(--border-hover); background:var(--bg-card-hover) }
+        .skill-card i { font-size:1.1rem; color:var(--green); margin-top:2px; flex-shrink:0 }
+        .skill-card span { font-size:.88rem; color:var(--text); line-height:1.5 }
+
+        /* INSTRUCTOR CARD */
+        .instructor-card { background:var(--bg-card); backdrop-filter:blur(16px); border:1px solid var(--border); border-radius:var(--radius); padding:24px; box-shadow:var(--shadow); display:flex; gap:20px; align-items:flex-start }
+        @media(max-width:600px) { .instructor-card { flex-direction:column; align-items:center; text-align:center } }
+        .instructor-avatar { width:72px; height:72px; border-radius:50%; background:linear-gradient(135deg,var(--green),var(--purple)); display:flex; align-items:center; justify-content:center; font-size:1.8rem; flex-shrink:0; color:#fff }
+        .instructor-info h4 { font-size:1.05rem; font-weight:700; color:#fff; margin-bottom:2px }
+        .instructor-info .instructor-role { font-size:.82rem; color:var(--green); font-weight:600; margin-bottom:8px }
+        .instructor-info p { font-size:.85rem; color:var(--text-secondary); line-height:1.7 }
+
+        /* PROJECT CARD */
+        .project-card { background:var(--bg-card); backdrop-filter:blur(16px); border:1px solid rgba(139,92,246,0.2); border-radius:var(--radius); padding:24px; box-shadow:var(--shadow); position:relative; overflow:hidden }
+        .project-card::before { content:''; position:absolute; top:-40px; right:-40px; width:120px; height:120px; background:rgba(139,92,246,0.08); border-radius:50%; pointer-events:none }
+        .project-card h4 { font-size:1.05rem; font-weight:700; color:#fff; margin-bottom:6px }
+        .project-card .project-tag { display:inline-block; padding:3px 10px; border-radius:12px; background:rgba(139,92,246,0.12); color:var(--purple); font-size:.72rem; font-weight:700; margin-bottom:10px }
+        .project-card p { font-size:.88rem; color:var(--text-secondary); line-height:1.7; position:relative; z-index:1 }
+
+        /* RESOURCES SECTION */
+        .resources-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px }
+        @media(max-width:600px) { .resources-grid { grid-template-columns:1fr } }
+        .resource-card { background:var(--bg-card); backdrop-filter:blur(16px); border:1px solid var(--border); border-radius:var(--radius-sm); padding:16px 18px; display:flex; align-items:center; gap:12px; transition:all .25s }
+        .resource-card:hover { border-color:var(--border-hover); background:var(--bg-card-hover) }
+        .resource-icon { width:40px; height:40px; border-radius:10px; background:rgba(59,130,246,0.1); border:1px solid rgba(59,130,246,0.2); display:flex; align-items:center; justify-content:center; font-size:.95rem; color:var(--blue); flex-shrink:0 }
+        .resource-card span { font-size:.85rem; color:var(--text); line-height:1.4 }
+
+        /* EXAM SECTION */
+        .exam-section { background:var(--bg-card); backdrop-filter:blur(16px); border:1px solid var(--border); border-radius:var(--radius); padding:24px; box-shadow:var(--shadow) }
+        .exam-question { margin-bottom:20px; padding-bottom:18px; border-bottom:1px solid var(--border) }
+        .exam-question:last-child { margin-bottom:0; padding-bottom:0; border-bottom:none }
+        .exam-q-text { font-weight:600; color:#fff; font-size:.92rem; margin-bottom:10px }
+        .exam-options { display:flex; flex-direction:column; gap:6px }
+        .exam-option { display:flex; align-items:center; gap:10px; padding:10px 14px; background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:8px; cursor:pointer; transition:all .2s; font-size:.85rem; color:var(--text-secondary) }
+        .exam-option:hover { border-color:var(--border-hover); background:rgba(255,255,255,0.04) }
+        .exam-option input[type="radio"] { accent-color:var(--green); cursor:pointer }
+        .exam-option.correct { border-color:var(--green)!important; background:rgba(152,202,63,0.08)!important; color:var(--green)!important }
+        .exam-option.wrong { border-color:#EF4444!important; background:rgba(239,68,68,0.08)!important; color:#EF4444!important }
+        .exam-submit-btn { margin-top:18px; padding:12px 28px; background:var(--green); color:#0a0a0f; border:none; border-radius:8px; font-weight:700; font-size:.88rem; cursor:pointer; transition:all .2s; box-shadow:0 0 16px var(--green-glow) }
+        .exam-submit-btn:hover { background:#a8da4f; transform:translateY(-1px) }
+        .exam-result { margin-top:14px; font-size:.92rem; font-weight:700; display:none }
+        .exam-result.show { display:block }
+
+        /* RELATED COURSES */
+        .related-courses { display:grid; grid-template-columns:repeat(3,1fr); gap:16px }
+        @media(max-width:768px) { .related-courses { grid-template-columns:1fr } }
+        .related-card { background:var(--bg-card); backdrop-filter:blur(16px); border:1px solid var(--border); border-radius:var(--radius); padding:22px; text-decoration:none; transition:all .25s; display:flex; flex-direction:column; gap:10px }
+        .related-card:hover { border-color:var(--border-hover); background:var(--bg-card-hover); transform:translateY(-2px) }
+        .related-card-icon { font-size:1.5rem }
+        .related-card h4 { font-size:.95rem; font-weight:700; color:#fff }
+        .related-card p { font-size:.8rem; color:var(--text-secondary); line-height:1.5 }
+        .related-card-arrow { font-size:.75rem; color:var(--green); font-weight:600; margin-top:auto }
+
+        /* CERTIFICATION SECTION */
+        .certification-section { background:var(--bg-card); backdrop-filter:blur(16px); border:1px solid rgba(152,202,63,0.2); border-radius:var(--radius); padding:28px; box-shadow:var(--shadow); text-align:center }
+        .certification-icon { font-size:3rem; color:#F59E0B; margin-bottom:12px }
+        .certification-section h3 { font-family:'Syne',sans-serif; font-size:1.3rem; font-weight:800; color:#fff; margin-bottom:8px }
+        .certification-section p { font-size:.9rem; color:var(--text-secondary); line-height:1.7; max-width:600px; margin:0 auto 16px }
+        .certification-btn { display:inline-block; padding:12px 28px; background:transparent; color:var(--green); border:1px solid var(--green); border-radius:8px; font-weight:700; font-size:.88rem; cursor:pointer; text-decoration:none; transition:all .2s }
+        .certification-btn:hover { background:rgba(152,202,63,0.1); box-shadow:0 0 16px var(--green-glow) }
+
+        /* PROGRESS OVERVIEW BAR */
+        .progress-overview { background:var(--bg-card); backdrop-filter:blur(16px); border:1px solid var(--border); border-radius:var(--radius); padding:24px; margin-bottom:36px; box-shadow:var(--shadow) }
+        .progress-overview-header { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:14px }
+        .progress-overview-title { font-weight:700; font-size:.95rem; color:#fff }
+        .progress-overview-pct { font-family:'Syne',sans-serif; font-size:1.3rem; font-weight:800; color:var(--green) }
+        .progress-bar-wrap { height:10px; background:rgba(255,255,255,0.04); border-radius:99px; overflow:hidden; border:1px solid var(--border) }
+        .progress-bar-fill { height:100%; border-radius:99px; background:linear-gradient(90deg,var(--green),var(--blue),var(--purple)); background-size:200%; transition:width .6s ease; animation:gradientShift 4s ease infinite }
+        .progress-bar-stats { display:flex; justify-content:space-between; margin-top:10px; font-size:.75rem; color:var(--text-muted) }
+        .progress-bar-stats .done-text { color:var(--green); font-weight:600 }
+
+        /* LESSONS SECTION */
+        .lessons-heading { font-family:'Syne',sans-serif; font-size:1.4rem; font-weight:800; margin-bottom:6px }
+        .lessons-subheading { font-size:.88rem; color:var(--text-secondary); margin-bottom:28px }
+        .lessons-list { display:flex; flex-direction:column; gap:14px }
+
+        .lesson-card { background:var(--bg-card); backdrop-filter:blur(16px); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; transition:all .25s; box-shadow:var(--shadow) }
+        .lesson-card:hover { border-color:var(--border-hover) }
+        .lesson-card.open { border-color:rgba(152,202,63,0.3); box-shadow:0 4px 24px rgba(0,0,0,0.4),0 0 20px rgba(152,202,63,0.06) }
+        .lesson-card.completed { border-color:rgba(152,202,63,0.15) }
+        .lesson-header { display:flex; align-items:center; gap:14px; padding:18px 22px; cursor:pointer; user-select:none; transition:background .2s }
+        .lesson-header:hover { background:rgba(255,255,255,0.02) }
+        .lesson-num { width:40px; height:40px; border-radius:12px; background:rgba(152,202,63,0.1); border:1px solid rgba(152,202,63,0.2); display:flex; align-items:center; justify-content:center; font-weight:800; font-size:.9rem; color:var(--green); flex-shrink:0; transition:all .25s }
+        .lesson-card.open .lesson-num { background:var(--green); color:#0a0a0f; border-color:var(--green); box-shadow:0 0 16px var(--green-glow) }
+        .lesson-card.completed .lesson-num { background:var(--green); color:#0a0a0f; border-color:var(--green) }
+        .lesson-info { flex:1; min-width:0 }
+        .lesson-info-title { font-size:1rem; font-weight:700; color:#fff; margin-bottom:3px }
+        .lesson-info-meta { font-size:.78rem; color:var(--text-muted) }
+        .lesson-duration { font-size:.76rem; color:var(--text-muted); background:rgba(255,255,255,0.03); border:1px solid var(--border); padding:4px 10px; border-radius:8px; white-space:nowrap; flex-shrink:0 }
+        .lesson-chevron { color:var(--text-muted); font-size:.85rem; transition:transform .3s; flex-shrink:0 }
+        .lesson-card.open .lesson-chevron { transform:rotate(180deg); color:var(--green) }
+        .lesson-body { max-height:0; overflow:hidden; transition:max-height .45s ease,padding .45s ease; border-top:1px solid transparent }
+        .lesson-card.open .lesson-body { max-height:800px; border-top-color:var(--border) }
+        .lesson-body-inner { padding:20px 22px 24px 76px }
+        @media(max-width:600px) { .lesson-body-inner { padding:18px 16px 20px 16px } }
+        .lesson-body-inner p { font-size:.92rem; color:var(--text-secondary); line-height:1.8; margin-bottom:14px }
+        .lesson-body-inner p:last-child { margin-bottom:0 }
+
+        /* COMPLETION TOGGLE */
+        .lesson-complete-row { display:flex; align-items:center; gap:10px; margin-top:16px; padding-top:14px; border-top:1px solid var(--border) }
+        .lesson-complete-btn { display:inline-flex; align-items:center; gap:8px; padding:8px 18px; border-radius:8px; font-size:.8rem; font-weight:600; cursor:pointer; transition:all .2s; border:1px solid var(--border); background:rgba(255,255,255,0.03); color:var(--text-secondary) }
+        .lesson-complete-btn:hover { border-color:var(--green); color:var(--green); background:rgba(152,202,63,0.05) }
+        .lesson-complete-btn.marked { background:rgba(152,202,63,0.08); border-color:var(--green); color:var(--green) }
+        .lesson-complete-btn.marked i { color:var(--green) }
+
+        /* FOOTER */
+        .footer { border-top:1px solid var(--border); padding:40px 0 30px; position:relative; z-index:1 }
+        .footer-grid { display:grid; grid-template-columns:2fr 1fr 1fr; gap:30px; margin-bottom:30px }
+        @media(max-width:768px){.footer-grid{grid-template-columns:1fr}}
+        .footer-brand h3 { font-size:1.2rem; font-weight:800; margin-bottom:8px; font-family:'Syne',sans-serif }
+        .footer-brand h3 span { color:var(--green) }
+        .footer-brand p { font-size:.85rem; color:var(--text-secondary); line-height:1.6 }
+        .footer-col h4 { font-size:.78rem; text-transform:uppercase; letter-spacing:2px; color:var(--text-muted); margin-bottom:14px }
+        .footer-col a { display:block; color:var(--text-secondary); text-decoration:none; font-size:.85rem; margin-bottom:8px; transition:color .2s }
+        .footer-col a:hover { color:var(--green) }
+        .footer-bottom { border-top:1px solid var(--border); padding-top:20px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px }
+        .footer-bottom span { font-size:.82rem; color:var(--text-muted) }
+        .social-links { display:flex; gap:12px }
+        .social-links a { width:36px; height:36px; border-radius:50%; background:rgba(255,255,255,0.04); border:1px solid var(--border); color:var(--text-secondary); display:flex; align-items:center; justify-content:center; text-decoration:none; transition:all .2s; font-size:.9rem }
+        .social-links a:hover { background:rgba(152,202,63,0.1); border-color:var(--green); color:var(--green) }
+        ::-webkit-scrollbar { width:6px }
+        ::-webkit-scrollbar-track { background:var(--bg) }
+        ::-webkit-scrollbar-thumb { background:rgba(152,202,63,0.2); border-radius:3px }
+        ::-webkit-scrollbar-thumb:hover { background:rgba(152,202,63,0.4) }
+        .lock-banner{display:none;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.25);border-radius:var(--radius-sm);padding:14px 20px;margin-bottom:20px;font-size:.85rem;color:#F59E0B;text-align:center}
+        .lock-banner.visible{display:block}
+        .lock-banner a{color:#FBBF24;font-weight:700}
+        .lesson-card.locked .lesson-body{max-height:0!important;border-top-color:transparent!important}
+        .lesson-card.locked .lesson-header{cursor:default}
+        .lesson-card.locked .lesson-chevron{color:rgba(245,158,11,0.4)}
+        .lesson-card.locked:hover{border-color:rgba(245,158,11,0.3)}
+        .lesson-lock-msg{display:none;padding:14px 18px 14px 60px;font-size:.82rem;color:#F59E0B}
+        .lesson-card.locked.open .lesson-lock-msg{display:block}
+        .lesson-card.locked.open .lesson-body{display:none}
+    </style>
+</head>
+<body>
+    <canvas id="bgCanvas"></canvas>
+    <div class="grid-overlay"></div>
+
+    <!-- NAVBAR -->
+    <nav class="navbar" id="navbar">
+        <div class="container">
+            <a href="index.html" class="nav-logo"><i class="fa-solid fa-brain"></i>Campus<span>IA</span></a>
+            <button class="nav-toggle" id="navToggle" aria-label="Menú"><i class="fa-solid fa-bars"></i></button>
+            <div class="nav-links" id="navLinks">
+                <a href="index.html">Inicio</a>
+                <a href="index.html#cursos">Cursos</a>
+                <a href="index.html#demo">Demo</a>
+                <a href="perfil.html">👤 Mi Perfil</a>
+                <a href="admin.html" class="admin-link">⚡ Admin</a>
+                <a href="inscripcion.html" class="nav-btn">Inscribirme <i class="fa-solid fa-arrow-right"></i></a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- PAGE CONTENT -->
+    <div class="page-content">
+        <div class="container">
+
+            <!-- COURSE HEADER -->
+            <div class="course-header">
+                <div class="course-breadcrumb">
+                    <a href="index.html">Inicio</a>
+                    <i class="fa-solid fa-chevron-right" style="font-size:.6rem"></i>
+                    <a href="index.html#cursos">Cursos</a>
+                    <i class="fa-solid fa-chevron-right" style="font-size:.6rem"></i>
+                    <span>Inteligencia Artificial (General)</span>
+                </div>
+                <div class="course-badge-row">
+                    <div class="course-badge-tag"><i class="fa-solid fa-brain"></i> Fundamentos</div>
+                    <div class="course-badge-tag">📚 4 lecciones</div>
+                    <div class="course-badge-tag">⏱️ 4h</div>
+                </div>
+                <h1 class="course-title">Inteligencia <span class="highlight">Artificial</span> (General)</h1>
+                <p class="course-desc">Una introducción completa al mundo de la Inteligencia Artificial. Desde sus fundamentos históricos hasta las aplicaciones modernas que están transformando el mundo.</p>
+                <div class="lock-banner" id="lockBanner">🔒 <strong>Vista previa.</strong> El contenido completo solo está disponible para estudiantes aceptados. <a href="inscripcion.html">Inscribite aquí</a></div>
+            </div>
+
+            <!-- ============ COURSE LAYOUT: SIDEBAR + MAIN CONTENT ============ -->
+            <div class="course-layout">
+
+                <!-- STATS SIDEBAR -->
+                <aside class="sidebar-stats">
+                    <div class="sidebar-stats-title">📋 Información del curso</div>
+                    <div class="stat-item">
+                        <div class="stat-icon green"><i class="fa-solid fa-tag"></i></div>
+                        <div class="stat-label">Precio</div>
+                        <div class="stat-value" style="color:var(--green)">Gratis</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-icon green"><i class="fa-solid fa-signal"></i></div>
+                        <div class="stat-label">Dificultad</div>
+                        <div class="stat-value"><span class="stat-badge">Principiante</span></div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-icon purple"><i class="fa-regular fa-clock"></i></div>
+                        <div class="stat-label">Duración</div>
+                        <div class="stat-value">4 horas</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-icon purple"><i class="fa-solid fa-layer-group"></i></div>
+                        <div class="stat-label">Lecciones</div>
+                        <div class="stat-value">4 lecciones</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-icon blue"><i class="fa-solid fa-users"></i></div>
+                        <div class="stat-label">Estudiantes</div>
+                        <div class="stat-value">3,200 inscritos <span class="stat-badge popular">¡Más popular!</span></div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-icon pink"><i class="fa-solid fa-star"></i></div>
+                        <div class="stat-label">Calificación</div>
+                        <div class="stat-value"><span class="stat-rating">4.9/5</span></div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-icon blue"><i class="fa-solid fa-calendar-check"></i></div>
+                        <div class="stat-label">Actualizado</div>
+                        <div class="stat-value">Mayo 2026</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-icon purple"><i class="fa-solid fa-language"></i></div>
+                        <div class="stat-label">Idioma</div>
+                        <div class="stat-value">Español</div>
+                    </div>
+                    <div class="cert-badge-row">
+                        <i class="fa-solid fa-certificate"></i>
+                        <span>Incluye <strong>certificado</strong> de finalización</span>
+                    </div>
+                    <a href="inscripcion.html" class="sidebar-enroll-btn">Inscribirme ahora <i class="fa-solid fa-arrow-right" style="margin-left:6px"></i></a>
+                </aside>
+
+                <!-- MAIN CONTENT AREA -->
+                <div class="main-content-area">
+
+                    <!-- LO QUE APRENDERÁS -->
+                    <section>
+                        <h2 class="section-title">🎯 Lo que aprenderás</h2>
+                        <p class="section-subtitle">Al finalizar este curso dominarás los siguientes temas:</p>
+                        <div class="skills-grid">
+                            <div class="skill-card"><i class="fa-solid fa-check-circle"></i><span>Comprender qué es la IA y sus tipos (débil vs fuerte)</span></div>
+                            <div class="skill-card"><i class="fa-solid fa-check-circle"></i><span>Diferenciar IA simbólica de IA conexionista</span></div>
+                            <div class="skill-card"><i class="fa-solid fa-check-circle"></i><span>Entender Machine Learning supervisado y no supervisado</span></div>
+                            <div class="skill-card"><i class="fa-solid fa-check-circle"></i><span>Conocer Reinforcement Learning y sus aplicaciones</span></div>
+                            <div class="skill-card"><i class="fa-solid fa-check-circle"></i><span>Explorar redes neuronales y deep learning</span></div>
+                            <div class="skill-card"><i class="fa-solid fa-check-circle"></i><span>Analizar el impacto ético de la IA</span></div>
+                            <div class="skill-card"><i class="fa-solid fa-check-circle"></i><span>Conocer la regulación global (EU AI Act)</span></div>
+                            <div class="skill-card"><i class="fa-solid fa-check-circle"></i><span>Visualizar el futuro de la AGI y el empleo</span></div>
+                        </div>
+                    </section>
+
+                    <!-- INSTRUCTOR -->
+                    <section>
+                        <h2 class="section-title">👨‍🏫 Instructor</h2>
+                        <p class="section-subtitle">Aprende de la mano de un experto en inteligencia artificial.</p>
+                        <div class="instructor-card">
+                            <div class="instructor-avatar"><i class="fa-solid fa-user-graduate"></i></div>
+                            <div class="instructor-info">
+                                <h4>Dr. Andrés Palacios</h4>
+                                <div class="instructor-role">Investigador Principal en IA</div>
+                                <p>Doctor en Ciencias de la Computación por Stanford University, con más de 12 años de experiencia en investigación en inteligencia artificial. Ex investigador de Google Brain, donde trabajó en modelos de lenguaje a gran escala y aprendizaje por refuerzo profundo. Ha publicado más de 40 artículos en conferencias como NeurIPS, ICML e ICLR. Su pasión es democratizar el conocimiento de IA y hacerlo accesible para hispanohablantes en todo el mundo.</p>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- PROYECTO DEL CURSO -->
+                    <section>
+                        <h2 class="section-title">🛠️ Proyecto del curso</h2>
+                        <p class="section-subtitle">Aplicá tus conocimientos en un proyecto práctico evaluable.</p>
+                        <div class="project-card">
+                            <div class="project-tag"><i class="fa-solid fa-flask"></i> Proyecto final</div>
+                            <h4>Análisis crítico de un sistema de IA real</h4>
+                            <p>Investigarás y redactarás un análisis crítico de un sistema de inteligencia artificial actualmente desplegado en el mundo real — como un sistema de recomendación, un modelo de lenguaje, un algoritmo de reconocimiento facial o un sistema de contratación automatizada. Tu análisis deberá cubrir aspectos técnicos (arquitectura, datos de entrenamiento), éticos (sesgo, transparencia, privacidad) y sociales (impacto laboral, equidad, regulación aplicable). El proyecto se evalúa mediante rúbrica y recibirás retroalimentación personalizada del instructor.</p>
+                        </div>
+                    </section>
+
+                    <!-- RECURSOS INCLUIDOS -->
+                    <section>
+                        <h2 class="section-title">📦 Recursos incluidos</h2>
+                        <p class="section-subtitle">Material complementario descargable para potenciar tu aprendizaje.</p>
+                        <div class="resources-grid">
+                            <div class="resource-card">
+                                <div class="resource-icon"><i class="fa-solid fa-scroll"></i></div>
+                                <span><strong>Papers históricos</strong><br>Turing (1950), Dartmouth (1956) — PDF</span>
+                            </div>
+                            <div class="resource-card">
+                                <div class="resource-icon"><i class="fa-solid fa-file-powerpoint"></i></div>
+                                <span><strong>Presentaciones resumen</strong><br>Diapositivas descargables de cada lección</span>
+                            </div>
+                            <div class="resource-card">
+                                <div class="resource-icon"><i class="fa-solid fa-timeline"></i></div>
+                                <span><strong>Línea de tiempo interactiva</strong><br>De la historia de la IA con hitos clave</span>
+                            </div>
+                            <div class="resource-card">
+                                <div class="resource-icon"><i class="fa-solid fa-book-open"></i></div>
+                                <span><strong>Guía de lectura recomendada</strong><br>Libros y artículos para profundizar</span>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- EXAMEN DEL CURSO -->
+                    <section>
+                        <h2 class="section-title">📝 Examen del curso</h2>
+                        <p class="section-subtitle">Poné a prueba tus conocimientos con estas preguntas.</p>
+                        <div class="exam-section" id="examSection">
+                            <div class="exam-question" data-q="1">
+                                <div class="exam-q-text">1. ¿En qué año se acuñó el término "Inteligencia Artificial"?</div>
+                                <div class="exam-options">
+                                    <label class="exam-option"><input type="radio" name="q1" value="1950"> 1950</label>
+                                    <label class="exam-option"><input type="radio" name="q1" value="1956"> 1956</label>
+                                    <label class="exam-option"><input type="radio" name="q1" value="1969"> 1969</label>
+                                    <label class="exam-option"><input type="radio" name="q1" value="1980"> 1980</label>
+                                </div>
+                            </div>
+                            <div class="exam-question" data-q="2">
+                                <div class="exam-q-text">2. ¿Qué tipo de IA predomina actualmente?</div>
+                                <div class="exam-options">
+                                    <label class="exam-option"><input type="radio" name="q2" value="AGI"> IA fuerte (AGI)</label>
+                                    <label class="exam-option"><input type="radio" name="q2" value="deb"> IA débil (estrecha)</label>
+                                    <label class="exam-option"><input type="radio" name="q2" value="sim"> IA simbólica pura</label>
+                                    <label class="exam-option"><input type="radio" name="q2" value="sup"> Superinteligencia</label>
+                                </div>
+                            </div>
+                            <div class="exam-question" data-q="3">
+                                <div class="exam-q-text">3. ¿Qué reglamento europeo clasifica sistemas de IA por riesgo?</div>
+                                <div class="exam-options">
+                                    <label class="exam-option"><input type="radio" name="q3" value="gdpr"> GDPR</label>
+                                    <label class="exam-option"><input type="radio" name="q3" value="aia"> EU AI Act</label>
+                                    <label class="exam-option"><input type="radio" name="q3" value="dma"> Digital Markets Act</label>
+                                    <label class="exam-option"><input type="radio" name="q3" value="dsa"> Digital Services Act</label>
+                                </div>
+                            </div>
+                            <button class="exam-submit-btn" id="examSubmitBtn" onclick="checkExam()">Verificar respuestas <i class="fa-solid fa-check"></i></button>
+                            <div class="exam-result" id="examResult"></div>
+                        </div>
+                    </section>
+
+                </div><!-- /main-content-area -->
+            </div><!-- /course-layout -->
+
+            <!-- PROGRESS OVERVIEW -->
+            <div class="progress-overview">
+                <div class="progress-overview-header">
+                    <span class="progress-overview-title">📊 Tu progreso en este curso</span>
+                    <span class="progress-overview-pct" id="progressPct">0%</span>
+                </div>
+                <div class="progress-bar-wrap">
+                    <div class="progress-bar-fill" id="progressBarFill" style="width:0%"></div>
+                </div>
+                <div class="progress-bar-stats">
+                    <span class="done-text" id="doneCount">0 de 4 lecciones completadas</span>
+                    <span id="remainingText">Faltan 4</span>
+                </div>
+            </div>
+
+            <!-- LESSONS -->
+            <h2 class="lessons-heading">📖 Lecciones del curso</h2>
+            <p class="lessons-subheading">Expande cada lección para leer el contenido y marca las que hayas completado.</p>
+
+            <div class="lessons-list">
+
+                <!-- LESSON 1 -->
+                <div class="lesson-card open" data-lesson="1">
+                    <div class="lesson-header" onclick="toggleLesson(this)">
+                        <div class="lesson-num">1</div>
+                        <div class="lesson-info">
+                            <div class="lesson-info-title">¿Qué es la Inteligencia Artificial?</div>
+                            <div class="lesson-info-meta">Historia, definiciones, tipos de IA</div>
+                        </div>
+                        <div class="lesson-duration"><i class="fa-regular fa-clock"></i> 55 min</div>
+                        <i class="fa-solid fa-chevron-down lesson-chevron"></i>
+                    </div>
+                    <div class="lesson-body">
+                        <div class="lesson-body-inner">
+                            <p>El término <strong>Inteligencia Artificial</strong> fue acuñado en la conferencia de <strong>Dartmouth en 1956</strong>, organizada por John McCarthy, Marvin Minsky, Nathaniel Rochester y Claude Shannon. Esta conferencia de verano reunió a los pioneros del campo y estableció las bases de lo que hoy conocemos como IA: "la ciencia e ingeniería de hacer máquinas inteligentes".</p>
+                            <p>Existen dos grandes categorías de IA. La <strong>IA débil (o estrecha)</strong> está diseñada para realizar tareas específicas — como jugar ajedrez, reconocer rostros o traducir idiomas — y es la que predomina hoy. La <strong>IA fuerte (o general, AGI)</strong> aspira a igualar o superar la inteligencia humana en cualquier dominio, algo que aún no se ha logrado.</p>
+                            <p>Otra distinción clave es entre <strong>IA simbólica</strong> (basada en reglas lógicas y representación explícita del conocimiento, dominante hasta los años 80) y la <strong>IA conexionista</strong> (redes neuronales que aprenden de datos, predominante en la actualidad).</p>
+                            <p>Hitos históricos que marcaron el campo: <strong>Deep Blue</strong> de IBM venció al campeón mundial de ajedrez Garry Kasparov en 1997; <strong>AlphaGo</strong> de DeepMind derrotó al campeón de Go Lee Sedol en 2016 usando aprendizaje por refuerzo y redes profundas; y <strong>ChatGPT</strong> (2022) democratizó los modelos de lenguaje a gran escala, alcanzando 100 millones de usuarios en solo dos meses.</p>
+                            <div class="lesson-complete-row">
+                                <button class="lesson-complete-btn" data-lesson-btn="1" onclick="toggleComplete(1, this)">
+                                    <i class="fa-regular fa-circle-check"></i> Marcar como completada
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- LESSON 2 -->
+                <div class="lesson-card" data-lesson="2">
+                    <div class="lesson-header" onclick="toggleLesson(this)">
+                        <div class="lesson-num">2</div>
+                        <div class="lesson-info">
+                            <div class="lesson-info-title">Machine Learning: El Corazón de la IA Moderna</div>
+                            <div class="lesson-info-meta">Aprendizaje supervisado, no supervisado, por refuerzo</div>
+                        </div>
+                        <div class="lesson-duration"><i class="fa-regular fa-clock"></i> 65 min</div>
+                        <i class="fa-solid fa-chevron-down lesson-chevron"></i>
+                    </div>
+                    <div class="lesson-body">
+                        <div class="lesson-body-inner">
+                            <p>El <strong>Machine Learning</strong> es el subcampo de la IA que permite a las máquinas aprender patrones a partir de datos sin ser programadas explícitamente con reglas. Se divide en tres paradigmas principales.</p>
+                            <p><strong>Aprendizaje supervisado:</strong> el modelo aprende a partir de datos etiquetados. Cada ejemplo de entrenamiento incluye una entrada y su salida esperada. Ejemplos cotidianos: predecir el precio de una casa a partir de su tamaño (<strong>regresión</strong>) o clasificar correos como spam o no spam (<strong>clasificación</strong>). La diferencia entre regresión y clasificación es fundamental: la regresión predice valores continuos (precios, temperaturas), mientras que la clasificación asigna etiquetas discretas (gato/perro, aprobado/reprobado).</p>
+                            <p><strong>Aprendizaje no supervisado:</strong> aquí los datos no tienen etiquetas. El modelo debe encontrar estructuras ocultas por sí mismo. El <strong>clustering</strong> es la técnica más común: agrupar clientes con comportamientos similares, segmentar imágenes, detectar anomalías en transacciones financieras. Algoritmos populares incluyen K-Means, DBSCAN y reducción de dimensionalidad con PCA.</p>
+                            <p><strong>Aprendizaje por refuerzo (Reinforcement Learning):</strong> un agente aprende interactuando con un entorno mediante prueba y error. Recibe recompensas o penalizaciones según sus acciones. Es el paradigma detrás de logros como AlphaGo, agentes que juegan Atari, robótica autónoma y optimización de tráfico. El agente busca maximizar su recompensa acumulada a largo plazo, balanceando exploración (probar nuevas acciones) y explotación (usar lo que ya sabe que funciona).</p>
+                            <div class="lesson-complete-row">
+                                <button class="lesson-complete-btn" data-lesson-btn="2" onclick="toggleComplete(2, this)">
+                                    <i class="fa-regular fa-circle-check"></i> Marcar como completada
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- LESSON 3 -->
+                <div class="lesson-card" data-lesson="3">
+                    <div class="lesson-header" onclick="toggleLesson(this)">
+                        <div class="lesson-num">3</div>
+                        <div class="lesson-info">
+                            <div class="lesson-info-title">Redes Neuronales y Deep Learning</div>
+                            <div class="lesson-info-meta">Perceptrón, capas, backpropagation, arquitecturas modernas</div>
+                        </div>
+                        <div class="lesson-duration"><i class="fa-regular fa-clock"></i> 70 min</div>
+                        <i class="fa-solid fa-chevron-down lesson-chevron"></i>
+                    </div>
+                    <div class="lesson-body">
+                        <div class="lesson-body-inner">
+                            <p>Una <strong>neurona artificial</strong> (perceptrón) recibe múltiples entradas, las multiplica por pesos, suma los resultados y aplica una función de activación para decidir si se "activa" o no. Es una simplificación matemática de cómo funcionan las neuronas biológicas.</p>
+                            <p>El <strong>forward pass</strong> es el viaje de los datos desde la entrada hasta la salida, pasando por capas ocultas. Cada neurona en una capa se conecta con las de la siguiente capa a través de pesos que representan la fuerza de esas conexiones. La <strong>función de activación</strong> (ReLU, sigmoide, tanh) introduce no-linealidad, permitiendo que la red aprenda relaciones complejas. Sin estas funciones, una red multicapa sería equivalente a una sola capa lineal.</p>
+                            <p>El <strong>backpropagation</strong> es el algoritmo que permite a la red aprender de sus errores. Después del forward pass, se compara la predicción con el valor real usando una función de pérdida. El error se propaga hacia atrás capa por capa, ajustando cada peso en la dirección que reduce el error. Este proceso se repite miles o millones de veces durante el entrenamiento. Es como afinar una guitarra: haces pequeños ajustes iterativos hasta que el sonido es correcto.</p>
+                            <p>Arquitecturas modernas: las <strong>CNNs</strong> (Redes Neuronales Convolucionales) son ideales para imágenes, usando filtros que detectan bordes, texturas y patrones. Las <strong>RNNs</strong> (Redes Recurrentes) procesan secuencias como texto o audio, manteniendo memoria de lo anterior. La arquitectura <strong>Transformer</strong> (2017) revolucionó el campo al procesar todas las palabras de una frase simultáneamente con el mecanismo de atención, dando origen a modelos como BERT, GPT-4 y los actuales LLMs que impulsan herramientas como ChatGPT.</p>
+                            <div class="lesson-complete-row">
+                                <button class="lesson-complete-btn" data-lesson-btn="3" onclick="toggleComplete(3, this)">
+                                    <i class="fa-regular fa-circle-check"></i> Marcar como completada
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- LESSON 4 -->
+                <div class="lesson-card" data-lesson="4">
+                    <div class="lesson-header" onclick="toggleLesson(this)">
+                        <div class="lesson-num">4</div>
+                        <div class="lesson-info">
+                            <div class="lesson-info-title">Ética y Futuro de la IA</div>
+                            <div class="lesson-info-meta">Sesgo algorítmico, privacidad, regulación, AGI</div>
+                        </div>
+                        <div class="lesson-duration"><i class="fa-regular fa-clock"></i> 50 min</div>
+                        <i class="fa-solid fa-chevron-down lesson-chevron"></i>
+                    </div>
+                    <div class="lesson-body">
+                        <div class="lesson-body-inner">
+                            <p>La IA plantea desafíos éticos urgentes. El <strong>sesgo algorítmico</strong> ocurre cuando los modelos reproducen o amplifican prejuicios presentes en los datos de entrenamiento. Ejemplos reales incluyen sistemas de reconocimiento facial con mayor tasa de error en personas de piel oscura, y algoritmos de contratación que penalizaban currículums con palabras asociadas a mujeres. Estos sesgos no son intencionales, pero sus consecuencias pueden ser graves cuando afectan decisiones sobre libertad, empleo o crédito.</p>
+                            <p>La <strong>privacidad</strong> es otro frente crítico: los modelos de IA requieren cantidades masivas de datos, y no siempre está claro cómo se recopilan, almacenan o usan. Las decisiones automatizadas — desde la aprobación de un préstamo hasta la selección de candidatos — carecen a menudo de transparencia y del derecho a una explicación significativa.</p>
+                            <p>Marcos regulatorios están emergiendo globalmente. El <strong>EU AI Act</strong> de la Unión Europea clasifica los sistemas de IA por niveles de riesgo (inaceptable, alto, limitado, mínimo) y establece requisitos estrictos de transparencia, supervisión humana y evaluación de conformidad. Es el intento más ambicioso de regular la IA hasta la fecha.</p>
+                            <p>El debate sobre la <strong>AGI</strong> (Inteligencia Artificial General) divide a la comunidad. Algunos expertos creen que estamos a décadas de lograr una IA con capacidades cognitivas humanas generales; otros advierten que podría llegar antes de lo esperado y sin los controles adecuados. El <strong>impacto en el empleo</strong> es tangible: la automatización ya está transformando industrias enteras, desde manufactura hasta servicios profesionales. La pregunta clave no es si la IA reemplazará trabajos, sino cómo la sociedad se adaptará para garantizar que sus beneficios se distribuyan equitativamente.</p>
+                            <div class="lesson-complete-row">
+                                <button class="lesson-complete-btn" data-lesson-btn="4" onclick="toggleComplete(4, this)">
+                                    <i class="fa-regular fa-circle-check"></i> Marcar como completada
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- ============ CURSOS RELACIONADOS ============ -->
+            <section style="margin-top:48px">
+                <h2 class="section-title">🔗 Cursos relacionados</h2>
+                <p class="section-subtitle">Continuá tu aprendizaje con estos cursos complementarios.</p>
+                <div class="related-courses">
+                    <a href="redes-neuronales.html" class="related-card">
+                        <div class="related-card-icon">🧠</div>
+                        <h4>Redes Neuronales</h4>
+                        <p>Profundizá en perceptrones, backpropagation, CNNs, RNNs y arquitecturas avanzadas.</p>
+                        <span class="related-card-arrow">Ver curso <i class="fa-solid fa-arrow-right"></i></span>
+                    </a>
+                    <a href="nlp.html" class="related-card">
+                        <div class="related-card-icon">💬</div>
+                        <h4>Procesamiento de Lenguaje Natural</h4>
+                        <p>Tokenización, embeddings, transformers y modelos de lenguaje desde cero.</p>
+                        <span class="related-card-arrow">Ver curso <i class="fa-solid fa-arrow-right"></i></span>
+                    </a>
+                    <a href="aprendizaje-por-refuerzo.html" class="related-card">
+                        <div class="related-card-icon">🎮</div>
+                        <h4>Aprendizaje por Refuerzo</h4>
+                        <p>Q-Learning, DQN, Policy Gradients y agentes que aprenden jugando.</p>
+                        <span class="related-card-arrow">Ver curso <i class="fa-solid fa-arrow-right"></i></span>
+                    </a>
+                </div>
+            </section>
+
+            <!-- ============ CERTIFICACIÓN ============ -->
+            <section style="margin-top:48px">
+                <h2 class="section-title">🏅 Certificación</h2>
+                <p class="section-subtitle">Obtené un certificado oficial al completar el curso.</p>
+                <div class="certification-section">
+                    <div class="certification-icon"><i class="fa-solid fa-award"></i></div>
+                    <h3>Certificado de Finalización</h3>
+                    <p>Al completar las 4 lecciones y aprobar el examen del curso, recibirás un certificado digital verificable emitido por <strong>Campus I.A.</strong> que podrás compartir en LinkedIn, agregar a tu CV y descargar en formato PDF. El certificado incluye un código QR de verificación único que valida tu logro ante empleadores.</p>
+                    <a href="inscripcion.html" class="certification-btn">Inscribirme para obtener el certificado <i class="fa-solid fa-arrow-right" style="margin-left:6px"></i></a>
+                </div>
+            </section>
+
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <h3>🤖 Campus<span>IA</span></h3>
+                    <p>Construido con Python, FastAPI y amor por el Machine Learning. Aprende IA de forma práctica con demos interactivas reales.</p>
+                </div>
+                <div class="footer-col">
+                    <h4>Cursos</h4>
+                    <a href="index.html#cursos">Regresión Lineal</a>
+                    <a href="index.html#cursos">Algoritmo Genético</a>
+                    <a href="index.html#infra">Infraestructura y Despliegue</a>
+                    <a href="ia-general.html">IA General</a>
+                </div>
+                <div class="footer-col">
+                    <h4>Recursos</h4>
+                    <a href="#">Documentación</a>
+                    <a href="#">API Reference</a>
+                    <a href="#">GitHub</a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <span>© 2026 Campus I.A. — Todos los derechos reservados.</span>
+                <div class="social-links">
+                    <a href="#" aria-label="GitHub"><i class="fa-brands fa-github"></i></a>
+                    <a href="#" aria-label="YouTube"><i class="fa-brands fa-youtube"></i></a>
+                    <a href="#" aria-label="Twitter"><i class="fa-brands fa-x-twitter"></i></a>
+                    <a href="#" aria-label="LinkedIn"><i class="fa-brands fa-linkedin-in"></i></a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        const COURSE_NAME = 'Inteligencia Artificial (General)';
+        const TOTAL_LESSONS = 4;
+
+        const session = (() => { try { return JSON.parse(sessionStorage.getItem('ia_student_session')); } catch(e) { return null; } })();
+        const isAccepted = session && session.status === 'accepted'; if (session) { const adminLink = document.querySelector('.admin-link'); if (adminLink) adminLink.style.display = 'none'; }
+
+        if (!isAccepted) {
+            document.getElementById('lockBanner').classList.add('visible');
+            document.querySelectorAll('.lesson-card').forEach(item => {
+                item.classList.add('locked');
+                const lockMsg = document.createElement('div');
+                lockMsg.className = 'lesson-lock-msg';
+                lockMsg.innerHTML = '🔒 <strong>Contenido bloqueado.</strong> <a href="inscripcion.html">Inscribite</a> y esperá la aceptación para acceder a la teoría completa.';
+                item.appendChild(lockMsg);
+            });
+        }
+
+        // ============ PARTICLES BACKGROUND ============
+        const canvas = document.getElementById('bgCanvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [], mouse = { x: null, y: null };
+
+        function resize() { canvas.width = innerWidth; canvas.height = innerHeight }
+        resize(); addEventListener('resize', resize);
+        addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY });
+
+        class Particle {
+            constructor() { this.reset() }
+            reset() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.size = Math.random() * 1.8 + 0.5;
+                this.speedX = (Math.random() - 0.5) * 0.5;
+                this.speedY = (Math.random() - 0.5) * 0.5;
+                this.opacity = Math.random() * 0.5 + 0.1;
+                this.color = ['152,202,63','139,92,246','236,72,153','59,130,246'][Math.floor(Math.random()*4)];
+            }
+            update() {
+                this.x += this.speedX; this.y += this.speedY;
+                if (mouse.x != null) {
+                    const dx = mouse.x - this.x, dy = mouse.y - this.y, dist = Math.sqrt(dx*dx+dy*dy);
+                    if (dist < 150) { const f = (150-dist)/150; this.x -= (dx/dist)*f*1.2; this.y -= (dy/dist)*f*1.2 }
+                }
+                if (this.x < 0) this.x = canvas.width; if (this.x > canvas.width) this.x = 0;
+                if (this.y < 0) this.y = canvas.height; if (this.y > canvas.height) this.y = 0;
+            }
+            draw() { ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI*2); ctx.fillStyle = `rgba(${this.color},${this.opacity})`; ctx.fill() }
+        }
+
+        for (let i = 0; i < 80; i++) particles.push(new Particle());
+
+        function connect() {
+            for (let i = 0; i < particles.length; i++)
+                for (let j = i+1; j < particles.length; j++) {
+                    const dx = particles[i].x - particles[j].x, dy = particles[i].y - particles[j].y, dist = Math.sqrt(dx*dx+dy*dy);
+                    if (dist < 130) { ctx.beginPath(); ctx.strokeStyle = `rgba(152,202,63,${(1-dist/130)*0.08})`; ctx.lineWidth = 0.5; ctx.moveTo(particles[i].x, particles[i].y); ctx.lineTo(particles[j].x, particles[j].y); ctx.stroke() }
+                }
+        }
+        (function animate() { ctx.clearRect(0, 0, canvas.width, canvas.height); particles.forEach(p => { p.update(); p.draw() }); connect(); requestAnimationFrame(animate) })();
+
+        // ============ NAVBAR SCROLL ============
+        const navbar = document.getElementById('navbar');
+        addEventListener('scroll', () => { navbar.classList.toggle('scrolled', pageYOffset > 50) });
+
+        // ============ MOBILE TOGGLE ============
+        document.getElementById('navToggle').addEventListener('click', () => document.getElementById('navLinks').classList.toggle('open'));
+        document.querySelectorAll('.nav-links a').forEach(l => l.addEventListener('click', () => document.getElementById('navLinks').classList.remove('open')));
+
+        // ============ LESSON TOGGLE ============
+        function toggleLesson(header) {
+            const card = header.parentElement;
+            if (card.classList.contains('locked')) {
+                card.classList.toggle('open');
+                return;
+            }
+            const lessonNum = parseInt(card.dataset.lesson);
+            const wasOpen = card.classList.contains('open');
+            card.classList.toggle('open');
+            if (!wasOpen) {
+                saveProgress(lessonNum);
+            }
+        }
+
+        // ============ PROGRESS TRACKING ============
+        function getProgress() {
+            try {
+                const data = JSON.parse(localStorage.getItem('ia_course_progress') || '{}');
+                return (data[COURSE_NAME] && Array.isArray(data[COURSE_NAME])) ? data[COURSE_NAME] : [];
+            } catch(e) { return []; }
+        }
+
+        function saveProgress(completedLessons) {
+            const data = JSON.parse(localStorage.getItem('ia_course_progress') || '{}');
+            data[COURSE_NAME] = completedLessons;
+            localStorage.setItem('ia_course_progress', JSON.stringify(data));
+        }
+
+        function toggleComplete(lessonNum, btn) {
+            let lessons = getProgress();
+            const idx = lessons.indexOf(lessonNum);
+            if (idx > -1) {
+                lessons.splice(idx, 1);
+            } else {
+                lessons.push(lessonNum);
+            }
+            lessons.sort((a,b) => a - b);
+            saveProgress(lessons);
+            updateAllUI();
+        }
+
+        function updateAllUI() {
+            const lessons = getProgress();
+            const done = lessons.length;
+            const pct = Math.round((done / TOTAL_LESSONS) * 100);
+
+            document.getElementById('progressPct').textContent = pct + '%';
+            document.getElementById('progressBarFill').style.width = pct + '%';
+            document.getElementById('doneCount').textContent = done + ' de ' + TOTAL_LESSONS + ' lecciones completadas';
+            document.getElementById('remainingText').textContent = done === TOTAL_LESSONS ? '¡Curso completado! 🎉' : 'Faltan ' + (TOTAL_LESSONS - done);
+
+            document.querySelectorAll('.lesson-card').forEach(card => {
+                const num = parseInt(card.dataset.lesson);
+                if (lessons.includes(num)) {
+                    card.classList.add('completed');
+                } else {
+                    card.classList.remove('completed');
+                }
+            });
+
+            document.querySelectorAll('.lesson-complete-btn').forEach(btn => {
+                const num = parseInt(btn.dataset.lessonBtn);
+                if (lessons.includes(num)) {
+                    btn.classList.add('marked');
+                    btn.innerHTML = '<i class="fa-solid fa-circle-check"></i> Completada ✓';
+                } else {
+                    btn.classList.remove('marked');
+                    btn.innerHTML = '<i class="fa-regular fa-circle-check"></i> Marcar como completada';
+                }
+            });
+        }
+
+        // Initialize UI from localStorage
+        updateAllUI();
+
+        // ============ EXAM QUIZ ============
+        function checkExam() {
+            const correctAnswers = { q1: '1956', q2: 'deb', q3: 'aia' };
+            let score = 0;
+            const total = 3;
+            const examSection = document.getElementById('examSection');
+
+            examSection.querySelectorAll('.exam-question').forEach(q => {
+                const qKey = 'q' + q.dataset.q;
+                const selected = q.querySelector('input[type="radio"]:checked');
+                const allOptions = q.querySelectorAll('.exam-option');
+                allOptions.forEach(opt => { opt.classList.remove('correct', 'wrong'); });
+                if (selected) {
+                    if (selected.value === correctAnswers[qKey]) {
+                        score++;
+                        selected.closest('.exam-option').classList.add('correct');
+                    } else {
+                        selected.closest('.exam-option').classList.add('wrong');
+                        const correctOpt = q.querySelector(`input[value="${correctAnswers[qKey]}"]`);
+                        if (correctOpt) correctOpt.closest('.exam-option').classList.add('correct');
+                    }
+                }
+            });
+
+            const resultEl = document.getElementById('examResult');
+            resultEl.classList.add('show');
+            if (score === total) {
+                resultEl.style.color = 'var(--green)';
+                resultEl.innerHTML = '🎉 ¡Excelente! Obtuviste ' + score + ' de ' + total + '. ¡Dominás los fundamentos de la IA!';
+            } else if (score >= 2) {
+                resultEl.style.color = '#F59E0B';
+                resultEl.innerHTML = '👍 ¡Buen trabajo! Obtuviste ' + score + ' de ' + total + '. Repasá las preguntas marcadas en rojo.';
+            } else {
+                resultEl.style.color = '#EF4444';
+                resultEl.innerHTML = '📚 Obtuviste ' + score + ' de ' + total + '. Te recomendamos repasar las lecciones del curso e intentarlo de nuevo.';
+            }
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <script src="supabase.js"></script>
+</body>
+</html>

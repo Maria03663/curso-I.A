@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Algoritmos Genéticos | Campus I.A.</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        :root {
+            --bg: #0a0a0f; --bg-card: rgba(15,15,25,0.7); --bg-card-hover: rgba(20,20,35,0.85);
+            --green: #98CA3F; --green-glow: rgba(152,202,63,0.35);
+            --purple: #8B5CF6; --purple-glow: rgba(139,92,246,0.35);
+            --pink: #EC4899; --pink-glow: rgba(236,72,153,0.35);
+            --blue: #3B82F6; --blue-glow: rgba(59,130,246,0.35);
+            --text: #E2E8F0; --text-secondary: #94A3B8; --text-muted: #64748B;
+            --border: rgba(255,255,255,0.08); --border-hover: rgba(255,255,255,0.18);
+            --radius: 14px; --radius-sm: 10px;
+            --shadow: 0 4px 24px rgba(0,0,0,0.4);
+            --transition: 0.25s cubic-bezier(0.4,0,0.2,1);
+        }
+        * { margin:0;padding:0;box-sizing:border-box }
+        html { scroll-behavior:smooth }
+        body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; overflow-x:hidden; line-height:1.6 }
+        #bgCanvas { position:fixed; top:0; left:0; width:100%; height:100%; z-index:0; pointer-events:none }
+        .grid-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background-image:linear-gradient(rgba(152,202,63,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(152,202,63,0.03) 1px,transparent 1px); background-size:50px 50px; z-index:0; pointer-events:none }
+        .container { max-width:1200px; margin:0 auto; padding:0 24px; position:relative; z-index:1 }
+        .container-narrow { max-width:900px; margin:0 auto; padding:0 24px; position:relative; z-index:1 }
+
+        /* NAVBAR */
+        .navbar { position:fixed; top:0; left:0; right:0; z-index:100; padding:14px 0; transition:all .25s; background:transparent }
+        .navbar.scrolled { background:rgba(10,10,15,0.92); backdrop-filter:blur(16px); border-bottom:1px solid var(--border); box-shadow:0 4px 20px rgba(0,0,0,0.3) }
+        .navbar .container { display:flex; align-items:center; justify-content:space-between }
+        .nav-logo { font-size:1.4rem; font-weight:800; color:#fff; text-decoration:none; display:flex; align-items:center; gap:10px }
+        .nav-logo i { color:var(--green); font-size:1.3rem }
+        .nav-logo span { color:var(--green); font-family:'Syne',sans-serif }
+        .nav-links { display:flex; align-items:center; gap:4px }
+        .nav-links a { color:var(--text-secondary); text-decoration:none; font-size:.88rem; font-weight:500; padding:8px 16px; border-radius:8px; transition:all .2s }
+        .nav-links a:hover { color:#fff; background:rgba(255,255,255,0.05) }
+        .nav-toggle { display:none; background:none; border:1px solid var(--border); color:#fff; padding:8px 12px; border-radius:8px; cursor:pointer; font-size:1.2rem }
+        @media(max-width:768px) {
+            .nav-toggle{display:block}.nav-links{display:none;position:absolute;top:100%;left:0;right:0;background:rgba(10,10,15,0.96);backdrop-filter:blur(20px);flex-direction:column;padding:16px;gap:4px;border-bottom:1px solid var(--border)}
+            .nav-links.open{display:flex}
+        }
+
+        /* PROGRESS BAR */
+        .progress-bar-wrapper { position:fixed; top:0; left:0; right:0; height:3px; z-index:101; background:rgba(255,255,255,0.04) }
+        .progress-bar-fill { height:100%; background:linear-gradient(90deg,var(--purple),var(--pink)); transition:width .5s ease; border-radius:0 2px 2px 0 }
+
+        /* COURSE HEADER */
+        .course-hero { padding:120px 0 50px; position:relative; z-index:1 }
+        .course-hero .container { max-width:800px }
+        .course-badge { display:inline-flex; align-items:center; gap:8px; padding:6px 16px; border-radius:20px; background:rgba(139,92,246,0.1); border:1px solid rgba(139,92,246,0.25); font-size:.78rem; color:var(--purple); font-weight:600; margin-bottom:20px }
+        .course-hero h1 { font-size:clamp(2rem,4.5vw,3rem); font-weight:900; line-height:1.2; margin-bottom:16px; font-family:'Syne',sans-serif }
+        .course-hero .desc { font-size:1.05rem; color:var(--text-secondary); line-height:1.8; max-width:620px }
+
+        /* COURSE LAYOUT (2-col: main + sidebar) */
+        .course-layout { display:flex; gap:30px; align-items:flex-start; padding:20px 0 10px }
+        .course-layout-main { flex:1; min-width:0 }
+        .course-layout-sidebar { width:340px; flex-shrink:0 }
+        @media(max-width:900px){ .course-layout{flex-direction:column} .course-layout-sidebar{width:100%} }
+
+        /* STATS SIDEBAR */
+        .stats-card { background:var(--bg-card); backdrop-filter:blur(16px); border:1px solid var(--border); border-radius:var(--radius); padding:24px; box-shadow:var(--shadow); position:sticky; top:90px }
+        @media(max-width:900px){ .stats-card{position:static} }
+        .stats-card h3 { font-size:1.05rem; font-weight:700; margin-bottom:18px; font-family:'Syne',sans-serif }
+        .stat-row { display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--border); font-size:.85rem }
+        .stat-row:last-child { border-bottom:none }
+        .stat-label { color:var(--text-muted) }
+        .stat-value { color:#fff; font-weight:600 }
+        .stat-price { font-size:1.3rem; font-weight:800; color:var(--green); font-family:'Syne',sans-serif }
+        .diff-badge { background:rgba(245,158,11,0.12); color:#F59E0B; padding:3px 12px; border-radius:12px; font-size:.73rem; font-weight:600; display:inline-block }
+        .rating-stars { color:#F59E0B; font-size:.78rem; letter-spacing:1px }
+        .cert-mini-badge { display:inline-flex; align-items:center; gap:5px; padding:5px 10px; border-radius:8px; background:rgba(152,202,63,0.08); border:1px solid rgba(152,202,63,0.2); font-size:.72rem; color:var(--green); font-weight:600; margin-top:6px }
+        .stats-btn { display:block; width:100%; padding:12px; border-radius:10px; background:var(--green); color:#0a0a0f; font-weight:700; font-size:.87rem; text-align:center; text-decoration:none; margin-top:16px; border:none; cursor:pointer; transition:all .2s; font-family:'Inter',sans-serif }
+        .stats-btn:hover { background:#a8da4f; transform:translateY(-1px); box-shadow:0 4px 16px rgba(152,202,63,0.3) }
+
+        /* SECTION BLOCKS */
+        .section-block { padding:16px 0 36px; position:relative; z-index:1 }
+        .section-title { font-size:1.35rem; font-weight:800; margin-bottom:22px; font-family:'Syne',sans-serif }
+        .section-title i { margin-right:6px }
+
+        /* SKILLS GRID */
+        .skills-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px }
+        @media(max-width:600px){ .skills-grid{grid-template-columns:1fr} }
+        .skill-item { display:flex; align-items:flex-start; gap:10px; padding:12px 16px; background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:var(--radius-sm); font-size:.84rem; color:var(--text-secondary); line-height:1.5; transition:all .2s }
+        .skill-item:hover { border-color:rgba(139,92,246,0.2); background:rgba(139,92,246,0.04) }
+        .skill-item i { color:var(--purple); margin-top:2px; flex-shrink:0 }
+
+        /* INSTRUCTOR */
+        .instructor-card { background:var(--bg-card); backdrop-filter:blur(16px); border:1px solid var(--border); border-radius:var(--radius); padding:28px; display:flex; gap:20px; align-items:center; box-shadow:var(--shadow) }
+        @media(max-width:600px){ .instructor-card{flex-direction:column;text-align:center} }
+        .instructor-avatar { width:80px; height:80px; border-radius:50%; background:linear-gradient(135deg,var(--purple),var(--pink)); display:flex; align-items:center; justify-content:center; font-size:1.8rem; flex-shrink:0; color:#fff }
+        .instructor-info h4 { font-size:1.05rem; font-weight:700 }
+        .instructor-info .role { color:var(--purple); font-size:.8rem; font-weight:600; margin-bottom:6px }
+        .instructor-info .bio { color:var(--text-secondary); font-size:.84rem; line-height:1.7 }
+
+        /* PROJECT CARD */
+        .project-card { background:var(--bg-card); backdrop-filter:blur(16px); border:1px solid var(--border); border-radius:var(--radius); padding:28px; box-shadow:var(--shadow); display:flex; gap:20px; align-items:flex-start }
+        @media(max-width:600px){ .project-card{flex-direction:column} }
+        .project-icon { width:64px; height:64px; border-radius:14px; background:linear-gradient(135deg,rgba(236,72,153,0.15),rgba(139,92,246,0.15)); border:1px solid rgba(236,72,153,0.2); display:flex; align-items:center; justify-content:center; font-size:1.6rem; color:var(--pink); flex-shrink:0 }
+        .project-info h4 { font-size:1.05rem; font-weight:700; margin-bottom:4px }
+        .project-info p { color:var(--text-secondary); font-size:.84rem; line-height:1.7; margin-bottom:8px }
+        .project-tags { display:flex; gap:6px; flex-wrap:wrap }
+        .project-tag { padding:3px 10px; border-radius:8px; background:rgba(236,72,153,0.08); border:1px solid rgba(236,72,153,0.15); font-size:.7rem; color:var(--pink); font-weight:500 }
+
+        /* RESOURCES */
+        .resources-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px }
+        @media(max-width:768px){ .resources-grid{grid-template-columns:repeat(2,1fr)} }
+        @media(max-width:400px){ .resources-grid{grid-template-columns:1fr} }
+        .resource-card { background:var(--bg-card); backdrop-filter:blur(16px); border:1px solid var(--border); border-radius:var(--radius); padding:22px 18px; text-align:center; box-shadow:var(--shadow); transition:var(--transition) }
+        .resource-card:hover { border-color:var(--border-hover); transform:translateY(-3px) }
+        .resource-card i { font-size:1.7rem; margin-bottom:12px }
+        .resource-card .rc-green { color:var(--green) }
+        .resource-card .rc-blue { color:var(--blue) }
+        .resource-card .rc-purple { color:var(--purple) }
+        .resource-card .rc-pink { color:var(--pink) }
+        .resource-card h5 { font-size:.85rem; font-weight:700; margin-bottom:4px }
+        .resource-card p { font-size:.74rem; color:var(--text-muted) }
+
+        /* LESSONS */
+        .lessons-section { padding:20px 0 80px; position:relative; z-index:1 }
+        .lessons-section .container { max-width:900px }
+        .section-heading { font-size:.75rem; font-weight:700; color:var(--purple); letter-spacing:3px; text-transform:uppercase; margin-bottom:20px }
+        .lessons-list { display:flex; flex-direction:column; gap:14px }
+        .lesson-card { background:var(--bg-card); backdrop-filter:blur(16px); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; transition:all .25s; box-shadow:var(--shadow) }
+        .lesson-card.open { border-color:rgba(139,92,246,0.3); background:rgba(20,20,35,0.85) }
+        .lesson-header { display:flex; align-items:center; gap:16px; padding:20px 24px; cursor:pointer; user-select:none; transition:background .2s }
+        .lesson-header:hover { background:rgba(255,255,255,0.02) }
+        .lesson-num { width:40px; height:40px; border-radius:10px; background:rgba(139,92,246,0.1); border:1px solid rgba(139,92,246,0.2); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:.9rem; color:var(--purple); flex-shrink:0; transition:all .3s }
+        .lesson-card.open .lesson-num { background:var(--purple); color:#fff; border-color:var(--purple); box-shadow:0 0 16px rgba(139,92,246,0.4) }
+        .lesson-info { flex:1; min-width:0 }
+        .lesson-title { font-weight:700; font-size:1.02rem; color:#fff; margin-bottom:3px }
+        .lesson-meta { font-size:.78rem; color:var(--text-muted); display:flex; align-items:center; gap:8px; flex-wrap:wrap }
+        .lesson-meta .tag { display:inline-block; padding:2px 8px; border-radius:8px; background:rgba(139,92,246,0.1); color:var(--purple); font-size:.68rem; font-weight:600 }
+        .lesson-chevron { color:var(--text-muted); font-size:.85rem; transition:transform .3s; flex-shrink:0 }
+        .lesson-card.open .lesson-chevron { transform:rotate(90deg) }
+        .lesson-check { width:24px; height:24px; border-radius:50%; border:2px solid var(--border); display:flex; align-items:center; justify-content:center; font-size:.6rem; color:transparent; transition:all .3s; flex-shrink:0; margin-left:4px }
+        .lesson-check.done { background:var(--purple); border-color:var(--purple); color:#fff }
+        .lesson-body { max-height:0; overflow:hidden; transition:max-height .45s ease; border-top:1px solid transparent }
+        .lesson-card.open .lesson-body { max-height:600px; border-top-color:var(--border) }
+        .lesson-content { padding:20px 24px 24px; display:flex; flex-direction:column; gap:14px }
+        .lesson-content p { font-size:.9rem; color:var(--text-secondary); line-height:1.75 }
+        .lesson-content .highlight-box { background:rgba(139,92,246,0.06); border:1px solid rgba(139,92,246,0.15); border-radius:var(--radius-sm); padding:14px 18px; font-size:.84rem; color:var(--text-secondary); line-height:1.7 }
+        .lesson-content .highlight-box i { color:var(--purple); margin-right:6px }
+        .lesson-duration { display:inline-flex; align-items:center; gap:4px; font-size:.76rem; color:var(--text-muted); padding:4px 10px; border-radius:8px; background:rgba(255,255,255,0.02); border:1px solid var(--border); align-self:flex-start }
+        .lesson-duration i { color:var(--purple) }
+
+        /* QUIZ ACCORDION */
+        .quiz-card { background:var(--bg-card); backdrop-filter:blur(16px); border:1px solid var(--border); border-radius:var(--radius); margin-bottom:10px; overflow:hidden; box-shadow:var(--shadow) }
+        .quiz-header { padding:16px 20px; cursor:pointer; display:flex; justify-content:space-between; align-items:center; font-weight:600; font-size:.92rem; transition:background .2s }
+        .quiz-header:hover { background:rgba(255,255,255,0.02) }
+        .quiz-chevron { color:var(--text-muted); font-size:.8rem; transition:transform .3s }
+        .quiz-card.open .quiz-chevron { transform:rotate(180deg) }
+        .quiz-body { max-height:0; overflow:hidden; transition:max-height .35s ease }
+        .quiz-card.open .quiz-body { max-height:120px }
+        .quiz-answer { padding:0 20px 16px; color:var(--text-secondary); font-size:.84rem }
+        .quiz-answer strong { color:var(--green) }
+
+        /* RELATED COURSES */
+        .related-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px }
+        @media(max-width:768px){ .related-grid{grid-template-columns:1fr} }
+        .related-card { background:var(--bg-card); backdrop-filter:blur(16px); border:1px solid var(--border); border-radius:var(--radius); padding:22px; text-decoration:none; color:inherit; box-shadow:var(--shadow); transition:var(--transition); display:block }
+        .related-card:hover { border-color:var(--border-hover); transform:translateY(-2px) }
+        .related-card i { font-size:1.4rem; margin-bottom:10px }
+        .related-card h5 { font-size:.88rem; font-weight:700; margin-bottom:4px; color:#fff }
+        .related-card p { font-size:.76rem; color:var(--text-muted) }
+
+        /* CERTIFICATION */
+        .cert-section { background:var(--bg-card); backdrop-filter:blur(16px); border:1px solid var(--border); border-radius:var(--radius); padding:32px; text-align:center; box-shadow:var(--shadow) }
+        .cert-section .cert-icon { font-size:2.5rem; color:var(--green); margin-bottom:12px }
+        .cert-section h3 { font-size:1.3rem; font-weight:800; margin-bottom:8px; font-family:'Syne',sans-serif }
+        .cert-section p { color:var(--text-secondary); font-size:.88rem; max-width:500px; margin:0 auto 16px }
+        .cert-features { display:flex; justify-content:center; gap:24px; flex-wrap:wrap; margin-top:4px }
+        .cert-feat { display:flex; align-items:center; gap:6px; font-size:.8rem; color:var(--text-secondary) }
+        .cert-feat i { color:var(--green); font-size:.7rem }
+
+        /* FOOTER */
+        .footer { border-top:1px solid var(--border); padding:40px 0 30px; position:relative; z-index:1 }
+        .footer-grid { display:grid; grid-template-columns:2fr 1fr 1fr; gap:30px; margin-bottom:30px }
+        @media(max-width:768px){.footer-grid{grid-template-columns:1fr}}
+        .footer-brand h3 { font-size:1.2rem; font-weight:800; margin-bottom:8px; font-family:'Syne',sans-serif }
+        .footer-brand h3 span { color:var(--green) }
+        .footer-brand p { font-size:.85rem; color:var(--text-secondary); line-height:1.6 }
+        .footer-col h4 { font-size:.78rem; text-transform:uppercase; letter-spacing:2px; color:var(--text-muted); margin-bottom:14px }
+        .footer-col a { display:block; color:var(--text-secondary); text-decoration:none; font-size:.85rem; margin-bottom:8px; transition:color .2s }
+        .footer-col a:hover { color:var(--green) }
+        .footer-bottom { border-top:1px solid var(--border); padding-top:20px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px }
+        .footer-bottom span { font-size:.82rem; color:var(--text-muted) }
+        .social-links { display:flex; gap:12px }
+        .social-links a { width:36px; height:36px; border-radius:50%; background:rgba(255,255,255,0.04); border:1px solid var(--border); color:var(--text-secondary); display:flex; align-items:center; justify-content:center; text-decoration:none; transition:all .2s; font-size:.9rem }
+        .social-links a:hover { background:rgba(152,202,63,0.1); border-color:var(--green); color:var(--green) }
+
+        ::-webkit-scrollbar { width:6px }
+        ::-webkit-scrollbar-track { background:var(--bg) }
+        ::-webkit-scrollbar-thumb { background:rgba(152,202,63,0.2); border-radius:3px }
+        ::-webkit-scrollbar-thumb:hover { background:rgba(152,202,63,0.4) }
+
+        .lock-banner{display:none;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.25);border-radius:var(--radius-sm);padding:14px 20px;margin-bottom:20px;font-size:.85rem;color:#F59E0B;text-align:center}
+        .lock-banner.visible{display:block}
+        .lock-banner a{color:#FBBF24;font-weight:700}
+        .lesson-card.locked .lesson-body{max-height:0!important;border-top-color:transparent!important}
+        .lesson-card.locked .lesson-header{cursor:default}
+        .lesson-card.locked .lesson-chevron{color:rgba(245,158,11,0.4)}
+        .lesson-card.locked:hover{border-color:rgba(245,158,11,0.3)}
+        .lesson-lock-msg{display:none;padding:14px 18px 14px 60px;font-size:.82rem;color:#F59E0B}
+        .lesson-card.locked.open .lesson-lock-msg{display:block}
+        .lesson-card.locked.open .lesson-body{display:none}
+    </style>
+</head>
+<body>
+    <canvas id="bgCanvas"></canvas>
+    <div class="grid-overlay"></div>
+
+    <div class="progress-bar-wrapper">
+        <div class="progress-bar-fill" id="progressBarFill" style="width:0%"></div>
+    </div>
+
+    <!-- NAVBAR -->
+    <nav class="navbar" id="navbar">
+        <div class="container">
+            <a href="index.html" class="nav-logo"><i class="fa-solid fa-brain"></i>Campus<span>IA</span></a>
+            <button class="nav-toggle" id="navToggle" aria-label="Menú"><i class="fa-solid fa-bars"></i></button>
+            <div class="nav-links" id="navLinks">
+                <a href="index.html#cursos">Cursos</a>
+                <a href="index.html#demo">Demo</a>
+                <a href="index.html#infra">Infraestructura</a>
+                <a href="perfil.html">👤 Mi Perfil</a>
+                <a href="admin.html" class="admin-link">⚡ Admin</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- COURSE HEADER -->
+    <section class="course-hero">
+        <div class="container">
+            <div class="course-badge"><i class="fa-solid fa-dna"></i> IA Evolutiva · 4 lecciones · 5h</div>
+            <h1>Algoritmos Genéticos</h1>
+            <p class="desc">Aprendé cómo la evolución biológica inspira algoritmos de optimización. Implementá selección natural, cruce y mutación para resolver problemas complejos.</p>
+            <div class="lock-banner" id="lockBanner">🔒 <strong>Vista previa.</strong> El contenido completo solo está disponible para estudiantes aceptados. <a href="inscripcion.html">Inscribite aquí</a></div>
+        </div>
+    </section>
+
+    <!-- COURSE LAYOUT: MAIN CONTENT + SIDEBAR -->
+    <div class="container">
+        <div class="course-layout">
+
+            <!-- MAIN CONTENT (left) -->
+            <div class="course-layout-main">
+
+                <!-- LO QUE APRENDERÁS -->
+                <div class="section-block">
+                    <h2 class="section-title"><i class="fa-solid fa-graduation-cap" style="color:var(--green)"></i> Lo que aprenderás</h2>
+                    <div class="skills-grid">
+                        <div class="skill-item"><i class="fa-solid fa-check-circle"></i> Comprender la evolución biológica y su aplicación computacional</div>
+                        <div class="skill-item"><i class="fa-solid fa-check-circle"></i> Implementar selección, cruce y mutación desde cero</div>
+                        <div class="skill-item"><i class="fa-solid fa-check-circle"></i> Diseñar funciones de fitness para problemas complejos</div>
+                        <div class="skill-item"><i class="fa-solid fa-check-circle"></i> Aplicar AGs a optimización combinatoria (TSP)</div>
+                        <div class="skill-item"><i class="fa-solid fa-check-circle"></i> Entender elitismo y diversidad genética</div>
+                        <div class="skill-item"><i class="fa-solid fa-check-circle"></i> Comparar métodos de selección (ruleta, torneo, rango)</div>
+                        <div class="skill-item"><i class="fa-solid fa-check-circle"></i> Implementar en Python sin librerías externas</div>
+                        <div class="skill-item"><i class="fa-solid fa-check-circle"></i> Crear visualizaciones de la convergencia evolutiva</div>
+                    </div>
+                </div>
+
+                <!-- INSTRUCTOR -->
+                <div class="section-block">
+                    <h2 class="section-title"><i class="fa-solid fa-chalkboard-user" style="color:var(--blue)"></i> Instructor</h2>
+                    <div class="instructor-card">
+                        <div class="instructor-avatar"><i class="fa-solid fa-user-graduate"></i></div>
+                        <div class="instructor-info">
+                            <h4>Dra. Elena Vega</h4>
+                            <div class="role">Especialista en Computación Evolutiva</div>
+                            <p class="bio">Doctora en Ciencias de la Computación por la Universidad Politécnica de Madrid, con más de 12 años investigando algoritmos evolutivos aplicados a optimización combinatoria. Ha publicado más de 30 artículos en revistas internacionales y lidera el laboratorio de Computación Bio-Inspirada del Campus I.A. Su enfoque combina rigor matemático con implementaciones prácticas en Python.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PROYECTO DEL CURSO -->
+                <div class="section-block">
+                    <h2 class="section-title"><i class="fa-solid fa-laptop-code" style="color:var(--pink)"></i> Proyecto del curso</h2>
+                    <div class="project-card">
+                        <div class="project-icon"><i class="fa-solid fa-route"></i></div>
+                        <div class="project-info">
+                            <h4>Optimización de rutas con AGs</h4>
+                            <p>Implementarás desde cero un algoritmo genético para resolver el clásico Problema del Viajante (TSP). Partirás de una población aleatoria de rutas y, mediante selección por torneo, cruce PMX y mutación por intercambio, harás evolucionar las soluciones hasta encontrar la ruta óptima. Visualizarás la convergencia generación a generación y compararás tus resultados contra benchmarks conocidos.</p>
+                            <div class="project-tags">
+                                <span class="project-tag">Python</span>
+                                <span class="project-tag">TSP</span>
+                                <span class="project-tag">PMX Crossover</span>
+                                <span class="project-tag">Visualización</span>
+                                <span class="project-tag">Matplotlib</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RECURSOS INCLUIDOS -->
+                <div class="section-block">
+                    <h2 class="section-title"><i class="fa-solid fa-box-archive" style="color:var(--purple)"></i> Recursos incluidos</h2>
+                    <div class="resources-grid">
+                        <div class="resource-card">
+                            <i class="fa-solid fa-database rc-green"></i>
+                            <h5>Datasets de benchmark</h5>
+                            <p>Instancias TSPLIB y conjuntos de datos de optimización para practicar</p>
+                        </div>
+                        <div class="resource-card">
+                            <i class="fa-solid fa-book rc-blue"></i>
+                            <h5>Notebooks Jupyter</h5>
+                            <p>Implementaciones completas con explicaciones paso a paso</p>
+                        </div>
+                        <div class="resource-card">
+                            <i class="fa-solid fa-file-pdf rc-purple"></i>
+                            <h5>Slides PDF</h5>
+                            <p>Presentaciones descargables de cada lección teórica</p>
+                        </div>
+                        <div class="resource-card">
+                            <i class="fa-brands fa-github rc-pink"></i>
+                            <h5>Código fuente en GitHub</h5>
+                            <p>Repositorio con todo el código del curso, tests y ejercicios extra</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div><!-- /course-layout-main -->
+
+            <!-- SIDEBAR (right, sticky on desktop) -->
+            <div class="course-layout-sidebar">
+                <div class="stats-card">
+                    <h3><i class="fa-solid fa-circle-info" style="color:var(--purple)"></i> Información del curso</h3>
+                    <div class="stat-row">
+                        <span class="stat-label">Precio</span>
+                        <span class="stat-price">Gratis</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Dificultad</span>
+                        <span class="diff-badge">Intermedio</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Duración</span>
+                        <span class="stat-value">5h</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Lecciones</span>
+                        <span class="stat-value">4 lecciones</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Estudiantes</span>
+                        <span class="stat-value">1,600 inscritos</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Valoración</span>
+                        <span class="rating-stars">4.7/5 ★★★★★</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Actualizado</span>
+                        <span class="stat-value">Abril 2026</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Idioma</span>
+                        <span class="stat-value">Español</span>
+                    </div>
+                    <div class="cert-mini-badge"><i class="fa-solid fa-certificate"></i> Certificado al finalizar</div>
+                    <a href="inscripcion.html" class="stats-btn">Inscribirme ahora</a>
+                </div>
+            </div><!-- /course-layout-sidebar -->
+
+        </div><!-- /course-layout -->
+    </div><!-- /container -->
+
+    <!-- LESSONS -->
+    <section class="lessons-section">
+        <div class="container">
+            <div class="section-heading">📚 Contenido del curso</div>
+            <div class="lessons-list" id="lessonsList">
+
+                <div class="lesson-card open" data-lesson="1">
+                    <div class="lesson-header" onclick="toggleLesson(this)">
+                        <div class="lesson-num">1</div>
+                        <div class="lesson-info">
+                            <div class="lesson-title">Fundamentos de la Evolución</div>
+                            <div class="lesson-meta"><span class="tag">Teoría</span> Darwin, selección natural, conceptos clave</div>
+                        </div>
+                        <div class="lesson-check" data-check="1"><i class="fa-solid fa-check"></i></div>
+                        <i class="fa-solid fa-chevron-right lesson-chevron"></i>
+                    </div>
+                    <div class="lesson-body">
+                        <div class="lesson-content">
+                            <p>La evolución biológica es un proceso de optimización natural que lleva millones de años refinando especies. Charles Darwin propuso que los organismos mejor adaptados a su entorno tienen más probabilidades de sobrevivir y reproducirse, transmitiendo sus características a las siguientes generaciones.</p>
+                            <p>En computación, tomamos estos principios para diseñar algoritmos que buscan soluciones óptimas en espacios enormes. En lugar de probar cada posibilidad, dejamos que una población de soluciones "evolucione".</p>
+                            <div class="highlight-box">
+                                <i class="fa-solid fa-lightbulb"></i> <strong>Conceptos clave:</strong> Población (conjunto de soluciones), Individuo (una solución candidata), Gen (cada componente de la solución), Fitness (qué tan buena es), Generaciones (iteraciones del proceso evolutivo).
+                            </div>
+                            <div class="lesson-duration"><i class="fa-regular fa-clock"></i> Duración estimada: 1h 15min</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="lesson-card" data-lesson="2">
+                    <div class="lesson-header" onclick="toggleLesson(this)">
+                        <div class="lesson-num">2</div>
+                        <div class="lesson-info">
+                            <div class="lesson-title">El Algoritmo Genético Paso a Paso</div>
+                            <div class="lesson-meta"><span class="tag">Algoritmo</span> Población inicial, evaluación, selección, cruce, mutación</div>
+                        </div>
+                        <div class="lesson-check" data-check="2"><i class="fa-solid fa-check"></i></div>
+                        <i class="fa-solid fa-chevron-right lesson-chevron"></i>
+                    </div>
+                    <div class="lesson-body">
+                        <div class="lesson-content">
+                            <p>Un algoritmo genético sigue un ciclo iterativo bien definido. Comienza con una <strong>población inicial</strong> generada aleatoriamente. Cada individuo se <strong>evalúa</strong> mediante la función de fitness. Luego se <strong>seleccionan</strong> los mejores para reproducirse mediante <strong>cruce</strong> (combinación de genes de dos padres) y se aplica <strong>mutación</strong> aleatoria para mantener diversidad. Este ciclo se repite durante muchas generaciones.</p>
+                            <div class="highlight-box">
+                                <i class="fa-solid fa-diagram-project"></i> <strong>Flujo conceptual:</strong> Población inicial → Evaluar fitness → ¿Criterio de parada? → No → Selección → Cruce → Mutación → Nueva generación → Repetir. Al cumplirse el criterio (generaciones máximas o fitness objetivo), se retorna el mejor individuo.
+                            </div>
+                            <p>Cada fase tiene variantes que afectan drásticamente el rendimiento: la selección puede ser por ruleta, torneo o rango; el cruce puede ser de un punto, dos puntos o uniforme; la mutación puede ser bit-flip, gaussiana o de intercambio.</p>
+                            <div class="lesson-duration"><i class="fa-regular fa-clock"></i> Duración estimada: 1h 30min</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="lesson-card" data-lesson="3">
+                    <div class="lesson-header" onclick="toggleLesson(this)">
+                        <div class="lesson-num">3</div>
+                        <div class="lesson-info">
+                            <div class="lesson-title">Función de Fitness y Selección</div>
+                            <div class="lesson-meta"><span class="tag">Diseño</span> Tipos de fitness, selección por ruleta, torneo, elitismo</div>
+                        </div>
+                        <div class="lesson-check" data-check="3"><i class="fa-solid fa-check"></i></div>
+                        <i class="fa-solid fa-chevron-right lesson-chevron"></i>
+                    </div>
+                    <div class="lesson-body">
+                        <div class="lesson-content">
+                            <p>La <strong>función de fitness</strong> es el corazón del algoritmo genético: mide qué tan buena es cada solución. Debe ser rápida de calcular, distinguir claramente entre buenas y malas soluciones, y guiar la búsqueda hacia el óptimo global sin caer en óptimos locales.</p>
+                            <p>Existen varios métodos de <strong>selección</strong>: la <strong>ruleta</strong> asigna probabilidades proporcionales al fitness (los mejores tienen más chance pero los peores aún participan). El <strong>torneo</strong> elige k individuos al azar y toma al mejor de ese grupo. El <strong>elitismo</strong> preserva a los n mejores individuos intactos a la siguiente generación, garantizando que el mejor fitness nunca empeore.</p>
+                            <div class="highlight-box">
+                                <i class="fa-solid fa-scale-balanced"></i> <strong>Comparación:</strong> Ruleta mantiene diversidad pero puede converger lento. Torneo es simple, ajustable con k (presión selectiva). Elitismo acelera convergencia pero puede causar convergencia prematura. La práctica común es usar torneo + elitismo.
+                            </div>
+                            <div class="lesson-duration"><i class="fa-regular fa-clock"></i> Duración estimada: 1h 15min</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="lesson-card" data-lesson="4">
+                    <div class="lesson-header" onclick="toggleLesson(this)">
+                        <div class="lesson-num">4</div>
+                        <div class="lesson-info">
+                            <div class="lesson-title">Aplicaciones Avanzadas</div>
+                            <div class="lesson-meta"><span class="tag">Práctica</span> Optimización de rutas, diseño de redes neuronales, scheduling</div>
+                        </div>
+                        <div class="lesson-check" data-check="4"><i class="fa-solid fa-check"></i></div>
+                        <i class="fa-solid fa-chevron-right lesson-chevron"></i>
+                    </div>
+                    <div class="lesson-body">
+                        <div class="lesson-content">
+                            <p>Los algoritmos genéticos brillan en problemas con espacios de búsqueda enormes donde los métodos tradicionales fallan. El clásico <strong>problema del viajante (TSP)</strong> encuentra rutas óptimas entre ciudades usando AGs con codificación por permutación y operadores de cruce especializados como PMX (Partially Mapped Crossover).</p>
+                            <p>En <strong>deep learning</strong>, se usan AGs para optimizar hiperparámetros (learning rate, número de capas, neuronas) y para diseñar arquitecturas de redes neuronales (NEAT — NeuroEvolution of Augmenting Topologies). También son efectivos en <strong>scheduling</strong> (horarios, planificación de producción) y diseño de ingeniería.</p>
+                            <div class="highlight-box">
+                                <i class="fa-solid fa-triangle-exclamation"></i> <strong>Limitaciones:</strong> Los AGs no garantizan encontrar el óptimo global. Son costosos computacionalmente (muchas evaluaciones de fitness). No son adecuados para problemas con restricciones estrictas o donde se necesita la solución exacta. Son ideales cuando tenés un espacio de búsqueda enorme, una función de fitness clara pero no derivable, y tiempo para explorar.
+                            </div>
+                            <div class="lesson-duration"><i class="fa-regular fa-clock"></i> Duración estimada: 1h</div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- EXAMEN DEL CURSO -->
+    <section class="section-block" style="padding-top:0">
+        <div class="container-narrow">
+            <h2 class="section-title"><i class="fa-solid fa-clipboard-question" style="color:var(--green)"></i> Examen del curso</h2>
+            <p style="color:var(--text-secondary); font-size:.88rem; margin-bottom:16px">Poné a prueba tus conocimientos sobre algoritmos genéticos.</p>
+
+            <div class="quiz-card">
+                <div class="quiz-header" onclick="toggleQuiz(this)">
+                    <span>¿Qué fase mantiene la diversidad genética en la población?</span>
+                    <i class="fa-solid fa-chevron-down quiz-chevron"></i>
+                </div>
+                <div class="quiz-body">
+                    <div class="quiz-answer">✅ <strong>Mutación.</strong> Introduce cambios aleatorios en los genes para evitar que la población converja prematuramente hacia óptimos locales.</div>
+                </div>
+            </div>
+
+            <div class="quiz-card">
+                <div class="quiz-header" onclick="toggleQuiz(this)">
+                    <span>¿Qué método preserva a los mejores individuos intactos entre generaciones?</span>
+                    <i class="fa-solid fa-chevron-down quiz-chevron"></i>
+                </div>
+                <div class="quiz-body">
+                    <div class="quiz-answer">✅ <strong>Elitismo.</strong> Garantiza que los n individuos con mejor fitness pasen directamente a la siguiente generación sin ser modificados.</div>
+                </div>
+            </div>
+
+            <div class="quiz-card">
+                <div class="quiz-header" onclick="toggleQuiz(this)">
+                    <span>¿Qué operador genético combina genes de dos padres para generar descendencia?</span>
+                    <i class="fa-solid fa-chevron-down quiz-chevron"></i>
+                </div>
+                <div class="quiz-body">
+                    <div class="quiz-answer">✅ <strong>Cruce (crossover).</strong> Permite explorar nuevas regiones del espacio de búsqueda combinando características prometedoras de ambos padres.</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CURSOS RELACIONADOS -->
+    <section class="section-block">
+        <div class="container-narrow">
+            <h2 class="section-title"><i class="fa-solid fa-link" style="color:var(--blue)"></i> Cursos relacionados</h2>
+            <div class="related-grid">
+                <a href="redes-neuronales.html" class="related-card">
+                    <i class="fa-solid fa-project-diagram" style="color:var(--green)"></i>
+                    <h5>Redes Neuronales con NEAT</h5>
+                    <p>Neuroevolución de topologías aumentadas: evolución de arquitecturas neuronales.</p>
+                </a>
+                <a href="aprendizaje-por-refuerzo.html" class="related-card">
+                    <i class="fa-solid fa-robot" style="color:var(--blue)"></i>
+                    <h5>Aprendizaje por Refuerzo</h5>
+                    <p>Agentes inteligentes que aprenden mediante prueba y error con recompensas.</p>
+                </a>
+                <a href="ia-general.html" class="related-card">
+                    <i class="fa-solid fa-brain" style="color:var(--purple)"></i>
+                    <h5>Inteligencia Artificial General</h5>
+                    <p>Fundamentos, paradigmas y el camino hacia una IA de propósito general.</p>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- CERTIFICACIÓN -->
+    <section class="section-block">
+        <div class="container-narrow">
+            <h2 class="section-title"><i class="fa-solid fa-certificate" style="color:var(--green)"></i> Certificación</h2>
+            <div class="cert-section">
+                <div class="cert-icon"><i class="fa-solid fa-award"></i></div>
+                <h3>Certificado de finalización</h3>
+                <p>Al completar las 4 lecciones y aprobar el examen, recibirás un certificado digital verificable que acredita tus competencias en Algoritmos Genéticos y Computación Evolutiva.</p>
+                <div class="cert-features">
+                    <div class="cert-feat"><i class="fa-solid fa-circle-check"></i> Verificable en blockchain</div>
+                    <div class="cert-feat"><i class="fa-solid fa-circle-check"></i> Compartible en LinkedIn</div>
+                    <div class="cert-feat"><i class="fa-solid fa-circle-check"></i> PDF descargable</div>
+                    <div class="cert-feat"><i class="fa-solid fa-circle-check"></i> Avalado por Campus I.A.</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <h3>🤖 Campus<span>IA</span></h3>
+                    <p>Construido con Python, FastAPI y amor por el Machine Learning. Aprende IA de forma práctica con demos interactivas reales.</p>
+                </div>
+                <div class="footer-col">
+                    <h4>Cursos</h4>
+                    <a href="index.html#cursos">Regresión Lineal</a>
+                    <a href="algoritmos-geneticos.html">Algoritmo Genético</a>
+                    <a href="index.html#infra">Infraestructura y Despliegue</a>
+                </div>
+                <div class="footer-col">
+                    <h4>Recursos</h4>
+                    <a href="#">Documentación</a>
+                    <a href="#">API Reference</a>
+                    <a href="#">GitHub</a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <span>© 2026 Campus I.A. — Todos los derechos reservados.</span>
+                <div class="social-links">
+                    <a href="#" aria-label="GitHub"><i class="fa-brands fa-github"></i></a>
+                    <a href="#" aria-label="YouTube"><i class="fa-brands fa-youtube"></i></a>
+                    <a href="#" aria-label="Twitter"><i class="fa-brands fa-x-twitter"></i></a>
+                    <a href="#" aria-label="LinkedIn"><i class="fa-brands fa-linkedin-in"></i></a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // ============ PARTICLES BACKGROUND ============
+        const canvas = document.getElementById('bgCanvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [], mouse = { x: null, y: null };
+
+        function resize() { canvas.width = innerWidth; canvas.height = innerHeight }
+        resize(); addEventListener('resize', resize);
+        addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY });
+
+        class Particle {
+            constructor() { this.reset() }
+            reset() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.size = Math.random() * 1.8 + 0.5;
+                this.speedX = (Math.random() - 0.5) * 0.5;
+                this.speedY = (Math.random() - 0.5) * 0.5;
+                this.opacity = Math.random() * 0.5 + 0.1;
+                this.color = ['152,202,63','139,92,246','236,72,153','59,130,246'][Math.floor(Math.random()*4)];
+            }
+            update() {
+                this.x += this.speedX; this.y += this.speedY;
+                if (mouse.x != null) {
+                    const dx = mouse.x - this.x, dy = mouse.y - this.y, dist = Math.sqrt(dx*dx+dy*dy);
+                    if (dist < 150) { const f = (150-dist)/150; this.x -= (dx/dist)*f*1.2; this.y -= (dy/dist)*f*1.2 }
+                }
+                if (this.x < 0) this.x = canvas.width; if (this.x > canvas.width) this.x = 0;
+                if (this.y < 0) this.y = canvas.height; if (this.y > canvas.height) this.y = 0;
+            }
+            draw() { ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI*2); ctx.fillStyle = `rgba(${this.color},${this.opacity})`; ctx.fill() }
+        }
+
+        for (let i = 0; i < 80; i++) particles.push(new Particle());
+
+        function connect() {
+            for (let i = 0; i < particles.length; i++)
+                for (let j = i+1; j < particles.length; j++) {
+                    const dx = particles[i].x - particles[j].x, dy = particles[i].y - particles[j].y, dist = Math.sqrt(dx*dx+dy*dy);
+                    if (dist < 130) { ctx.beginPath(); ctx.strokeStyle = `rgba(152,202,63,${(1-dist/130)*0.08})`; ctx.lineWidth = 0.5; ctx.moveTo(particles[i].x, particles[i].y); ctx.lineTo(particles[j].x, particles[j].y); ctx.stroke() }
+                }
+        }
+        (function animate() { ctx.clearRect(0, 0, canvas.width, canvas.height); particles.forEach(p => { p.update(); p.draw() }); connect(); requestAnimationFrame(animate) })();
+
+        // ============ NAVBAR SCROLL ============
+        const navbar = document.getElementById('navbar');
+        addEventListener('scroll', () => { navbar.classList.toggle('scrolled', pageYOffset > 50) });
+
+        // ============ MOBILE TOGGLE ============
+        document.getElementById('navToggle').addEventListener('click', () => document.getElementById('navLinks').classList.toggle('open'));
+        document.querySelectorAll('.nav-links a').forEach(l => l.addEventListener('click', () => document.getElementById('navLinks').classList.remove('open')));
+
+        // ============ LESSON TOGGLE + PROGRESS ============
+        const COURSE_NAME = 'Algoritmos Genéticos';
+        const TOTAL_LESSONS = 4;
+        const session = (() => { try { return JSON.parse(sessionStorage.getItem('ia_student_session')); } catch(e) { return null; } })();
+        const isAccepted = session && session.status === 'accepted'; if (session) { const adminLink = document.querySelector('.admin-link'); if (adminLink) adminLink.style.display = 'none'; }
+
+        if (!isAccepted) {
+            document.getElementById('lockBanner').classList.add('visible');
+            document.querySelectorAll('.lesson-card').forEach(item => {
+                item.classList.add('locked');
+                const lockMsg = document.createElement('div');
+                lockMsg.className = 'lesson-lock-msg';
+                lockMsg.innerHTML = '🔒 <strong>Contenido bloqueado.</strong> <a href="inscripcion.html">Inscribite</a> y esperá la aceptación para acceder a la teoría completa.';
+                item.appendChild(lockMsg);
+            });
+        }
+
+        const STORAGE_KEY = 'ia_course_progress';
+
+        function getProgress() {
+            try {
+                const data = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+                return data[COURSE_NAME] || [];
+            } catch(e) {
+                return [];
+            }
+        }
+
+        function saveProgress(lessonNum) {
+            const progress = getProgress();
+            if (!progress.includes(lessonNum)) {
+                progress.push(lessonNum);
+                const data = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+                data[COURSE_NAME] = progress;
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+            }
+            updateProgressUI();
+        }
+
+        function updateProgressUI() {
+            const completed = getProgress();
+            const pct = Math.round((completed.length / TOTAL_LESSONS) * 100);
+            document.getElementById('progressBarFill').style.width = pct + '%';
+
+            document.querySelectorAll('.lesson-check').forEach(el => {
+                const num = parseInt(el.dataset.check);
+                if (completed.includes(num)) {
+                    el.classList.add('done');
+                } else {
+                    el.classList.remove('done');
+                }
+            });
+        }
+
+        function toggleLesson(header) {
+            const card = header.parentElement;
+            if (card.classList.contains('locked')) {
+                card.classList.toggle('open');
+                return;
+            }
+            const lessonNum = parseInt(card.dataset.lesson);
+            const wasOpen = card.classList.contains('open');
+            card.classList.toggle('open');
+            if (!wasOpen) {
+                saveProgress(lessonNum);
+            }
+        }
+
+        // ============ QUIZ TOGGLE ============
+        function toggleQuiz(header) {
+            const card = header.parentElement;
+            card.classList.toggle('open');
+        }
+
+        updateProgressUI();
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <script src="supabase.js"></script>
+</body>
+</html>
