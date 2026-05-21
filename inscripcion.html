@@ -182,7 +182,19 @@
                     <div class="success-box" id="successMessage">
                         <span class="icon">✅</span>
                         <h2>¡Inscripción exitosa!</h2>
-                        <p>Revisa tu correo para las instrucciones de acceso. También puedes iniciar sesión en tu perfil.</p>
+                        <p>Tu cuenta fue creada. Guardá tus credenciales para iniciar sesión.</p>
+                        <div id="credsBox" style="background:rgba(0,0,0,0.3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:18px 20px;margin:16px 0 24px;text-align:left">
+                            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+                                <span style="font-size:.75rem;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:1px">🔑 Tus credenciales</span>
+                                <button id="copyCredsBtn" onclick="copyCredentials()" style="background:rgba(152,202,63,0.1);border:1px solid rgba(152,202,63,0.2);color:var(--green);padding:5px 12px;border-radius:6px;cursor:pointer;font-size:.72rem;font-weight:600;transition:all .2s"><i class="fa-regular fa-copy"></i> Copiar</button>
+                            </div>
+                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:.85rem">
+                                <span style="color:var(--text-muted)">📧 Usuario:</span>
+                                <span id="successEmail" style="color:#fff;font-weight:600;word-break:break-all"></span>
+                                <span style="color:var(--text-muted)">🔐 Contraseña:</span>
+                                <span id="successPassword" style="color:var(--green);font-weight:700;font-family:monospace;letter-spacing:1px"></span>
+                            </div>
+                        </div>
                         <a href="perfil.html" class="btn-back"><i class="fa-solid fa-user"></i> Ir a Mi Perfil</a>
                     </div>
                 </div>
@@ -210,6 +222,19 @@
         for(let i=0;i<60;i++)particles.push(new P());
         function cn(){for(let i=0;i<particles.length;i++)for(let j=i+1;j<particles.length;j++){const dx=particles[i].x-particles[j].x,dy=particles[i].y-particles[j].y,dist=Math.sqrt(dx*dx+dy*dy);if(dist<130){ctx.beginPath();ctx.strokeStyle=`rgba(152,202,63,${(1-dist/130)*.06})`;ctx.lineWidth=.5;ctx.moveTo(particles[i].x,particles[i].y);ctx.lineTo(particles[j].x,particles[j].y);ctx.stroke()}}}
         (function a(){ctx.clearRect(0,0,canvas.width,canvas.height);particles.forEach(p=>{p.u();p.d()});cn();requestAnimationFrame(a)})();
+
+        // Copy credentials
+        function copyCredentials() {
+            const email = document.getElementById('successEmail').textContent;
+            const pw = document.getElementById('successPassword').textContent;
+            navigator.clipboard.writeText('Usuario: ' + email + '\nContraseña: ' + pw).then(() => {
+                const btn = document.getElementById('copyCredsBtn');
+                btn.innerHTML = '<i class="fa-solid fa-check"></i> Copiado';
+                btn.style.borderColor = 'var(--green)';
+                btn.style.background = 'rgba(152,202,63,0.2)';
+                setTimeout(() => { btn.innerHTML = '<i class="fa-regular fa-copy"></i> Copiar'; btn.style.borderColor = 'rgba(152,202,63,0.2)'; btn.style.background = 'rgba(152,202,63,0.1)'; }, 2000);
+            }).catch(() => toast('❌ No se pudo copiar'));
+        }
 
         // Toast
         function toast(msg){const old=document.querySelector('.toast');if(old)old.remove();const t=document.createElement('div');t.className='toast';t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),3000)}
@@ -321,17 +346,19 @@
                 inscripciones.push(formData);
                 localStorage.setItem('ia_inscripciones', JSON.stringify(inscripciones));
 
-                // 4. Mostrar éxito SOLO si todo funcionó
+                // 4. Mostrar credenciales y éxito
+                document.getElementById('successEmail').textContent = formData.email;
+                document.getElementById('successPassword').textContent = tempPassword;
                 document.getElementById('enrollmentForm').style.display='none';
                 document.getElementById('formHeader').style.display='none';
                 document.getElementById('successMessage').style.display='block';
-                toast('✅ ¡Registro exitoso! Revisá tu correo.');
+                toast('✅ ¡Registro exitoso! Guardá tus credenciales.');
 
-                // 5. Enviar correo de bienvenida (no bloquea el éxito)
+                // 5. Enviar correo de bienvenida con contraseña (no bloquea el éxito)
                 if (window.enviarCorreoBienvenida) {
                     try {
-                        await window.enviarCorreoBienvenida(formData.fullName, formData.email, formData.course);
-                        console.log('📧 Correo enviado a', formData.email);
+                        await window.enviarCorreoBienvenida(formData.fullName, formData.email, formData.course, tempPassword);
+                        console.log('📧 Correo con contraseña enviado a', formData.email);
                     } catch (mailErr) {
                         console.warn('⚠️ Correo no enviado:', mailErr.message);
                     }

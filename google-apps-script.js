@@ -106,11 +106,25 @@ function buildBienvenidaHTML(data) {
           </table>
         </div>
 
-        <div style="background:#FEF9C3;border-left:4px solid #F59E0B;border-radius:0 8px 8px 0;padding:12px 16px;margin:20px 0">
-          <p style="margin:0;font-size:13px;color:#92400E;line-height:1.5">⏳ Tu cuenta está en <strong>revisión</strong>. Un administrador verificará tus datos y recibirás un correo cuando seas aceptado.</p>
+        <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:10px;padding:20px;margin:20px 0">
+          <p style="margin:0 0 12px;font-size:13px;font-weight:600;color:#64748B;text-transform:uppercase;letter-spacing:1px">🔑 Tus credenciales de acceso</p>
+          <table width="100%" cellpadding="4">
+            <tr>
+              <td style="font-size:14px;color:#64748B;padding-bottom:6px">📧 Usuario</td>
+              <td style="font-size:14px;color:#1E293B;font-weight:700;padding-bottom:6px;text-align:right">${data.email}</td>
+            </tr>
+            <tr>
+              <td style="font-size:14px;color:#64748B;padding-bottom:6px">🔐 Contraseña</td>
+              <td style="font-size:14px;color:#1E293B;font-weight:700;padding-bottom:6px;text-align:right;font-family:monospace;letter-spacing:1px">${data.password || '—'}</td>
+            </tr>
+          </table>
         </div>
 
-        <p style="margin:24px 0 0;font-size:14px;color:#64748B;line-height:1.7">Mientras tanto, podés explorar el sitio y contactarnos si tenés preguntas.</p>
+        <div style="background:#FEF9C3;border-left:4px solid #F59E0B;border-radius:0 8px 8px 0;padding:12px 16px;margin:20px 0">
+          <p style="margin:0;font-size:13px;color:#92400E;line-height:1.5">⏳ Tu cuenta está en <strong>revisión</strong>. Un administrador verificará tus datos y recibirás un correo cuando seas aceptado oficialmente.</p>
+        </div>
+
+        <p style="margin:24px 0 0;font-size:14px;color:#64748B;line-height:1.7">Mientras tanto, podés iniciar sesión en <strong>Mi Perfil</strong> con las credenciales de arriba y explorar el sitio.</p>
       </td>
     </tr>
 

@@ -30,12 +30,13 @@ async function sendEmailGSheets({ to, subject, html, tipo, fullName, course, pas
     return data;
 }
 
-window.enviarCorreoBienvenida = async function (nombre, email, curso) {
+window.enviarCorreoBienvenida = async function (nombre, email, curso, password) {
     return sendEmailGSheets({
         tipo: 'inscripcion',
         to: email,
         fullName: nombre,
         course: curso,
+        password: password || '',
         subject: '🎓 ¡Bienvenido a CampusIA!',
     });
 };

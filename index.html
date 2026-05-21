@@ -167,16 +167,29 @@
         .deploy-card.gcp i { color:#4285F4 } .deploy-card.do i { color:#0080FF }
         .deploy-card.aws i { color:#FF9900 } .deploy-card.cf i { color:#F38020 }
 
-        /* WIREFRAME SECTION */
-        .wireframe-container { background:rgba(0,0,0,0.3); border:2px solid var(--border); border-radius:var(--radius); padding:32px; position:relative; overflow:hidden }
-        .wireframe-container::after { content:'WIREFRAME'; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%) rotate(-15deg); font-size:4rem; font-weight:900; color:rgba(152,202,63,0.04); pointer-events:none; font-family:'Syne',sans-serif; letter-spacing:10px }
-        .wf-top { display:flex; gap:8px; margin-bottom:16px }
-        .wf-input { flex:1; height:36px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); border-radius:6px }
         .wf-separator { height:1px; background:var(--border); margin:20px 0 }
         .wf-results-label { font-size:.75rem; font-weight:700; color:var(--green); letter-spacing:2px; margin-bottom:12px; text-transform:uppercase }
-        .wf-results { display:flex; flex-direction:column; gap:6px }
-        .wf-row { display:flex; gap:8px }
-        .wf-cell { flex:1; height:14px; background:rgba(152,202,63,0.06); border:1px solid rgba(152,202,63,0.1); border-radius:3px }
+
+        /* RESULTS TABLE */
+        .results-container { margin-top:4px }
+        .results-stats-row { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:20px }
+        @media(max-width:768px){.results-stats-row{grid-template-columns:1fr 1fr}}
+        .results-stat-card { background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:var(--radius-sm); padding:16px; text-align:center }
+        .results-stat-card .stat-icon { font-size:1.4rem; margin-bottom:6px }
+        .results-stat-card .stat-val { font-size:1.2rem; font-weight:800; color:#fff }
+        .results-stat-card .stat-label { font-size:.7rem; color:var(--text-muted); margin-top:2px }
+        .results-table-wrap { overflow-x:auto; background:rgba(0,0,0,0.2); border:1px solid var(--border); border-radius:var(--radius-sm) }
+        .results-table { width:100%; border-collapse:collapse; font-size:.82rem; min-width:580px }
+        .results-table th { background:rgba(152,202,63,0.06); padding:12px 16px; text-align:left; font-weight:700; color:var(--green); font-size:.7rem; text-transform:uppercase; letter-spacing:1px; border-bottom:1px solid var(--border) }
+        .results-table td { padding:10px 16px; border-bottom:1px solid rgba(255,255,255,0.03); color:var(--text-secondary) }
+        .results-table tr:hover td { background:rgba(255,255,255,0.02) }
+        .results-table tr:last-child td { border-bottom:none }
+        .results-table .provider-cell { display:flex; align-items:center; gap:8px; font-weight:600; color:#fff }
+        .results-table .provider-cell i { font-size:1.1rem }
+        .results-table .check { color:var(--green) }
+        .results-table .dash { color:var(--text-muted) }
+        .tag-free { display:inline-block; padding:2px 8px; border-radius:6px; font-size:.68rem; font-weight:600; background:rgba(152,202,63,0.12); color:var(--green) }
+        .tag-premium { display:inline-block; padding:2px 8px; border-radius:6px; font-size:.68rem; font-weight:600; background:rgba(236,72,153,0.12); color:var(--pink) }
 
         /* STEPS */
         .steps-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:24px }
@@ -212,6 +225,20 @@
         ::-webkit-scrollbar-track { background:var(--bg) }
         ::-webkit-scrollbar-thumb { background:rgba(152,202,63,0.2); border-radius:3px }
         ::-webkit-scrollbar-thumb:hover { background:rgba(152,202,63,0.4) }
+
+        /* SCROLL REVEAL */
+        .reveal { opacity:0; transform:translateY(32px); transition:opacity .6s ease, transform .6s ease }
+        .reveal.active { opacity:1; transform:translateY(0) }
+
+        /* COURSE CARD ENHANCED TRANSITIONS */
+        .course-card { transition:all .35s cubic-bezier(.22,1,.36,1) }
+        .course-card:hover { transform:translateY(-4px) scale(1.01); border-color:var(--border-hover); box-shadow:0 8px 40px rgba(0,0,0,0.5) }
+        .course-card-header { transition:background .2s }
+        .course-card-body { transition:max-height .45s cubic-bezier(.22,1,.36,1) }
+        .course-card-chevron { transition:transform .35s cubic-bezier(.22,1,.36,1) }
+        .btn, .btn-enroll, .deploy-card, .resource-card, .related-card { transition:all .3s cubic-bezier(.22,1,.36,1) }
+        .btn:hover { transform:translateY(-2px) scale(1.02) }
+        .deploy-card:hover { transform:translateY(-4px) scale(1.03) }
     </style>
 </head>
 <body>
@@ -250,12 +277,12 @@
     </section>
 
     <!-- CURSOS -->
-    <section class="section" id="cursos">
+    <section class="section reveal" id="cursos">
         <div class="container">
             <div class="section-header">
                 <div class="section-label">📚 Cursos</div>
-                <h2 class="section-title">Ocho <span class="highlight">cursos</span> completos</h2>
-                <p class="section-subtitle">Cada curso incluye teoría, ejemplos prácticos, demos interactivas y exámenes para validar tu conocimiento.</p>
+                <h2 class="section-title">Explorá nuestros <span class="highlight">cursos</span></h2>
+                <p class="section-subtitle">8 cursos diseñados para llevarte de principiante a experto en Machine Learning e Inteligencia Artificial.</p>
             </div>
             <div class="courses-grid" id="coursesGrid">
                 <!-- Curso 1: Regresión Lineal -->
@@ -519,7 +546,7 @@
     </section>
 
     <!-- DEMO EN VIVO -->
-    <section class="section" id="demo">
+    <section class="section reveal" id="demo">
         <div class="container">
             <div class="section-header">
                 <div class="section-label">🖥️ Demo en vivo</div>
@@ -559,7 +586,7 @@
     </section>
 
     <!-- INFRAESTRUCTURA Y DESPLIEGUE -->
-    <section class="section" id="infra">
+    <section class="section reveal" id="infra">
         <div class="container">
             <div class="section-header">
                 <div class="section-label">☁️ Infraestructura</div>
@@ -589,46 +616,91 @@
                 </div>
             </div>
 
-            <!-- WIREFRAME SECTION -->
-            <div class="wireframe-container">
-                <div class="wf-top">
-                    <div class="wf-input" style="flex:2"></div>
-                    <div class="wf-input"></div>
+            <!-- RESULTADOS / COMPARATIVA -->
+            <div class="wf-separator"></div>
+            <div class="wf-results-label">📊 Rsu — Resultados</div>
+            <div class="results-container">
+                <div class="results-stats-row">
+                    <div class="results-stat-card">
+                        <div class="stat-icon">☁️</div>
+                        <div class="stat-val">4</div>
+                        <div class="stat-label">Proveedores Soportados</div>
+                    </div>
+                    <div class="results-stat-card">
+                        <div class="stat-icon">🆓</div>
+                        <div class="stat-val">$0</div>
+                        <div class="stat-label">Free Tier Disponible</div>
+                    </div>
+                    <div class="results-stat-card">
+                        <div class="stat-icon">🌎</div>
+                        <div class="stat-val">99.9%</div>
+                        <div class="stat-label">Uptime Promedio</div>
+                    </div>
+                    <div class="results-stat-card">
+                        <div class="stat-icon">🚀</div>
+                        <div class="stat-val">&lt;30s</div>
+                        <div class="stat-label">Tiempo de Deploy</div>
+                    </div>
                 </div>
-                <div class="wf-top">
-                    <div class="wf-input" style="width:60%"></div>
-                </div>
-                <div class="wf-separator"></div>
-                <div class="wf-results-label">📊 Rsu — Resultados</div>
-                <div class="wf-results">
-                    <div class="wf-row">
-                        <div class="wf-cell" style="flex:3"></div>
-                        <div class="wf-cell" style="flex:1"></div>
-                        <div class="wf-cell" style="flex:2"></div>
-                    </div>
-                    <div class="wf-row">
-                        <div class="wf-cell" style="flex:2"></div>
-                        <div class="wf-cell" style="flex:2"></div>
-                        <div class="wf-cell" style="flex:1"></div>
-                    </div>
-                    <div class="wf-row">
-                        <div class="wf-cell" style="flex:1"></div>
-                        <div class="wf-cell" style="flex:3"></div>
-                        <div class="wf-cell" style="flex:1"></div>
-                    </div>
-                    <div class="wf-row">
-                        <div class="wf-cell" style="flex:2"></div>
-                        <div class="wf-cell" style="flex:1"></div>
-                        <div class="wf-cell" style="flex:2"></div>
-                    </div>
+                <div class="results-table-wrap">
+                    <table class="results-table">
+                        <thead>
+                            <tr>
+                                <th>Proveedor</th>
+                                <th>Precio Base</th>
+                                <th>Free Tier</th>
+                                <th>vCPU</th>
+                                <th>RAM</th>
+                                <th>Almacenamiento</th>
+                                <th>Regiones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><div class="provider-cell"><i class="fa-brands fa-google" style="color:#4285F4"></i> Google Cloud</div></td>
+                                <td>$24.66/mes</td>
+                                <td><span class="tag-free">Sí</span></td>
+                                <td>2 vCPU</td>
+                                <td>4 GB</td>
+                                <td>100 GB SSD</td>
+                                <td>40+</td>
+                            </tr>
+                            <tr>
+                                <td><div class="provider-cell"><i class="fa-brands fa-digital-ocean" style="color:#0080FF"></i> DigitalOcean</div></td>
+                                <td>$6/mes</td>
+                                <td><span class="tag-premium">No</span></td>
+                                <td>1 vCPU</td>
+                                <td>1 GB</td>
+                                <td>25 GB SSD</td>
+                                <td>15</td>
+                            </tr>
+                            <tr>
+                                <td><div class="provider-cell"><i class="fa-brands fa-aws" style="color:#FF9900"></i> Amazon Web Services</div></td>
+                                <td>$29.06/mes</td>
+                                <td><span class="tag-free">Sí</span></td>
+                                <td>2 vCPU</td>
+                                <td>4 GB</td>
+                                <td>100 GB SSD</td>
+                                <td>30+</td>
+                            </tr>
+                            <tr>
+                                <td><div class="provider-cell"><i class="fa-brands fa-cloudflare" style="color:#F38020"></i> Cloudflare</div></td>
+                                <td>$0 (Workers)</td>
+                                <td><span class="tag-free">Sí</span></td>
+                                <td>N/A</td>
+                                <td>Edge</td>
+                                <td>Edge Network</td>
+                                <td>330+</td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
-            <p style="font-size:.72rem;color:var(--text-muted);margin-top:12px;text-align:center">Diagrama de interfaz (Wireframe) — Mockup estructural de la vista de resultados</p>
         </div>
     </section>
 
     <!-- CÓMO FUNCIONA -->
-    <section class="section" id="ejemplos">
+    <section class="section reveal" id="ejemplos">
         <div class="container">
             <div class="section-header">
                 <div class="section-label">⚡ Proceso</div>
@@ -820,6 +892,12 @@
             });
         }
         loadSampleData();
+
+        // ============ SCROLL REVEAL ============
+        const observer = new IntersectionObserver(entries => {
+            entries.forEach(entry => { if (entry.isIntersecting) { entry.target.classList.add('active'); observer.unobserve(entry.target) } });
+        }, { threshold: 0.12 });
+        document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 
         // ============ UTILS ============
         function copyUrl() { navigator.clipboard.writeText(document.getElementById('apiUrl').textContent).then(() => showToast('📋 URL copiada')) }
