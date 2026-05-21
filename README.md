@@ -7,7 +7,7 @@ Plataforma educativa de cursos de Inteligencia Artificial con contenido interact
 - **Frontend:** HTML + CSS + JavaScript vanilla
 - **Backend:** Supabase (Auth + Database)
 - **Emails:** Google Apps Script (welcome + acceptance)
-- **Hosting:** DigitalOcean — [https://monkfish-app-au7oa.ondigitalocean.app/](https://monkfish-app-au7oa.ondigitalocean.app/)
+- **Hosting:** GitHub Pages
 
 ## Estructura
 
@@ -52,7 +52,7 @@ LAB_MARIA_M.L/
 
 - **Email:** `olaya1726@gmail.com`
 - **Contraseña:** `admin123`
-- Crear el usuario en Supabase > Authentication > Users con ese email y contraseña
+-.
 
 ## Funcionalidades
 

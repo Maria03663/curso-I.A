@@ -295,6 +295,17 @@
                 const username = formData.fullName.toLowerCase().replace(/[^a-záéíóúñü]/g,'').replace(/[áéíóúñ]/g, function(m){return {á:'a',é:'e',í:'i',ó:'o',ú:'u',ñ:'n'}[m]}) + '.' + Math.random().toString(36).slice(2, 6);
                 console.log('🔐 Registrando en Supabase Auth... Usuario:', username);
 
+                // Verificar primero si el email ya existe en la tabla profiles
+                const { data: existingProfile } = await window.supabase
+                    .from('profiles')
+                    .select('email')
+                    .eq('email', formData.email)
+                    .maybeSingle();
+
+                if (existingProfile) {
+                    throw new Error('Este correo electrónico ya está registrado. Usá "Iniciar sesión" o contactá al administrador.');
+                }
+
                 const { data: authData, error: authError } = await window.supabase.auth.signUp({
                     email: formData.email,
                     password: tempPassword,
@@ -305,7 +316,7 @@
                         throw new Error('Demasiados intentos. Desactivá "Confirm email" en Supabase (Auth > Settings) o esperá 1 hora.');
                     }
                     if (authError.message?.includes('already registered') || authError.message?.includes('already exists')) {
-                        throw new Error('Este email ya está registrado. Revisá tu bandeja de entrada.');
+                        throw new Error('Este correo fue registrado anteriormente pero el perfil no se completó. Contactá al administrador para activarlo o usá otro email.');
                     }
                     throw new Error(authError.message || 'Error al crear la cuenta');
                 }
