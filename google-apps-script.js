@@ -64,6 +64,8 @@ function doGet() {
 // PLANTILLAS DE EMAIL
 // ============================================
 
+var SITE_URL = 'https://maria03663.github.io/curso-I.A'; // CAMBIÁ esto por tu URL real
+
 function esc(str) {
   return (str || '').replace(/[&<>"']/g, function(m) {
     if (m === '&') return '&amp;';
@@ -95,7 +97,9 @@ function buildBienvenidaHTML(data) {
     + '<p style=\"margin:0 0 12px;font-size:13px;font-weight:600;color:#64748B;text-transform:uppercase;letter-spacing:1px\">🔑 Tus credenciales de acceso</p>'
     + '<table width=\"100%\" cellpadding=\"4\"><tr><td style=\"font-size:14px;color:#64748B;padding-bottom:6px\">📧 Usuario</td><td style=\"font-size:14px;color:#1E293B;font-weight:700;padding-bottom:6px;text-align:right\">' + e + '</td></tr>'
     + '<tr><td style=\"font-size:14px;color:#64748B;padding-bottom:6px\">🔐 Contrase&ntilde;a</td><td style=\"font-size:14px;color:#1E293B;font-weight:700;padding-bottom:6px;text-align:right;font-family:monospace;letter-spacing:1px\">' + p + '</td></tr></table></div>'
-    + '<p style=\"margin:20px 0 0;font-size:14px;color:#64748B;line-height:1.7\">Ya pod&eacute;s iniciar sesi&oacute;n en <strong>Mi Perfil</strong> con tus credenciales y explorar el contenido del curso.</p>'
+    + '<p style=\"margin:20px 0 0;font-size:14px;color:#64748B;line-height:1.7\">Ya pod&eacute;s iniciar sesi&oacute;n con tus credenciales y explorar el contenido del curso.</p>'
+    + '<div style=\"margin:24px 0 0;text-align:center\">'
+    + '<a href=\"' + SITE_URL + '/perfil.html\" style=\"display:inline-block;padding:14px 36px;background:#8B5CF6;color:#FFFFFF;text-decoration:none;border-radius:10px;font-weight:700;font-size:15px\">Ir a Mi Perfil &rarr;</a></div>'
     + '</td></tr>'
     + '<tr><td style=\"padding:20px 32px;background:#F8FAFC;border-top:1px solid #E2E8F0;text-align:center\">'
     + '<p style=\"margin:0 0 4px;font-size:12px;font-weight:600;color:#8B5CF6\">CampusIA &mdash; Aprend&eacute; Machine Learning desde cero</p>'
@@ -123,7 +127,7 @@ function buildAceptacionHTML(data) {
     + '<tr><td style=\"font-size:14px;color:#64748B;padding-bottom:6px\">🔐 Contrase&ntilde;a</td><td style=\"font-size:14px;color:#1E293B;font-weight:700;padding-bottom:6px;text-align:right;font-family:monospace;letter-spacing:1px\">' + p + '</td></tr></table></div>'
     + '<p style=\"margin:20px 0 8px;font-size:14px;color:#475569;line-height:1.7\">Inici&aacute; sesi&oacute;n en <strong>Mi Perfil</strong> con estas credenciales para acceder a las lecciones, material complementario y evaluaciones.</p>'
     + '<div style=\"margin:24px 0 0;text-align:center\">'
-    + '<a href=\"#\" style=\"display:inline-block;padding:14px 36px;background:#8B5CF6;color:#FFFFFF;text-decoration:none;border-radius:10px;font-weight:700;font-size:15px\">Ir a Mi Perfil &rarr;</a></div>'
+    + '<a href=\"' + SITE_URL + '/perfil.html\" style=\"display:inline-block;padding:14px 36px;background:#8B5CF6;color:#FFFFFF;text-decoration:none;border-radius:10px;font-weight:700;font-size:15px\">Ir a Mi Perfil &rarr;</a></div>'
     + '</td></tr>'
     + '<tr><td style=\"padding:20px 32px;background:#F8FAFC;border-top:1px solid #E2E8F0;text-align:center\">'
     + '<p style=\"margin:0 0 4px;font-size:12px;font-weight:600;color:#8B5CF6\">CampusIA &mdash; Aprend&eacute; Machine Learning desde cero</p>'
