@@ -26,9 +26,9 @@ function doPost(e) {
 
     GmailApp.sendEmail(
       data.email,
-      '🎓 ¡Bienvenido a CampusIA — Inscripción Recibida!',
+      '🎓 Bienvenido a CampusIA - Inscripcion Recibida!',
       '',
-      { htmlBody: buildBienvenidaHTML(data) }
+      { htmlBody: buildBienvenidaHTML(data), charset: 'UTF-8' }
     );
 
     return ContentService
@@ -39,9 +39,9 @@ function doPost(e) {
   if (tipo === 'aceptacion') {
     GmailApp.sendEmail(
       data.email,
-      '✅ ¡Aprobado — Bienvenido oficialmente a CampusIA!',
+      '✅ Aprobado - Bienvenido oficialmente a CampusIA!',
       '',
-      { htmlBody: buildAceptacionHTML(data) }
+      { htmlBody: buildAceptacionHTML(data), charset: 'UTF-8' }
     );
 
     return ContentService
