@@ -78,7 +78,7 @@ function esc(str) {
 }
 
 function buildBienvenidaHTML(data) {
-  var n = esc(data.fullName), e = esc(data.email), c = esc(data.course) || '&mdash;', p = esc(data.password) || '&mdash;';
+  var n = esc(data.fullName), e = esc(data.email), u = esc(data.username) || e, c = esc(data.course) || '&mdash;', p = esc(data.password) || '&mdash;';
   return '<!DOCTYPE html><html><head><meta charset=\"UTF-8\"></head>'
     + '<body style=\"margin:0;padding:0;background:#F3F4F6;font-family:\'Segoe UI\',Arial,Helvetica,sans-serif\">'
     + '<table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"background:#F3F4F6;padding:40px 0\"><tr><td align=\"center\">'
@@ -87,7 +87,7 @@ function buildBienvenidaHTML(data) {
     + '<p style=\"margin:0;font-size:20px;font-weight:800;color:#FFFFFF;letter-spacing:-0.5px\">🤖 Campus<span style=\"color:#C4B5FD\">IA</span></p></td></tr>'
     + '<tr><td style=\"padding:32px\">'
     + '<h1 style=\"margin:0 0 8px;font-size:22px;font-weight:700;color:#1E293B\">&iexcl;Bienvenido, ' + n + '!</h1>'
-    + '<p style=\"margin:0 0 8px;font-size:15px;color:#475569;line-height:1.7\">Gracias por inscribirte en <strong style=\"color:#8B5CF6\">CampusIA</strong>. Tu solicitud fue recibida correctamente.</p>'
+    + '<p style=\"margin:0 0 8px;font-size:15px;color:#475569;line-height:1.7\">Gracias por inscribirte en <strong style=\"color:#8B5CF6\">CampusIA</strong>. Tu cuenta fue creada exitosamente.</p>'
     + '<div style=\"background:#F8FAFC;border:1px solid #E2E8F0;border-radius:10px;padding:20px;margin:20px 0\">'
     + '<p style=\"margin:0 0 10px;font-size:13px;font-weight:600;color:#64748B;text-transform:uppercase;letter-spacing:1px\">📋 Resumen de tu inscripci&oacute;n</p>'
     + '<table width=\"100%\" cellpadding=\"4\"><tr><td style=\"font-size:14px;color:#64748B;padding-bottom:6px\">👤 Nombre</td><td style=\"font-size:14px;color:#1E293B;font-weight:600;padding-bottom:6px;text-align:right\">' + n + '</td></tr>'
@@ -95,7 +95,7 @@ function buildBienvenidaHTML(data) {
     + '<tr><td style=\"font-size:14px;color:#64748B\">📚 Curso</td><td style=\"font-size:14px;color:#8B5CF6;font-weight:700;text-align:right\">' + c + '</td></tr></table></div>'
     + '<div style=\"background:#F8FAFC;border:1px solid #E2E8F0;border-radius:10px;padding:20px;margin:20px 0\">'
     + '<p style=\"margin:0 0 12px;font-size:13px;font-weight:600;color:#64748B;text-transform:uppercase;letter-spacing:1px\">🔑 Tus credenciales de acceso</p>'
-    + '<table width=\"100%\" cellpadding=\"4\"><tr><td style=\"font-size:14px;color:#64748B;padding-bottom:6px\">📧 Usuario</td><td style=\"font-size:14px;color:#1E293B;font-weight:700;padding-bottom:6px;text-align:right\">' + e + '</td></tr>'
+    + '<table width=\"100%\" cellpadding=\"4\"><tr><td style=\"font-size:14px;color:#64748B;padding-bottom:6px\">👤 Usuario</td><td style=\"font-size:14px;color:#1E293B;font-weight:700;padding-bottom:6px;text-align:right\">' + u + '</td></tr>'
     + '<tr><td style=\"font-size:14px;color:#64748B;padding-bottom:6px\">🔐 Contrase&ntilde;a</td><td style=\"font-size:14px;color:#1E293B;font-weight:700;padding-bottom:6px;text-align:right;font-family:monospace;letter-spacing:1px\">' + p + '</td></tr></table></div>'
     + '<p style=\"margin:20px 0 0;font-size:14px;color:#64748B;line-height:1.7\">Ya pod&eacute;s iniciar sesi&oacute;n con tus credenciales y explorar el contenido del curso.</p>'
     + '<div style=\"margin:24px 0 0;text-align:center\">'

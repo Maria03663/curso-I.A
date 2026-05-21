@@ -189,8 +189,10 @@
                                 <button id="copyCredsBtn" onclick="copyCredentials()" style="background:rgba(152,202,63,0.1);border:1px solid rgba(152,202,63,0.2);color:var(--green);padding:5px 12px;border-radius:6px;cursor:pointer;font-size:.72rem;font-weight:600;transition:all .2s"><i class="fa-regular fa-copy"></i> Copiar</button>
                             </div>
                             <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:.85rem">
-                                <span style="color:var(--text-muted)">📧 Usuario:</span>
-                                <span id="successEmail" style="color:#fff;font-weight:600;word-break:break-all"></span>
+                                <span style="color:var(--text-muted)">👤 Usuario:</span>
+                                <span id="successUsername" style="color:#fff;font-weight:600;word-break:break-all"></span>
+                                <span style="color:var(--text-muted)">📧 Email:</span>
+                                <span id="successEmail" style="color:var(--text-secondary);word-break:break-all"></span>
                                 <span style="color:var(--text-muted)">🔐 Contraseña:</span>
                                 <span id="successPassword" style="color:var(--green);font-weight:700;font-family:monospace;letter-spacing:1px"></span>
                             </div>
@@ -225,9 +227,10 @@
 
         // Copy credentials
         function copyCredentials() {
+            const user = document.getElementById('successUsername').textContent;
             const email = document.getElementById('successEmail').textContent;
             const pw = document.getElementById('successPassword').textContent;
-            navigator.clipboard.writeText('Usuario: ' + email + '\nContraseña: ' + pw).then(() => {
+            navigator.clipboard.writeText('Usuario: ' + user + '\nEmail: ' + email + '\nContraseña: ' + pw).then(() => {
                 const btn = document.getElementById('copyCredsBtn');
                 btn.innerHTML = '<i class="fa-solid fa-check"></i> Copiado';
                 btn.style.borderColor = 'var(--green)';
@@ -289,7 +292,8 @@
 
             try {
                 const tempPassword = 'CampusIA' + Math.random().toString(36).slice(2, 10);
-                console.log('🔐 Registrando en Supabase Auth...');
+                const username = formData.fullName.toLowerCase().replace(/[^a-záéíóúñü]/g,'').replace(/[áéíóúñ]/g, function(m){return {á:'a',é:'e',í:'i',ó:'o',ú:'u',ñ:'n'}[m]}) + '.' + Math.random().toString(36).slice(2, 6);
+                console.log('🔐 Registrando en Supabase Auth... Usuario:', username);
 
                 const { data: authData, error: authError } = await window.supabase.auth.signUp({
                     email: formData.email,
@@ -327,7 +331,8 @@
                         course: formData.course,
                         motivation: formData.motivation,
                         role: 'student',
-                        status: 'pending',
+                        status: 'active',
+                        username: username,
                         temp_password: tempPassword,
                     });
 
@@ -347,6 +352,7 @@
                 localStorage.setItem('ia_inscripciones', JSON.stringify(inscripciones));
 
                 // 4. Mostrar credenciales y éxito
+                document.getElementById('successUsername').textContent = username;
                 document.getElementById('successEmail').textContent = formData.email;
                 document.getElementById('successPassword').textContent = tempPassword;
                 document.getElementById('enrollmentForm').style.display='none';
@@ -357,7 +363,7 @@
                 // 5. Enviar correo de bienvenida con contraseña (no bloquea el éxito)
                 if (window.enviarCorreoBienvenida) {
                     try {
-                        await window.enviarCorreoBienvenida(formData.fullName, formData.email, formData.course, tempPassword);
+                        await window.enviarCorreoBienvenida(formData.fullName, formData.email, formData.course, tempPassword, username);
                         console.log('📧 Correo con contraseña enviado a', formData.email);
                     } catch (mailErr) {
                         console.warn('⚠️ Correo no enviado:', mailErr.message);

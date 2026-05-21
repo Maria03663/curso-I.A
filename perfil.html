@@ -282,15 +282,28 @@
         // Intentar login con Supabase primero
         if (window.supabase) {
             try {
+                // Buscar perfil por username o email
+                let query = window.supabase.from('profiles').select('*');
+                if (username.includes('@')) {
+                    query = query.eq('email', username);
+                } else {
+                    query = query.eq('username', username);
+                }
+                const { data: profileList, error: profileErr } = await query.limit(1).maybeSingle();
+                const profile = (!profileErr && profileList) ? profileList : null;
+                const loginEmail = profile?.email || (username.includes('@') ? username : null);
+
+                if (!loginEmail) {
+                    throw new Error('Usuario no encontrado');
+                }
+
                 const { data: authData, error: authErr } = await window.supabase.auth.signInWithPassword({
-                    email: username.includes('@') ? username : username + '@campusia.com',
+                    email: loginEmail,
                     password: pass,
                 });
                 if (authData.user && !authErr) {
-                    const { data: profile } = await window.supabase.from('profiles')
-                        .select('*').eq('id', authData.user.id).single();
                         const user = {
-                            username: username,
+                            username: profile?.username || username,
                             fullName: profile?.full_name || username,
                             email: authData.user.email,
                             phone: profile?.phone || '—',

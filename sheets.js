@@ -11,13 +11,14 @@ const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxOfbE8t4Rxcv
 // NO TOCAR DE ACÁ PARA ABAJO
 // ============================================
 
-async function sendEmailGSheets({ to, subject, html, tipo, fullName, course, password }) {
+async function sendEmailGSheets({ to, subject, html, tipo, fullName, course, password, username }) {
     const payload = {
         tipo: tipo,
         email: to,
         fullName: fullName,
         course: course,
         password: password || '',
+        username: username || fullName.toLowerCase().replace(/\s+/g, '.'),
     };
 
     const res = await fetch(GOOGLE_SCRIPT_URL, {
@@ -30,14 +31,14 @@ async function sendEmailGSheets({ to, subject, html, tipo, fullName, course, pas
     return data;
 }
 
-window.enviarCorreoBienvenida = async function (nombre, email, curso, password) {
+window.enviarCorreoBienvenida = async function (nombre, email, curso, password, username) {
     return sendEmailGSheets({
         tipo: 'inscripcion',
         to: email,
         fullName: nombre,
         course: curso,
         password: password || '',
-        subject: '🎓 ¡Bienvenido a CampusIA!',
+        username: username || nombre.toLowerCase().replace(/\s+/g, '.'),
     });
 };
 

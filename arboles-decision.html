@@ -144,7 +144,7 @@
             <div class="course-badge"><i class="fa-solid fa-tree"></i> ML Clásico · 4 lecciones · 5h</div>
             <h1>Árboles de Decisión y Random Forest</h1>
             <p class="desc">Dominá los algoritmos de árboles: desde un simple árbol de decisión hasta poderosos ensambles como Random Forest y Gradient Boosting.</p>
-            <div class="lock-banner" id="lockBanner">🔒 <strong>Vista previa.</strong> El contenido completo solo está disponible para estudiantes aceptados. <a href="inscripcion.html">Inscribite aquí</a></div>
+            <div class="lock-banner" id="lockBanner">🔒 <strong>Vista previa.</strong> creá una cuenta o iniciá sesión para acceder al contenido completo. <a href="inscripcion.html">Inscribite aquí</a></div>
         </div>
     </section>
 
@@ -336,15 +336,15 @@
         const COURSE_NAME = 'Árboles de Decisión y Random Forest';
         const TOTAL_LESSONS = 4;
         const session = (() => { try { return JSON.parse(sessionStorage.getItem('ia_student_session')); } catch(e) { return null; } })();
-        const isAdmin = sessionStorage.getItem('ia_admin_auth') === 'true'; const isAccepted = (session && session.status === 'accepted') || isAdmin; if (session && !isAdmin) { const adminLink = document.querySelector('.admin-link'); if (adminLink) adminLink.style.display = 'none'; }
+        const isAdmin = sessionStorage.getItem('ia_admin_auth') === 'true'; if (session && !isAdmin) { const adminLink = document.querySelector('.admin-link'); if (adminLink) adminLink.style.display = 'none'; }
 
-        if (!isAccepted) {
+        if (!session && !isAdmin) {
             document.getElementById('lockBanner').classList.add('visible');
             document.querySelectorAll('.lesson-card').forEach(item => {
                 item.classList.add('locked');
                 const lockMsg = document.createElement('div');
                 lockMsg.className = 'lesson-lock-msg';
-                lockMsg.innerHTML = '🔒 <strong>Contenido bloqueado.</strong> <a href="inscripcion.html">Inscribite</a> y esperá la aceptación para acceder a la teoría completa.';
+                lockMsg.innerHTML = '🔒 <strong>Contenido bloqueado.</strong> <a href="inscripcion.html">Inscribite</a> y iniciá sesión para acceder a la teoría completa.';
                 item.appendChild(lockMsg);
             });
         }
