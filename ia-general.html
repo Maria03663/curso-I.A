@@ -655,8 +655,7 @@
         }
 
         if (session) {
-            document.querySelectorAll('#navLinks a:not([href*="perfil"])').forEach(function(el) { el.style.display = 'none' });
-            document.querySelectorAll('.course-header, .course-layout, .sidebar-stats, .main-content-area, .progress-overview, section[style*="margin-top:48px"], .footer').forEach(function(el) { if (el) el.style.display = 'none' });
+            document.querySelectorAll('.admin-link').forEach(function(el) { if (el) el.style.display = 'none' });
         }
 
         // ============ PARTICLES BACKGROUND ============

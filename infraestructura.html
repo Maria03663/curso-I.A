@@ -711,9 +711,7 @@
         }
 
         if (session) {
-            document.querySelectorAll('#navLinks a:not([href*="perfil"])').forEach(function(el) { el.style.display = 'none' });
-            document.querySelectorAll('.course-hero, .course-layout, .skills-section, .instructor-section, .project-section, .resources-section, .quiz-section, .related-section, .cert-section, .course-sidebar, .progress-bar-wrapper').forEach(function(el) { if (el) el.style.display = 'none' });
-            document.querySelectorAll('.footer').forEach(function(el) { if (el) el.style.display = 'none' });
+            document.querySelectorAll('.admin-link').forEach(function(el) { if (el) el.style.display = 'none' });
         }
 
         const STORAGE_KEY = 'ia_course_progress';
