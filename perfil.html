@@ -286,7 +286,7 @@
                 if (username.includes('@')) {
                     query = query.eq('email', username);
                 } else {
-                    query = query.ilike('full_name', username);
+                    query = query.ilike('full_name', `%${username}%`);
                 }
                 const { data: profileList, error: profileErr } = await query.limit(1).maybeSingle();
                 const profile = (!profileErr && profileList) ? profileList : null;
