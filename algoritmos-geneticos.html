@@ -639,16 +639,23 @@
         const session = (() => { try { return JSON.parse(sessionStorage.getItem('ia_student_session')); } catch(e) { return null; } })();
         const isAdmin = sessionStorage.getItem('ia_admin_auth') === 'true'; if (session && !isAdmin) { const adminLink = document.querySelector('.admin-link'); if (adminLink) adminLink.style.display = 'none'; }
 
-        if (!session && !isAdmin) {
-            document.getElementById('lockBanner').classList.add('visible');
-            document.querySelectorAll('.lesson-card').forEach(item => {
-                item.classList.add('locked');
-                const lockMsg = document.createElement('div');
-                lockMsg.className = 'lesson-lock-msg';
-                lockMsg.innerHTML = '🔒 <strong>Contenido bloqueado.</strong> <a href="inscripcion.html">Inscribite</a> y iniciá sesión para acceder a la teoría completa.';
-                item.appendChild(lockMsg);
-            });
-        }
+        (function() {
+            function lockCourse(msg) {
+                document.getElementById('lockBanner').classList.add('visible');
+                document.querySelectorAll('.lesson-card').forEach(item => {
+                    item.classList.add('locked');
+                    const lockMsg = document.createElement('div');
+                    lockMsg.className = 'lesson-lock-msg';
+                    lockMsg.innerHTML = msg;
+                    item.appendChild(lockMsg);
+                });
+            }
+            if (!session && !isAdmin) {
+                lockCourse('🔒 <strong>Contenido bloqueado.</strong> <a href="inscripcion.html">Inscribite</a> y iniciá sesión para acceder a la teoría completa.');
+            } else if (session && session.course !== COURSE_NAME && !isAdmin) {
+                lockCourse('🔒 <strong>No estás inscrito en este curso.</strong> Estás inscrito en: <strong>' + session.course + '</strong>. <a href="perfil.html">Ir a mi perfil</a>');
+            }
+        })();
 
         if (session) {
             document.querySelectorAll('.admin-link').forEach(function(el) { if (el) el.style.display = 'none' });
