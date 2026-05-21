@@ -288,8 +288,8 @@
                 } else {
                     query = query.ilike('full_name', `%${username}%`);
                 }
-                const { data: profileList, error: profileErr } = await query.limit(1).maybeSingle();
-                const profile = (!profileErr && profileList) ? profileList : null;
+                const { data: profileList, error: profileErr } = await query.limit(1);
+                const profile = (!profileErr && profileList && profileList.length > 0) ? profileList[0] : null;
                 const loginEmail = profile?.email || (username.includes('@') ? username : null);
 
                 if (!loginEmail) {
@@ -317,8 +317,18 @@
                     showDashboard(user);
                     return;
                 }
+
+                // Si auth falló, mostrar error y salir
+                if (authErr) {
+                    throw new Error(authErr.message || 'Credenciales inválidas');
+                }
             } catch (supaErr) {
-                console.warn('⚠️ Supabase no disponible, usando demo:', supaErr.message);
+                console.warn('⚠️ Error de Supabase:', supaErr.message);
+                loading.style.display = 'none'; form.style.display = 'block';
+                error.textContent = '❌ ' + supaErr.message;
+                error.classList.add('visible');
+                setTimeout(() => error.classList.remove('visible'), 4000);
+                return;
             }
         }
 
