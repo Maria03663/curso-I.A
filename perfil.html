@@ -142,8 +142,8 @@
         </div>
         <form id="loginForm">
             <div class="field">
-                <label>👤 Usuario</label>
-                <input type="text" id="loginUser" placeholder="Tu nombre de usuario" required>
+                <label>📧 Email o nombre completo</label>
+                <input type="text" id="loginUser" placeholder="tu@email.com o nombre completo" required>
             </div>
             <div class="field">
                 <label>🔑 Contraseña</label>
@@ -281,12 +281,12 @@
         // Intentar login con Supabase primero
         if (window.supabase) {
             try {
-                // Buscar perfil por username o email
+                // Buscar perfil por email o nombre completo
                 let query = window.supabase.from('profiles').select('*');
                 if (username.includes('@')) {
                     query = query.eq('email', username);
                 } else {
-                    query = query.eq('username', username);
+                    query = query.ilike('full_name', username);
                 }
                 const { data: profileList, error: profileErr } = await query.limit(1).maybeSingle();
                 const profile = (!profileErr && profileList) ? profileList : null;
@@ -302,7 +302,7 @@
                 });
                 if (authData.user && !authErr) {
                         const user = {
-                            username: profile?.username || username,
+                            username: profile?.full_name?.toLowerCase().replace(/\s+/g, '.') || username,
                             fullName: profile?.full_name || username,
                             email: authData.user.email,
                             phone: profile?.phone || '—',
