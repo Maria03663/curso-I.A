@@ -5,7 +5,7 @@
 // 3. Pegá esa URL abajo en GOOGLE_SCRIPT_URL
 // ============================================
 
-const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxS7-GviskVHKD1-3lXxqgWpVJKgGxhClzPP3ZBK0GAErWZnCXpKR5kvaQbFl3rzNeq/exec';
+const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxOfbE8t4Rxcvesc570fgbc4Pt-G1DzrXe4Bo3PiCz8VLgYig43cjsDYZVJJIjKFPZS/exec';
 
 // ============================================
 // NO TOCAR DE ACÁ PARA ABAJO
