@@ -348,6 +348,12 @@
                 item.appendChild(lockMsg);
             });
         }
+
+        if (session) {
+            document.querySelectorAll('#navLinks a:not([href*="perfil"])').forEach(function(el) { el.style.display = 'none' });
+            document.querySelectorAll('.course-hero, .footer').forEach(function(el) { if (el) el.style.display = 'none' });
+        }
+
         const STORAGE_KEY = 'ia_course_progress';
 
         function getProgress() {

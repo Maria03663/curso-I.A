@@ -27,8 +27,8 @@
         #bgCanvas { position:fixed; top:0; left:0; width:100%; height:100%; z-index:0; pointer-events:none }
         .grid-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background-image:linear-gradient(rgba(152,202,63,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(152,202,63,0.03) 1px,transparent 1px); background-size:50px 50px; z-index:0; pointer-events:none }
         .container { max-width:1200px; margin:0 auto; padding:0 24px; position:relative; z-index:1 }
+        .container-narrow { max-width:900px; margin:0 auto; padding:0 24px; position:relative; z-index:1 }
 
-        /* NAVBAR */
         .navbar { position:fixed; top:0; left:0; right:0; z-index:100; padding:14px 0; transition:all .25s; background:transparent }
         .navbar.scrolled { background:rgba(10,10,15,0.92); backdrop-filter:blur(16px); border-bottom:1px solid var(--border); box-shadow:0 4px 20px rgba(0,0,0,0.3) }
         .navbar .container { display:flex; align-items:center; justify-content:space-between }
@@ -44,66 +44,645 @@
             .nav-links.open{display:flex}
         }
 
-        /* PROGRESS BAR */
         .progress-bar-wrapper { position:fixed; top:0; left:0; right:0; height:3px; z-index:101; background:rgba(255,255,255,0.04) }
         .progress-bar-fill { height:100%; background:linear-gradient(90deg,var(--purple),var(--pink)); transition:width .5s ease; border-radius:0 2px 2px 0 }
 
-        /* COURSE HEADER */
         .course-hero { padding:120px 0 50px; position:relative; z-index:1 }
         .course-hero .container { max-width:800px }
         .course-badge { display:inline-flex; align-items:center; gap:8px; padding:6px 16px; border-radius:20px; background:rgba(139,92,246,0.1); border:1px solid rgba(139,92,246,0.25); font-size:.78rem; color:var(--purple); font-weight:600; margin-bottom:20px }
         .course-hero h1 { font-size:clamp(2rem,4.5vw,3rem); font-weight:900; line-height:1.2; margin-bottom:16px; font-family:'Syne',sans-serif }
         .course-hero .desc { font-size:1.05rem; color:var(--text-secondary); line-height:1.8; max-width:620px }
 
-        /* ===== NEW SECTIONS ===== */
+        .course-layout { display:flex; gap:30px; align-items:flex-start; padding:20px 0 10px }
+        .course-layout-main { flex:1; min-width:0 }
+        .course-layout-sidebar { width:340px; flex-shrink:0 }
+        @media(max-width:900px){ .course-layout{flex-direction:column} .course-layout-sidebar{width:100%} }
 
-        /* SECTION WRAPPER */
-        .course-section { padding:50px 0; position:relative; z-index:1 }
-        .course-section .container { max-width:900px }
-        .section-label { font-size:.75rem; font-weight:700; color:var(--purple); letter-spacing:3px; text-transform:uppercase; margin-bottom:6px }
-        .section-title { font-size:1.5rem; font-weight:800; margin-bottom:24px; font-family:'Syne',sans-serif; color:#fff }
+        .stats-card { background:var(--bg-card); backdrop-filter:blur(16px); border:1px solid var(--border); border-radius:var(--radius); padding:24px; box-shadow:var(--shadow); position:sticky; top:90px }
+        @media(max-width:900px){ .stats-card{position:static} }
+        .stats-card h3 { font-size:1.05rem; font-weight:700; margin-bottom:18px; font-family:'Syne',sans-serif }
+        .stat-row { display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--border); font-size:.85rem }
+        .stat-row:last-child { border-bottom:none }
+        .stat-label { color:var(--text-muted) }
+        .stat-value { color:#fff; font-weight:600 }
+        .stat-price { font-size:1.3rem; font-weight:800; color:var(--green); font-family:'Syne',sans-serif }
+        .diff-badge { background:rgba(245,158,11,0.12); color:#F59E0B; padding:3px 12px; border-radius:12px; font-size:.73rem; font-weight:600; display:inline-block }
+        .rating-stars { color:#F59E0B; font-size:.78rem; letter-spacing:1px }
+        .cert-mini-badge { display:inline-flex; align-items:center; gap:5px; padding:5px 10px; border-radius:8px; background:rgba(152,202,63,0.08); border:1px solid rgba(152,202,63,0.2); font-size:.72rem; color:var(--green); font-weight:600; margin-top:6px }
+        .stats-btn { display:block; width:100%; padding:12px; border-radius:10px; background:var(--green); color:#0a0a0f; font-weight:700; font-size:.87rem; text-align:center; text-decoration:none; margin-top:16px; border:none; cursor:pointer; transition:all .2s; font-family:'Inter',sans-serif }
+        .stats-btn:hover { background:#a8da4f; transform:translateY(-1px); box-shadow:0 4px 16px rgba(152,202,63,0.3) }
 
-        /* 1. STATS SIDEBAR */
-        .stats-grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; background:var(--bg-card); backdrop-filter:blur(16px); border:1px solid var(--border); border-radius:var(--radius); padding:28px 32px; box-shadow:var(--shadow) }
-        .stats-col { display:flex; flex-direction:column; gap:14px }
-        .stat-item { display:flex; align-items:center; gap:12px; font-size:.88rem; color:var(--text-secondary) }
-        .stat-item i { width:28px; height:28px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:.78rem; flex-shrink:0 }
-        .stat-item .icon-green { background:rgba(152,202,63,0.12); color:var(--green) }
-        .stat-item .icon-purple { background:rgba(139,92,246,0.12); color:var(--purple) }
-        .stat-item .icon-pink { background:rgba(236,72,153,0.12); color:var(--pink) }
-        .stat-item .icon-blue { background:rgba(59,130,246,0.12); color:var(--blue) }
-        .stat-item strong { color:#fff; font-weight:600 }
-        .badge-pink { display:inline-block; padding:2px 10px; border-radius:12px; background:rgba(236,72,153,0.15); color:var(--pink); font-size:.72rem; font-weight:700 }
-        .stats-cta { margin-top:10px }
-        .btn-primary { display:inline-flex; align-items:center; gap:8px; padding:12px 28px; border-radius:var(--radius-sm); background:linear-gradient(135deg,var(--purple),var(--pink)); color:#fff; font-weight:700; font-size:.9rem; border:none; cursor:pointer; text-decoration:none; transition:all .3s; box-shadow:0 4px 20px rgba(139,92,246,0.3) }
-        .btn-primary:hover { transform:translateY(-2px); box-shadow:0 6px 30px rgba(139,92,246,0.45) }
-        .cert-badge { display:inline-flex; align-items:center; gap:6px; padding:6px 14px; border-radius:20px; background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.2); color:#FBBF24; font-size:.78rem; font-weight:600 }
+        .section-block { padding:16px 0 36px; position:relative; z-index:1 }
+        .section-title { font-size:1.35rem; font-weight:800; margin-bottom:22px; font-family:'Syne',sans-serif }
+        .section-title i { margin-right:6px }
 
-        /* 2. SKILLS GRID */
-        .skills-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px }
-        @media(max-width:640px){.skills-grid{grid-template-columns:1fr}}
-        .skill-card { display:flex; align-items:flex-start; gap:12px; background:var(--bg-card); backdrop-filter:blur(16px); border:1px solid var(--border); border-radius:var(--radius-sm); padding:16px 18px; transition:all .25s }
-        .skill-card:hover { border-color:var(--border-hover); background:var(--bg-card-hover); transform:translateY(-2px) }
-        .skill-icon { width:36px; height:36px; border-radius:10px; background:rgba(139,92,246,0.1); border:1px solid rgba(139,92,246,0.15); display:flex; align-items:center; justify-content:center; font-size:.85rem; color:var(--purple); flex-shrink:0 }
-        .skill-card p { font-size:.85rem; color:var(--text-secondary); line-height:1.6 }
+        .skills-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px }
+        @media(max-width:600px){ .skills-grid{grid-template-columns:1fr} }
+        .skill-item { display:flex; align-items:flex-start; gap:10px; padding:12px 16px; background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:var(--radius-sm); font-size:.84rem; color:var(--text-secondary); line-height:1.5; transition:all .2s }
+        .skill-item:hover { border-color:rgba(139,92,246,0.2); background:rgba(139,92,246,0.04) }
+        .skill-item i { color:var(--purple); margin-top:2px; flex-shrink:0 }
 
-        /* 3. INSTRUCTOR */
-        .instructor-card { display:flex; gap:24px; background:var(--bg-card); backdrop-filter:blur(16px); border:1px solid var(--border); border-radius:var(--radius); padding:28px 32px; box-shadow:var(--shadow); align-items:flex-start }
-        @media(max-width:640px){.instructor-card{flex-direction:column;align-items:center;text-align:center}}
-        .instructor-avatar { width:100px; height:100px; border-radius:50%; background:linear-gradient(135deg,var(--purple),var(--pink)); display:flex; align-items:center; justify-content:center; font-size:2.5rem; color:#fff; flex-shrink:0; box-shadow:0 0 30px rgba(139,92,246,0.25) }
-        .instructor-info h4 { font-size:1.1rem; font-weight:700; color:#fff; margin-bottom:2px }
-        .instructor-info .role { font-size:.82rem; color:var(--purple); font-weight:600; margin-bottom:10px }
-        .instructor-info p { font-size:.85rem; color:var(--text-secondary); line-height:1.7 }
-        .instructor-stats { display:flex; gap:16px; margin-top:12px; flex-wrap:wrap }
-        .instructor-stats span { font-size:.78rem; color:var(--text-muted); display:flex; align-items:center; gap:6px }
+        .instructor-card { background:var(--bg-card); backdrop-filter:blur(16px); border:1px solid var(--border); border-radius:var(--radius); padding:28px; display:flex; gap:20px; align-items:center; box-shadow:var(--shadow) }
+        @media(max-width:600px){ .instructor-card{flex-direction:column;text-align:center} }
+        .instructor-avatar { width:80px; height:80px; border-radius:50%; background:linear-gradient(135deg,var(--purple),var(--pink)); display:flex; align-items:center; justify-content:center; font-size:1.8rem; flex-shrink:0; color:#fff }
+        .instructor-info h4 { font-size:1.05rem; font-weight:700 }
+        .instructor-info .role { color:var(--purple); font-size:.8rem; font-weight:600; margin-bottom:6px }
+        .instructor-info .bio { color:var(--text-secondary); font-size:.84rem; line-height:1.7 }
 
-        /* 4. PROYECTO */
-        .project-card { background:var(--bg-card); backdrop-filter:blur(16px); border:1px solid var(--border); border-radius:var(--radius); padding:28px 32px; box-shadow:var(--shadow); position:relative; overflow:hidden }
-        .project-card::before { content:''; position:absolute; top:0; right:0; width:200px; height:200px; background:radial-gradient(circle,rgba(139,92,246,0.08),transparent 70%); pointer-events:none }
-        .project-card h4 { font-size:1.1rem; font-weight:700; color:#fff; margin-bottom:8px; display:flex; align-items:center; gap:10px }
-        .project-card h4 i { color:var(--pink) }
-        .project-card p { font-size:.85rem; color:var(--text-secondary); line-height:1.7; margin-bottom:16px }
-        .project-steps { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px }
-        @media(max-width:640px){.project-steps{grid-template-columns:1fr}}
-        .project-step { background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:var(--radius-sm); padding:14px 16px; text-align:center }
-        .project-step .step-num { width:28px; height:28px; border"""
+        .project-card { background:var(--bg-card); backdrop-filter:blur(16px); border:1px solid var(--border); border-radius:var(--radius); padding:28px; box-shadow:var(--shadow); display:flex; gap:20px; align-items:flex-start }
+        @media(max-width:600px){ .project-card{flex-direction:column} }
+        .project-icon { width:64px; height:64px; border-radius:14px; background:linear-gradient(135deg,rgba(236,72,153,0.15),rgba(139,92,246,0.15)); border:1px solid rgba(236,72,153,0.2); display:flex; align-items:center; justify-content:center; font-size:1.6rem; color:var(--pink); flex-shrink:0 }
+        .project-info h4 { font-size:1.05rem; font-weight:700; margin-bottom:4px }
+        .project-info p { color:var(--text-secondary); font-size:.84rem; line-height:1.7; margin-bottom:8px }
+        .project-tags { display:flex; gap:6px; flex-wrap:wrap }
+        .project-tag { padding:3px 10px; border-radius:8px; background:rgba(236,72,153,0.08); border:1px solid rgba(236,72,153,0.15); font-size:.7rem; color:var(--pink); font-weight:500 }
+
+        .resources-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px }
+        @media(max-width:768px){ .resources-grid{grid-template-columns:repeat(2,1fr)} }
+        @media(max-width:400px){ .resources-grid{grid-template-columns:1fr} }
+        .resource-card { background:var(--bg-card); backdrop-filter:blur(16px); border:1px solid var(--border); border-radius:var(--radius); padding:22px 18px; text-align:center; box-shadow:var(--shadow); transition:var(--transition) }
+        .resource-card:hover { border-color:var(--border-hover); transform:translateY(-3px) }
+        .resource-card i { font-size:1.7rem; margin-bottom:12px }
+        .resource-card .rc-green { color:var(--green) }
+        .resource-card .rc-blue { color:var(--blue) }
+        .resource-card .rc-purple { color:var(--purple) }
+        .resource-card .rc-pink { color:var(--pink) }
+        .resource-card h5 { font-size:.85rem; font-weight:700; margin-bottom:4px }
+        .resource-card p { font-size:.74rem; color:var(--text-muted) }
+
+        .lessons-section { padding:20px 0 80px; position:relative; z-index:1 }
+        .lessons-section .container { max-width:900px }
+        .section-heading { font-size:.75rem; font-weight:700; color:var(--purple); letter-spacing:3px; text-transform:uppercase; margin-bottom:20px }
+        .lessons-list { display:flex; flex-direction:column; gap:14px }
+        .lesson-card { background:var(--bg-card); backdrop-filter:blur(16px); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; transition:all .25s; box-shadow:var(--shadow) }
+        .lesson-card.open { border-color:rgba(139,92,246,0.3); background:rgba(20,20,35,0.85) }
+        .lesson-header { display:flex; align-items:center; gap:16px; padding:20px 24px; cursor:pointer; user-select:none; transition:background .2s }
+        .lesson-header:hover { background:rgba(255,255,255,0.02) }
+        .lesson-num { width:40px; height:40px; border-radius:10px; background:rgba(139,92,246,0.1); border:1px solid rgba(139,92,246,0.2); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:.9rem; color:var(--purple); flex-shrink:0; transition:all .3s }
+        .lesson-card.open .lesson-num { background:var(--purple); color:#fff; border-color:var(--purple); box-shadow:0 0 16px rgba(139,92,246,0.4) }
+        .lesson-info { flex:1; min-width:0 }
+        .lesson-title { font-weight:700; font-size:1.02rem; color:#fff; margin-bottom:3px }
+        .lesson-meta { font-size:.78rem; color:var(--text-muted); display:flex; align-items:center; gap:8px; flex-wrap:wrap }
+        .lesson-meta .tag { display:inline-block; padding:2px 8px; border-radius:8px; background:rgba(139,92,246,0.1); color:var(--purple); font-size:.68rem; font-weight:600 }
+        .lesson-chevron { color:var(--text-muted); font-size:.85rem; transition:transform .3s; flex-shrink:0 }
+        .lesson-card.open .lesson-chevron { transform:rotate(90deg) }
+        .lesson-check { width:24px; height:24px; border-radius:50%; border:2px solid var(--border); display:flex; align-items:center; justify-content:center; font-size:.6rem; color:transparent; transition:all .3s; flex-shrink:0; margin-left:4px }
+        .lesson-check.done { background:var(--purple); border-color:var(--purple); color:#fff }
+        .lesson-body { max-height:0; overflow:hidden; transition:max-height .45s ease; border-top:1px solid transparent }
+        .lesson-card.open .lesson-body { max-height:600px; border-top-color:var(--border) }
+        .lesson-content { padding:20px 24px 24px; display:flex; flex-direction:column; gap:14px }
+        .lesson-content p { font-size:.9rem; color:var(--text-secondary); line-height:1.75 }
+        .lesson-content .highlight-box { background:rgba(139,92,246,0.06); border:1px solid rgba(139,92,246,0.15); border-radius:var(--radius-sm); padding:14px 18px; font-size:.84rem; color:var(--text-secondary); line-height:1.7 }
+        .lesson-content .highlight-box i { color:var(--purple); margin-right:6px }
+        .lesson-duration { display:inline-flex; align-items:center; gap:4px; font-size:.76rem; color:var(--text-muted); padding:4px 10px; border-radius:8px; background:rgba(255,255,255,0.02); border:1px solid var(--border); align-self:flex-start }
+        .lesson-duration i { color:var(--purple) }
+
+        .quiz-card { background:var(--bg-card); backdrop-filter:blur(16px); border:1px solid var(--border); border-radius:var(--radius); margin-bottom:10px; overflow:hidden; box-shadow:var(--shadow) }
+        .quiz-header { padding:16px 20px; cursor:pointer; display:flex; justify-content:space-between; align-items:center; font-weight:600; font-size:.92rem; transition:background .2s }
+        .quiz-header:hover { background:rgba(255,255,255,0.02) }
+        .quiz-chevron { color:var(--text-muted); font-size:.8rem; transition:transform .3s }
+        .quiz-card.open .quiz-chevron { transform:rotate(180deg) }
+        .quiz-body { max-height:0; overflow:hidden; transition:max-height .35s ease }
+        .quiz-card.open .quiz-body { max-height:120px }
+        .quiz-answer { padding:0 20px 16px; color:var(--text-secondary); font-size:.84rem }
+        .quiz-answer strong { color:var(--green) }
+
+        .related-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px }
+        @media(max-width:768px){ .related-grid{grid-template-columns:1fr} }
+        .related-card { background:var(--bg-card); backdrop-filter:blur(16px); border:1px solid var(--border); border-radius:var(--radius); padding:22px; text-decoration:none; color:inherit; box-shadow:var(--shadow); transition:var(--transition); display:block }
+        .related-card:hover { border-color:var(--border-hover); transform:translateY(-2px) }
+        .related-card i { font-size:1.4rem; margin-bottom:10px }
+        .related-card h5 { font-size:.88rem; font-weight:700; margin-bottom:4px; color:#fff }
+        .related-card p { font-size:.76rem; color:var(--text-muted) }
+
+        .cert-section { background:var(--bg-card); backdrop-filter:blur(16px); border:1px solid var(--border); border-radius:var(--radius); padding:32px; text-align:center; box-shadow:var(--shadow) }
+        .cert-section .cert-icon { font-size:2.5rem; color:var(--green); margin-bottom:12px }
+        .cert-section h3 { font-size:1.3rem; font-weight:800; margin-bottom:8px; font-family:'Syne',sans-serif }
+        .cert-section p { color:var(--text-secondary); font-size:.88rem; max-width:500px; margin:0 auto 16px }
+        .cert-features { display:flex; justify-content:center; gap:24px; flex-wrap:wrap; margin-top:4px }
+        .cert-feat { display:flex; align-items:center; gap:6px; font-size:.8rem; color:var(--text-secondary) }
+        .cert-feat i { color:var(--green); font-size:.7rem }
+
+        .footer { border-top:1px solid var(--border); padding:40px 0 30px; position:relative; z-index:1 }
+        .footer-grid { display:grid; grid-template-columns:2fr 1fr 1fr; gap:30px; margin-bottom:30px }
+        @media(max-width:768px){.footer-grid{grid-template-columns:1fr}}
+        .footer-brand h3 { font-size:1.2rem; font-weight:800; margin-bottom:8px; font-family:'Syne',sans-serif }
+        .footer-brand h3 span { color:var(--green) }
+        .footer-brand p { font-size:.85rem; color:var(--text-secondary); line-height:1.6 }
+        .footer-col h4 { font-size:.78rem; text-transform:uppercase; letter-spacing:2px; color:var(--text-muted); margin-bottom:14px }
+        .footer-col a { display:block; color:var(--text-secondary); text-decoration:none; font-size:.85rem; margin-bottom:8px; transition:color .2s }
+        .footer-col a:hover { color:var(--green) }
+        .footer-bottom { border-top:1px solid var(--border); padding-top:20px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px }
+        .footer-bottom span { font-size:.82rem; color:var(--text-muted) }
+        .social-links { display:flex; gap:12px }
+        .social-links a { width:36px; height:36px; border-radius:50%; background:rgba(255,255,255,0.04); border:1px solid var(--border); color:var(--text-secondary); display:flex; align-items:center; justify-content:center; text-decoration:none; transition:all .2s; font-size:.9rem }
+        .social-links a:hover { background:rgba(152,202,63,0.1); border-color:var(--green); color:var(--green) }
+
+        ::-webkit-scrollbar { width:6px }
+        ::-webkit-scrollbar-track { background:var(--bg) }
+        ::-webkit-scrollbar-thumb { background:rgba(152,202,63,0.2); border-radius:3px }
+        ::-webkit-scrollbar-thumb:hover { background:rgba(152,202,63,0.4) }
+
+        .lock-banner{display:none;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.25);border-radius:var(--radius-sm);padding:14px 20px;margin-bottom:20px;font-size:.85rem;color:#F59E0B;text-align:center}
+        .lock-banner.visible{display:block}
+        .lock-banner a{color:#FBBF24;font-weight:700}
+        .lesson-card.locked .lesson-body{max-height:0!important;border-top-color:transparent!important}
+        .lesson-card.locked .lesson-header{cursor:default}
+        .lesson-card.locked .lesson-chevron{color:rgba(245,158,11,0.4)}
+        .lesson-card.locked:hover{border-color:rgba(245,158,11,0.3)}
+        .lesson-lock-msg{display:none;padding:14px 18px 14px 60px;font-size:.82rem;color:#F59E0B}
+        .lesson-card.locked.open .lesson-lock-msg{display:block}
+        .lesson-card.locked.open .lesson-body{display:none}
+    </style>
+</head>
+<body>
+    <canvas id="bgCanvas"></canvas>
+    <div class="grid-overlay"></div>
+
+    <div class="progress-bar-wrapper">
+        <div class="progress-bar-fill" id="progressBarFill" style="width:0%"></div>
+    </div>
+
+    <nav class="navbar" id="navbar">
+        <div class="container">
+            <a href="index.html" class="nav-logo"><i class="fa-solid fa-brain"></i>Campus<span>IA</span></a>
+            <button class="nav-toggle" id="navToggle" aria-label="Menú"><i class="fa-solid fa-bars"></i></button>
+            <div class="nav-links" id="navLinks">
+                <a href="index.html#cursos">Cursos</a>
+                <a href="index.html#demo">Demo</a>
+                <a href="index.html#infra">Infraestructura</a>
+                <a href="perfil.html">👤 Mi Perfil</a>
+                <a href="admin.html" class="admin-link">⚡ Admin</a>
+            </div>
+        </div>
+    </nav>
+
+    <section class="course-hero">
+        <div class="container">
+            <div class="course-badge"><i class="fa-solid fa-brain"></i> Deep Learning · 4 lecciones · 6h</div>
+            <h1>Redes Neuronales y Deep Learning</h1>
+            <p class="desc">Aprendé cómo las redes neuronales artificiales imitan el cerebro humano para reconocer patrones, clasificar imágenes y procesar lenguaje natural con TensorFlow y PyTorch.</p>
+            <div class="lock-banner" id="lockBanner">🔒 <strong>Vista previa.</strong> creá una cuenta o iniciá sesión para acceder al contenido completo. <a href="inscripcion.html">Inscribite aquí</a></div>
+        </div>
+    </section>
+
+    <div class="container">
+        <div class="course-layout">
+
+            <div class="course-layout-main">
+
+                <div class="section-block">
+                    <h2 class="section-title"><i class="fa-solid fa-graduation-cap" style="color:var(--green)"></i> Lo que aprenderás</h2>
+                    <div class="skills-grid">
+                        <div class="skill-item"><i class="fa-solid fa-check-circle"></i> Comprender el perceptrón y las funciones de activación</div>
+                        <div class="skill-item"><i class="fa-solid fa-check-circle"></i> Construir redes multicapa con backpropagation</div>
+                        <div class="skill-item"><i class="fa-solid fa-check-circle"></i> Implementar CNNs para clasificación de imágenes</div>
+                        <div class="skill-item"><i class="fa-solid fa-check-circle"></i> Diseñar RNNs y LSTMs para secuencias de texto</div>
+                        <div class="skill-item"><i class="fa-solid fa-check-circle"></i> Usar TensorFlow/Keras y PyTorch en proyectos reales</div>
+                        <div class="skill-item"><i class="fa-solid fa-check-circle"></i> Técnicas de regularización: Dropout, BatchNorm, Data Augmentation</div>
+                        <div class="skill-item"><i class="fa-solid fa-check-circle"></i> Entender transfer learning y fine-tuning</div>
+                        <div class="skill-item"><i class="fa-solid fa-check-circle"></i> Desplegar modelos entrenados como APIs</div>
+                    </div>
+                </div>
+
+                <div class="section-block">
+                    <h2 class="section-title"><i class="fa-solid fa-chalkboard-user" style="color:var(--blue)"></i> Instructor</h2>
+                    <div class="instructor-card">
+                        <div class="instructor-avatar"><i class="fa-solid fa-user-graduate"></i></div>
+                        <div class="instructor-info">
+                            <h4>Dr. Carlos Mendoza</h4>
+                            <div class="role">Especialista en Deep Learning</div>
+                            <p class="bio">PhD en Inteligencia Artificial por el MIT, con más de 10 años de experiencia en investigación y desarrollo de arquitecturas neuronales. Ha trabajado en Google Brain y OpenAI, contribuyendo a proyectos de visión computacional y NLP. Es autor de más de 25 publicaciones en conferencias top como NeurIPS, ICML y CVPR.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section-block">
+                    <h2 class="section-title"><i class="fa-solid fa-laptop-code" style="color:var(--pink)"></i> Proyecto del curso</h2>
+                    <div class="project-card">
+                        <div class="project-icon"><i class="fa-solid fa-image"></i></div>
+                        <div class="project-info">
+                            <h4>Clasificador de imágenes con CNN</h4>
+                            <p>Construirás desde cero una red neuronal convolucional para clasificar imágenes del dataset CIFAR-10. Implementarás capas convolucionales, pooling, dropout y batch normalization. Entrenarás el modelo en TensorFlow/Keras, optimizarás hiperparámetros y lo desplegarás como una API web usando FastAPI. Finalmente aplicarás transfer learning con ResNet50 para superar el 90% de precisión.</p>
+                            <div class="project-tags">
+                                <span class="project-tag">Python</span>
+                                <span class="project-tag">TensorFlow</span>
+                                <span class="project-tag">Keras</span>
+                                <span class="project-tag">CNN</span>
+                                <span class="project-tag">FastAPI</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section-block">
+                    <h2 class="section-title"><i class="fa-solid fa-box-archive" style="color:var(--purple)"></i> Recursos incluidos</h2>
+                    <div class="resources-grid">
+                        <div class="resource-card">
+                            <i class="fa-solid fa-database rc-green"></i>
+                            <h5>Datasets etiquetados</h5>
+                            <p>CIFAR-10, MNIST, Fashion-MNIST y datasets personalizados para practicar</p>
+                        </div>
+                        <div class="resource-card">
+                            <i class="fa-solid fa-book rc-blue"></i>
+                            <h5>Notebooks Jupyter</h5>
+                            <p>Implementaciones completas con explicaciones paso a paso en Colab</p>
+                        </div>
+                        <div class="resource-card">
+                            <i class="fa-solid fa-file-pdf rc-purple"></i>
+                            <h5>Slides PDF</h5>
+                            <p>Presentaciones descargables de cada lección teórica</p>
+                        </div>
+                        <div class="resource-card">
+                            <i class="fa-brands fa-github rc-pink"></i>
+                            <h5>Código fuente en GitHub</h5>
+                            <p>Repositorio con todo el código del curso, tests y ejercicios extra</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="course-layout-sidebar">
+                <div class="stats-card">
+                    <h3><i class="fa-solid fa-circle-info" style="color:var(--purple)"></i> Información del curso</h3>
+                    <div class="stat-row">
+                        <span class="stat-label">Precio</span>
+                        <span class="stat-price">Gratis</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Dificultad</span>
+                        <span class="diff-badge">Intermedio</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Duración</span>
+                        <span class="stat-value">6h</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Lecciones</span>
+                        <span class="stat-value">4 lecciones</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Estudiantes</span>
+                        <span class="stat-value">1,200 inscritos</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Valoración</span>
+                        <span class="rating-stars">4.8/5 ★★★★★</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Actualizado</span>
+                        <span class="stat-value">Abril 2026</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Idioma</span>
+                        <span class="stat-value">Español</span>
+                    </div>
+                    <div class="cert-mini-badge"><i class="fa-solid fa-certificate"></i> Certificado al finalizar</div>
+                    <a href="inscripcion.html" class="stats-btn">Inscribirme ahora</a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <section class="lessons-section">
+        <div class="container">
+            <div class="section-heading">📚 Contenido del curso</div>
+            <div class="lessons-list" id="lessonsList">
+
+                <div class="lesson-card open" data-lesson="1">
+                    <div class="lesson-header" onclick="toggleLesson(this)">
+                        <div class="lesson-num">1</div>
+                        <div class="lesson-info">
+                            <div class="lesson-title">El Perceptrón y las Redes Feed-Forward</div>
+                            <div class="lesson-meta"><span class="tag">Teoría</span> Perceptrón simple, función sigmoide, red multicapa</div>
+                        </div>
+                        <div class="lesson-check" data-check="1"><i class="fa-solid fa-check"></i></div>
+                        <i class="fa-solid fa-chevron-right lesson-chevron"></i>
+                    </div>
+                    <div class="lesson-body">
+                        <div class="lesson-content">
+                            <p>El <strong>perceptrón</strong> es la unidad fundamental de una red neuronal. Inspirado en la neurona biológica, recibe entradas, las pondera, aplica una función de activación y produce una salida. Frank Rosenblatt lo creó en 1957 para clasificación binaria.</p>
+                            <p>Una <strong>red feed-forward multicapa</strong> (MLP) apila múltiples capas de perceptrones. Cada capa aprende representaciones cada vez más abstractas: bordes simples en la primera capa, formas geométricas en la segunda, y objetos completos en las capas profundas.</p>
+                            <div class="highlight-box">
+                                <i class="fa-solid fa-lightbulb"></i> <strong>Conceptos clave:</strong> Neurona artificial, pesos y sesgos, funciones de activación (ReLU, sigmoide, tanh), capa oculta, inicialización de pesos, forward propagation.
+                            </div>
+                            <div class="lesson-duration"><i class="fa-regular fa-clock"></i> Duración estimada: 1h 30min</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="lesson-card" data-lesson="2">
+                    <div class="lesson-header" onclick="toggleLesson(this)">
+                        <div class="lesson-num">2</div>
+                        <div class="lesson-info">
+                            <div class="lesson-title">Backpropagation y Entrenamiento</div>
+                            <div class="lesson-meta"><span class="tag">Algoritmo</span> Gradiente descendente, retropropagación, optimizadores</div>
+                        </div>
+                        <div class="lesson-check" data-check="2"><i class="fa-solid fa-check"></i></div>
+                        <i class="fa-solid fa-chevron-right lesson-chevron"></i>
+                    </div>
+                    <div class="lesson-body">
+                        <div class="lesson-content">
+                            <p>El <strong>backpropagation</strong> es el algoritmo que hace posible el deep learning. Calcula el gradiente del error respecto a cada peso de la red usando la regla de la cadena, permitiendo ajustar todos los pesos simultáneamente para minimizar la función de pérdida.</p>
+                            <p>El <strong>gradiente descendente</strong> actualiza los pesos en dirección opuesta al gradiente. Variantes como Adam, RMSprop y SGD con momentum aceleran la convergencia y evitan quedar atrapado en mínimos locales.</p>
+                            <div class="highlight-box">
+                                <i class="fa-solid fa-diagram-project"></i> <strong>Flujo de entrenamiento:</strong> Forward pass → Calcular pérdida → Backward pass (calcular gradientes) → Actualizar pesos → Repetir. El learning rate controla qué tan grande es cada paso: muy grande diverge, muy pequeño converge lentamente.
+                            </div>
+                            <p>Problemas comunes: desvanecimiento del gradiente (gradientes se vuelven casi cero en capas tempranas), explosión del gradiente (valores enormes que desestabilizan el entrenamiento), y overfitting (la red memoriza en vez de generalizar).</p>
+                            <div class="lesson-duration"><i class="fa-regular fa-clock"></i> Duración estimada: 1h 30min</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="lesson-card" data-lesson="3">
+                    <div class="lesson-header" onclick="toggleLesson(this)">
+                        <div class="lesson-num">3</div>
+                        <div class="lesson-info">
+                            <div class="lesson-title">Redes Convolucionales (CNNs)</div>
+                            <div class="lesson-meta"><span class="tag">Arquitectura</span> Convolución, pooling, arquitecturas modernas</div>
+                        </div>
+                        <div class="lesson-check" data-check="3"><i class="fa-solid fa-check"></i></div>
+                        <i class="fa-solid fa-chevron-right lesson-chevron"></i>
+                    </div>
+                    <div class="lesson-body">
+                        <div class="lesson-content">
+                            <p>Las <strong>redes convolucionales (CNN)</strong> revolucionaron la visión computacional. En lugar de conectar cada neurona con todas las de la capa anterior (conexión completa), usan <strong>filtros convolucionales</strong> que recorren la imagen detectando patrones locales como bordes, texturas y formas.</p>
+                            <p>Una CNN típica alterna capas convolucionales (extraen características), capas de pooling (reducen dimensionalidad) y capas fully-connected (clasifican). Arquitecturas famosas: LeNet, AlexNet, VGG, ResNet (con conexiones residuales que permiten entrenar redes de más de 100 capas), e Inception.</p>
+                            <div class="highlight-box">
+                                <i class="fa-solid fa-scale-balanced"></i> <strong>Componentes clave:</strong> Filtro/kernel (matriz que aprende patrones), stride (paso del filtro), padding (relleno para mantener dimensiones), pooling (max-pooling, average-pooling), mapas de activación (feature maps).
+                            </div>
+                            <div class="lesson-duration"><i class="fa-regular fa-clock"></i> Duración estimada: 1h 30min</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="lesson-card" data-lesson="4">
+                    <div class="lesson-header" onclick="toggleLesson(this)">
+                        <div class="lesson-num">4</div>
+                        <div class="lesson-info">
+                            <div class="lesson-title">RNNs, LSTMs y Transfer Learning</div>
+                            <div class="lesson-meta"><span class="tag">Práctica</span> Secuencias, memoria larga, modelos pre-entrenados</div>
+                        </div>
+                        <div class="lesson-check" data-check="4"><i class="fa-solid fa-check"></i></div>
+                        <i class="fa-solid fa-chevron-right lesson-chevron"></i>
+                    </div>
+                    <div class="lesson-body">
+                        <div class="lesson-content">
+                            <p>Las <strong>redes recurrentes (RNN)</strong> procesan secuencias manteniendo un estado oculto que captura información de pasos anteriores. Son ideales para texto, audio y series temporales. Sin embargo, sufren de desvanecimiento del gradiente en secuencias largas.</p>
+                            <p>Las <strong>LSTMs (Long Short-Term Memory)</strong> resuelven este problema con compuertas (input, forget, output) que controlan qué información recordar y qué olvidar. Los GRUs son una versión simplificada igual de efectiva.</p>
+                            <p>El <strong>transfer learning</strong> permite tomar un modelo pre-entrenado (como ResNet50, BERT o GPT) y adaptarlo a una tarea específica con pocos datos. Fine-tuning ajusta las últimas capas del modelo pre-entrenado para la nueva tarea, ahorrando tiempo de entrenamiento y datos.</p>
+                            <div class="highlight-box">
+                                <i class="fa-solid fa-triangle-exclamation"></i> <strong>Aplicaciones reales:</strong> Clasificación de imágenes médicas (CNNs + transfer learning), traducción automática (seq2seq + attention), chatbots (transformers), reconocimiento de voz, generación de texto (GPT, LLaMA), y sistemas de recomendación.
+                            </div>
+                            <div class="lesson-duration"><i class="fa-regular fa-clock"></i> Duración estimada: 1h 30min</div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <section class="section-block" style="padding-top:0">
+        <div class="container-narrow">
+            <h2 class="section-title"><i class="fa-solid fa-clipboard-question" style="color:var(--green)"></i> Examen del curso</h2>
+            <p style="color:var(--text-secondary); font-size:.88rem; margin-bottom:16px">Poné a prueba tus conocimientos sobre redes neuronales.</p>
+
+            <div class="quiz-card">
+                <div class="quiz-header" onclick="toggleQuiz(this)">
+                    <span>¿Qué función de activación se usa comúnmente en capas ocultas para evitar el desvanecimiento del gradiente?</span>
+                    <i class="fa-solid fa-chevron-down quiz-chevron"></i>
+                </div>
+                <div class="quiz-body">
+                    <div class="quiz-answer">✅ <strong>ReLU (Rectified Linear Unit).</strong> Su derivada es 1 para entradas positivas, evitando que el gradiente se desvanezca en capas profundas.</div>
+                </div>
+            </div>
+
+            <div class="quiz-card">
+                <div class="quiz-header" onclick="toggleQuiz(this)">
+                    <span>¿Qué técnica permite entrenar redes de más de 100 capas sin degradación?</span>
+                    <i class="fa-solid fa-chevron-down quiz-chevron"></i>
+                </div>
+                <div class="quiz-body">
+                    <div class="quiz-answer">✅ <strong>Conexiones residuales (ResNet).</strong> Saltan capas sumando la entrada directamente a la salida, permitiendo que el gradiente fluya sin atenuarse.</div>
+                </div>
+            </div>
+
+            <div class="quiz-card">
+                <div class="quiz-header" onclick="toggleQuiz(this)">
+                    <span>¿Qué arquitectura es más adecuada para clasificar imágenes?</span>
+                    <i class="fa-solid fa-chevron-down quiz-chevron"></i>
+                </div>
+                <div class="quiz-body">
+                    <div class="quiz-answer">✅ <strong>CNN (Red Convolucional).</strong> Utiliza filtros que detectan patrones espaciales como bordes, texturas y formas en las imágenes.</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section-block">
+        <div class="container-narrow">
+            <h2 class="section-title"><i class="fa-solid fa-link" style="color:var(--blue)"></i> Cursos relacionados</h2>
+            <div class="related-grid">
+                <a href="ia-general.html" class="related-card">
+                    <i class="fa-solid fa-brain" style="color:var(--green)"></i>
+                    <h5>Inteligencia Artificial General</h5>
+                    <p>Fundamentos, paradigmas y el camino hacia una IA de propósito general.</p>
+                </a>
+                <a href="nlp.html" class="related-card">
+                    <i class="fa-solid fa-language" style="color:var(--blue)"></i>
+                    <h5>Procesamiento de Lenguaje Natural</h5>
+                    <p>Tokenización, embeddings, transformers y modelos de lenguaje desde cero.</p>
+                </a>
+                <a href="regresion-lineal.html" class="related-card">
+                    <i class="fa-solid fa-chart-line" style="color:var(--purple)"></i>
+                    <h5>Regresión Lineal y Gradient Descent</h5>
+                    <p>Base matemática del deep learning, desde regresión simple hasta redes neuronales.</p>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <section class="section-block">
+        <div class="container-narrow">
+            <h2 class="section-title"><i class="fa-solid fa-certificate" style="color:var(--green)"></i> Certificación</h2>
+            <div class="cert-section">
+                <div class="cert-icon"><i class="fa-solid fa-award"></i></div>
+                <h3>Certificado de finalización</h3>
+                <p>Al completar las 4 lecciones y aprobar el examen, recibirás un certificado digital verificable que acredita tus competencias en Redes Neuronales y Deep Learning.</p>
+                <div class="cert-features">
+                    <div class="cert-feat"><i class="fa-solid fa-circle-check"></i> Verificable en blockchain</div>
+                    <div class="cert-feat"><i class="fa-solid fa-circle-check"></i> Compartible en LinkedIn</div>
+                    <div class="cert-feat"><i class="fa-solid fa-circle-check"></i> PDF descargable</div>
+                    <div class="cert-feat"><i class="fa-solid fa-circle-check"></i> Avalado por Campus I.A.</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <h3>🤖 Campus<span>IA</span></h3>
+                    <p>Construido con Python, FastAPI y amor por el Machine Learning. Aprende IA de forma práctica con demos interactivas reales.</p>
+                </div>
+                <div class="footer-col">
+                    <h4>Cursos</h4>
+                    <a href="index.html#cursos">Regresión Lineal</a>
+                    <a href="redes-neuronales.html">Redes Neuronales</a>
+                    <a href="index.html#infra">Infraestructura y Despliegue</a>
+                </div>
+                <div class="footer-col">
+                    <h4>Recursos</h4>
+                    <a href="#">Documentación</a>
+                    <a href="#">API Reference</a>
+                    <a href="#">GitHub</a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <span>© 2026 Campus I.A. — Todos los derechos reservados.</span>
+                <div class="social-links">
+                    <a href="#" aria-label="GitHub"><i class="fa-brands fa-github"></i></a>
+                    <a href="#" aria-label="YouTube"><i class="fa-brands fa-youtube"></i></a>
+                    <a href="#" aria-label="Twitter"><i class="fa-brands fa-x-twitter"></i></a>
+                    <a href="#" aria-label="LinkedIn"><i class="fa-brands fa-linkedin-in"></i></a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        const canvas = document.getElementById('bgCanvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [], mouse = { x: null, y: null };
+
+        function resize() { canvas.width = innerWidth; canvas.height = innerHeight }
+        resize(); addEventListener('resize', resize);
+        addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY });
+
+        class Particle {
+            constructor() { this.reset() }
+            reset() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.size = Math.random() * 1.8 + 0.5;
+                this.speedX = (Math.random() - 0.5) * 0.5;
+                this.speedY = (Math.random() - 0.5) * 0.5;
+                this.opacity = Math.random() * 0.5 + 0.1;
+                this.color = ['152,202,63','139,92,246','236,72,153','59,130,246'][Math.floor(Math.random()*4)];
+            }
+            update() {
+                this.x += this.speedX; this.y += this.speedY;
+                if (mouse.x != null) {
+                    const dx = mouse.x - this.x, dy = mouse.y - this.y, dist = Math.sqrt(dx*dx+dy*dy);
+                    if (dist < 150) { const f = (150-dist)/150; this.x -= (dx/dist)*f*1.2; this.y -= (dy/dist)*f*1.2 }
+                }
+                if (this.x < 0) this.x = canvas.width; if (this.x > canvas.width) this.x = 0;
+                if (this.y < 0) this.y = canvas.height; if (this.y > canvas.height) this.y = 0;
+            }
+            draw() { ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI*2); ctx.fillStyle = `rgba(${this.color},${this.opacity})`; ctx.fill() }
+        }
+
+        for (let i = 0; i < 80; i++) particles.push(new Particle());
+
+        function connect() {
+            for (let i = 0; i < particles.length; i++)
+                for (let j = i+1; j < particles.length; j++) {
+                    const dx = particles[i].x - particles[j].x, dy = particles[i].y - particles[j].y, dist = Math.sqrt(dx*dx+dy*dy);
+                    if (dist < 130) { ctx.beginPath(); ctx.strokeStyle = `rgba(152,202,63,${(1-dist/130)*0.08})`; ctx.lineWidth = 0.5; ctx.moveTo(particles[i].x, particles[i].y); ctx.lineTo(particles[j].x, particles[j].y); ctx.stroke() }
+                }
+        }
+        (function animate() { ctx.clearRect(0, 0, canvas.width, canvas.height); particles.forEach(p => { p.update(); p.draw() }); connect(); requestAnimationFrame(animate) })();
+
+        const navbar = document.getElementById('navbar');
+        addEventListener('scroll', () => { navbar.classList.toggle('scrolled', pageYOffset > 50) });
+
+        document.getElementById('navToggle').addEventListener('click', () => document.getElementById('navLinks').classList.toggle('open'));
+        document.querySelectorAll('.nav-links a').forEach(l => l.addEventListener('click', () => document.getElementById('navLinks').classList.remove('open')));
+
+        const COURSE_NAME = 'Redes Neuronales y Deep Learning';
+        const TOTAL_LESSONS = 4;
+        const session = (() => { try { return JSON.parse(sessionStorage.getItem('ia_student_session')); } catch(e) { return null; } })();
+        const isAdmin = sessionStorage.getItem('ia_admin_auth') === 'true'; if (session && !isAdmin) { const adminLink = document.querySelector('.admin-link'); if (adminLink) adminLink.style.display = 'none'; }
+
+        if (!session && !isAdmin) {
+            document.getElementById('lockBanner').classList.add('visible');
+            document.querySelectorAll('.lesson-card').forEach(item => {
+                item.classList.add('locked');
+                const lockMsg = document.createElement('div');
+                lockMsg.className = 'lesson-lock-msg';
+                lockMsg.innerHTML = '🔒 <strong>Contenido bloqueado.</strong> <a href="inscripcion.html">Inscribite</a> y iniciá sesión para acceder a la teoría completa.';
+                item.appendChild(lockMsg);
+            });
+        }
+
+        if (session) {
+            document.querySelectorAll('#navLinks a:not([href*="perfil"])').forEach(function(el) { el.style.display = 'none' });
+            document.querySelectorAll('.course-hero, .course-layout, .section-block, .footer').forEach(function(el) { if (el) el.style.display = 'none' });
+        }
+
+        const STORAGE_KEY = 'ia_course_progress';
+
+        function getProgress() {
+            try {
+                const data = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+                return data[COURSE_NAME] || [];
+            } catch(e) {
+                return [];
+            }
+        }
+
+        function saveProgress(lessonNum) {
+            const progress = getProgress();
+            if (!progress.includes(lessonNum)) {
+                progress.push(lessonNum);
+                const data = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+                data[COURSE_NAME] = progress;
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+            }
+            updateProgressUI();
+        }
+
+        function updateProgressUI() {
+            const completed = getProgress();
+            const pct = Math.round((completed.length / TOTAL_LESSONS) * 100);
+            document.getElementById('progressBarFill').style.width = pct + '%';
+
+            document.querySelectorAll('.lesson-check').forEach(el => {
+                const num = parseInt(el.dataset.check);
+                if (completed.includes(num)) {
+                    el.classList.add('done');
+                } else {
+                    el.classList.remove('done');
+                }
+            });
+        }
+
+        function toggleLesson(header) {
+            const card = header.parentElement;
+            if (card.classList.contains('locked')) {
+                card.classList.toggle('open');
+                return;
+            }
+            const lessonNum = parseInt(card.dataset.lesson);
+            const wasOpen = card.classList.contains('open');
+            card.classList.toggle('open');
+            if (!wasOpen) {
+                saveProgress(lessonNum);
+            }
+        }
+
+        function toggleQuiz(header) {
+            const card = header.parentElement;
+            card.classList.toggle('open');
+        }
+
+        updateProgressUI();
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <script src="supabase.js"></script>
+</body>
+</html>

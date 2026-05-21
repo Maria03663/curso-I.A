@@ -134,10 +134,10 @@
         <h1>🔐 Panel <span>Admin</span></h1>
         <p class="sub">Acceso restringido a administradores</p>
         <form id="adminLoginForm">
-            <div class="field"><label>👤 Usuario</label><input type="text" id="adminUser" placeholder="admin" required></div>
+            <div class="field"><label>📧 Email</label><input type="email" id="adminEmail" placeholder="admin@email.com" required></div>
             <div class="field"><label>🔑 Contraseña</label><div class="pw-wrapper"><input type="password" id="adminPass" placeholder="••••••••" required><button type="button" class="pw-toggle" onclick="togglePw('adminPass',this)" tabindex="-1"><i class="fa-regular fa-eye-slash"></i></button></div></div>
             <div class="login-err" id="adminLoginError">Credenciales inválidas</div>
-            <button type="submit" class="login-btn"><i class="fa-solid fa-lock-open"></i> Ingresar</button>
+            <button type="submit" class="login-btn" id="adminLoginBtn"><span id="adminLoginBtnText"><i class="fa-solid fa-lock-open"></i> Ingresar</span><span id="adminLoginSpinner" style="display:none"><div class="loading-spinner sm" style="margin:0 auto"></div></span></button>
         </form>
     </div>
 </div>
@@ -210,9 +210,9 @@
                 <p class="section-sub">Administra los usuarios registrados</p>
                 <input type="text" class="search-bar" placeholder="🔍 Buscar por nombre o email..." id="studentSearch">
                 <table>
-                    <thead><tr><th>Nombre</th><th>Email</th><th>Curso</th><th>Estado</th><th>Fecha</th><th>Acciones</th></tr></thead>
+                    <thead><tr><th>Nombre</th><th>Email</th><th>Curso</th><th>Estado</th><th>Fecha</th></tr></thead>
                     <tbody id="inscriptionsTbody">
-                        <tr><td colspan="6" style="text-align:center;padding:30px 20px"><div class="empty-state"><div class="loading-spinner lg" style="margin:0 auto 12px"></div><p style="color:var(--text-muted)">Cargando estudiantes...</p></div></td></tr>
+                        <tr><td colspan="5" style="text-align:center;padding:30px 20px"><div class="empty-state"><div class="loading-spinner lg" style="margin:0 auto 12px"></div><p style="color:var(--text-muted)">Cargando estudiantes...</p></div></td></tr>
                     </tbody>
                 </table>
             </section>
@@ -241,13 +241,13 @@
                 <p class="section-sub">Métricas clave de la plataforma</p>
                 <div class="kpi-grid">
                     <div class="kpi"><div class="val g" id="statsEstudiantes">—</div><div class="lbl">Estudiantes</div></div>
-                    <div class="kpi"><div class="val p" id="statsCursos">—</div><div class="lbl">Cursos</div></div>
-                    <div class="kpi"><div class="val pk" id="statsPendientes">—</div><div class="lbl">Pendientes</div></div>
-                    <div class="kpi"><div class="val b" id="statsAceptados">—</div><div class="lbl">Aceptados</div></div>
+                    <div class="kpi"><div class="val p" id="statsCursos">—</div><div class="lbl">Cursos activos</div></div>
+                    <div class="kpi"><div class="val pk" id="statsMes">—</div><div class="lbl">Registros este mes</div></div>
+                    <div class="kpi"><div class="val b" id="statsSemana">—</div><div class="lbl">Esta semana</div></div>
                 </div>
                 <div class="chart-row">
                     <div class="chart-box"><h4>Cursos más populares</h4><canvas id="chartPopular"></canvas></div>
-                    <div class="chart-box"><h4>Distribución por estado</h4><canvas id="chartPlans"></canvas></div>
+                    <div class="chart-box"><h4>Registros por mes</h4><canvas id="chartPlans"></canvas></div>
                 </div>
             </section>
         </main>
@@ -288,8 +288,8 @@
         btn.innerHTML = isPw ? '<i class="fa-regular fa-eye"></i>' : '<i class="fa-regular fa-eye-slash"></i>';
     }
 
-    // Admin auth
-    const ADMIN_CREDS = { user: 'admin', pass: 'admin123' };
+    // Admin auth via Supabase
+    const ADMIN_EMAIL = 'olaya1726@gmail.com';
 
     if (sessionStorage.getItem('ia_admin_auth') === 'true') {
         document.getElementById('loginOverlay').style.display = 'none';
@@ -297,19 +297,46 @@
         initCharts();
     }
 
-    document.getElementById('adminLoginForm').addEventListener('submit', function(e) {
+    document.getElementById('adminLoginForm').addEventListener('submit', async function(e) {
         e.preventDefault();
-        const u = document.getElementById('adminUser').value.trim().toLowerCase();
-        const p = document.getElementById('adminPass').value;
-        if (u === ADMIN_CREDS.user && p === ADMIN_CREDS.pass) {
+        const email = document.getElementById('adminEmail').value.trim().toLowerCase();
+        const pass = document.getElementById('adminPass').value;
+
+        if (email !== ADMIN_EMAIL) {
+            const err = document.getElementById('adminLoginError');
+            err.textContent = 'Email no autorizado';
+            err.classList.add('show');
+            setTimeout(() => err.classList.remove('show'), 3000);
+            return;
+        }
+
+        const btn = document.getElementById('adminLoginBtn');
+        const btnText = document.getElementById('adminLoginBtnText');
+        const spinner = document.getElementById('adminLoginSpinner');
+        btn.disabled = true;
+        btnText.style.display = 'none';
+        spinner.style.display = 'inline';
+
+        try {
+            const { data, error } = await window.supabase.auth.signInWithPassword({ email, password: pass });
+            if (error) throw error;
             sessionStorage.setItem('ia_admin_auth', 'true');
             document.getElementById('loginOverlay').style.display = 'none';
             document.getElementById('adminDashboard').style.display = 'block';
             initCharts();
-        } else {
-            const err = document.getElementById('adminLoginError');
-            err.classList.add('show');
-            setTimeout(() => err.classList.remove('show'), 3000);
+        } catch(err) {
+            console.error('Admin login error:', err);
+            const el = document.getElementById('adminLoginError');
+            const msg = err.message || String(err);
+            if (msg.includes('Invalid login credentials')) el.textContent = 'Contraseña incorrecta';
+            else if (msg.includes('Email not confirmed') || msg.includes('email_not_confirmed')) el.textContent = 'Email no confirmado. Confirmalo en Supabase Auth > Users';
+            else el.textContent = msg;
+            el.classList.add('show');
+            setTimeout(() => el.classList.remove('show'), 5000);
+        } finally {
+            btn.disabled = false;
+            btnText.style.display = 'inline';
+            spinner.style.display = 'none';
         }
     });
 
@@ -340,8 +367,8 @@
             data: {
                 labels: ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'],
                 datasets: [{
-                    label: 'Ingresos ($)',
-                    data: [1200,1800,2200,2800,3250,0,0,0,0,0,0,0],
+                    label: 'Registros',
+                    data: [0,0,0,0,0,0,0,0,0,0,0,0],
                     backgroundColor: 'rgba(139,92,246,0.3)',
                     borderColor: '#8B5CF6',
                     borderWidth: 1,
@@ -359,33 +386,108 @@
         });
     }
 
-    function initStatsCharts() {
-        setTimeout(() => {
-            const ctx1 = document.getElementById('chartPopular')?.getContext('2d');
-            if (ctx1 && !ctx1.chart) {
-                ctx1.chart = new Chart(ctx1, {
-                    type: 'bar', indexAxis:'y',
-                    data: {
-                        labels: ['Regresión Lineal','Algoritmos Genéticos','Infraestructura','IA (General)'],
-                        datasets: [{ label:'Estudiantes', data:[0,0,0,0], backgroundColor:['rgba(152,202,63,0.4)','rgba(139,92,246,0.4)','rgba(59,130,246,0.4)','rgba(236,72,153,0.4)'], borderColor:['#98CA3F','#8B5CF6','#3B82F6','#EC4899'], borderWidth:1,borderRadius:4 }]
-                    },
-                    options: {
-                        responsive:true, maintainAspectRatio:true,
-                        plugins:{legend:{labels:{color:'#94A3B8',font:{family:'Inter',size:11}}}},
-                        scales:{x:{grid:{color:'rgba(255,255,255,0.03)'},ticks:{color:'#64748B'}},y:{grid:{display:false},ticks:{color:'#94A3B8'}}}
-                    }
-                });
-            }
+    function updateCharts(students) {
+        const byCourse = {};
+        const byMonth = {};
+        const now = new Date();
+        const thisMonth = now.getMonth();
+        const thisYear = now.getFullYear();
+        let thisWeekCount = 0, thisMonthCount = 0;
+        const weekAgo = new Date(now); weekAgo.setDate(weekAgo.getDate() - 7);
 
-            const ctx2 = document.getElementById('chartPlans')?.getContext('2d');
-            if (ctx2 && !ctx2.chart) {
-                ctx2.chart = new Chart(ctx2, {
-                    type:'doughnut',
-                    data:{labels:['Pendientes','Aceptados','Rechazados'],datasets:[{data:[0,0,0],backgroundColor:['rgba(245,158,11,0.4)','rgba(16,185,129,0.4)','rgba(239,68,68,0.4)'],borderColor:['#F59E0B','#10B981','#EF4444'],borderWidth:1}]},
-                    options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{position:'bottom',labels:{color:'#94A3B8',font:{family:'Inter',size:11},padding:16}}}}
-                });
+        students.forEach(s => {
+            const course = s.course || 'Sin curso';
+            byCourse[course] = (byCourse[course] || 0) + 1;
+
+            if (s.created_at) {
+                const d = new Date(s.created_at);
+                const key = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+                byMonth[key] = (byMonth[key] || 0) + 1;
+                if (d >= weekAgo) thisWeekCount++;
+                if (d.getMonth() === thisMonth && d.getFullYear() === thisYear) thisMonthCount++;
             }
-        }, 100);
+        });
+
+        const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+        setVal('statsMes', thisMonthCount);
+        setVal('statsSemana', thisWeekCount);
+
+        const courses = Object.keys(byCourse).sort((a,b) => byCourse[b] - byCourse[a]);
+        const courseLabels = courses.slice(0, 8);
+        const courseData = courseLabels.map(c => byCourse[c]);
+
+        const ctx1 = document.getElementById('chartPopular')?.getContext('2d');
+        if (ctx1) {
+            if (ctx1._chart) ctx1._chart.destroy();
+            ctx1._chart = new Chart(ctx1, {
+                type: 'bar', indexAxis: 'y',
+                data: {
+                    labels: courseLabels,
+                    datasets: [{
+                        label: 'Estudiantes',
+                        data: courseData,
+                        backgroundColor: courseLabels.map((_,i) => ['rgba(152,202,63,0.4)','rgba(139,92,246,0.4)','rgba(59,130,246,0.4)','rgba(236,72,153,0.4)','rgba(245,158,11,0.4)','rgba(16,185,129,0.4)','rgba(239,68,68,0.4)','rgba(99,102,241,0.4)'][i % 8]),
+                        borderColor: courseLabels.map((_,i) => ['#98CA3F','#8B5CF6','#3B82F6','#EC4899','#F59E0B','#10B981','#EF4444','#6366F1'][i % 8]),
+                        borderWidth: 1, borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: true,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { grid: { color: 'rgba(255,255,255,0.03)' }, ticks: { color: '#64748B' } },
+                        y: { grid: { display: false }, ticks: { color: '#94A3B8' } }
+                    }
+                }
+            });
+        }
+
+        const months = Object.keys(byMonth).sort();
+        const monthLabels = months.map(m => { const [y,mo] = m.split('-'); const meses = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic']; return meses[parseInt(mo)-1] + (y != now.getFullYear() ? ' '+y : ''); });
+        const monthData = months.map(m => byMonth[m]);
+
+        const ctx2 = document.getElementById('chartPlans')?.getContext('2d');
+        if (ctx2) {
+            if (ctx2._chart) ctx2._chart.destroy();
+            ctx2._chart = new Chart(ctx2, {
+                type: 'line',
+                data: {
+                    labels: monthLabels,
+                    datasets: [{
+                        label: 'Registros',
+                        data: monthData,
+                        borderColor: '#8B5CF6',
+                        backgroundColor: 'rgba(139,92,246,0.1)',
+                        fill: true,
+                        tension: 0.3,
+                        pointBackgroundColor: '#8B5CF6',
+                        pointRadius: 4,
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: true,
+                    plugins: { legend: { labels: { color: '#94A3B8', font: { family: 'Inter', size: 11 } } } },
+                    scales: {
+                        x: { grid: { color: 'rgba(255,255,255,0.03)' }, ticks: { color: '#64748B' } },
+                        y: { grid: { color: 'rgba(255,255,255,0.03)' }, ticks: { color: '#64748B' }, beginAtZero: true }
+                    }
+                }
+            });
+        }
+
+        const revenueCtx = document.getElementById('chartRevenue')?.getContext('2d');
+        if (revenueCtx && revenueCtx._chart) {
+            const monthlyRegs = Array(12).fill(0);
+            students.forEach(s => {
+                if (s.created_at) {
+                    const d = new Date(s.created_at);
+                    if (d.getFullYear() === now.getFullYear()) monthlyRegs[d.getMonth()]++;
+                }
+            });
+            revenueCtx._chart.data.datasets[0].data = monthlyRegs;
+            revenueCtx._chart.update();
+        }
     }
 
     // Modal
@@ -439,9 +541,14 @@
             }
 
             const students = data || [];
+            const uniqueCourses = [...new Set(students.map(s => s.course).filter(Boolean))];
+            const statsCursos = document.getElementById('statsCursos');
+            if (statsCursos) statsCursos.textContent = uniqueCourses.length;
             updateKPIs(students);
             updateRecentStudents(students);
             updateInscriptionsTable(students);
+            updateCoursesTable(students);
+            updateCharts(students);
             console.log('✅ ' + students.length + ' estudiantes cargados');
         } catch (e) {
             console.warn('⚠️ Sin conexión a Supabase:', e.message);
@@ -452,7 +559,7 @@
     function showLoadError(msg) {
         const isError = msg.includes('Error') || msg.includes('Sin conexión');
         const color = isError ? '#EF4444' : 'var(--text-muted)';
-        const html = '<tr><td colspan="6" style="text-align:center;padding:30px 20px"><div class="empty-state">' +
+        const html = '<tr><td colspan="5" style="text-align:center;padding:30px 20px"><div class="empty-state">' +
             (isError ? '<i class="fa-solid fa-triangle-exclamation" style="color:#EF4444"></i>' : '<div class="loading-spinner lg" style="margin:0 auto 12px"></div>') +
             '<p style="color:' + color + '">' + msg + '</p></div></td></tr>';
         const tbody = document.getElementById('inscriptionsTbody');
@@ -463,16 +570,13 @@
 
     function updateKPIs(students) {
         const total = students.length;
-        const pendientes = students.filter(s => s.status === 'pending').length;
-        const aceptados = students.filter(s => s.status === 'accepted').length;
-
         const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
         setVal('kpiEstudiantes', total);
-        setVal('kpiPendientes', pendientes);
-        setVal('kpiAceptados', aceptados);
         setVal('statsEstudiantes', total);
-        setVal('statsPendientes', pendientes);
-        setVal('statsAceptados', aceptados);
+        setVal('kpiPendientes', '—');
+        setVal('kpiAceptados', '—');
+        setVal('statsPendientes', '—');
+        setVal('statsAceptados', '—');
     }
 
     function updateRecentStudents(students) {
@@ -487,7 +591,7 @@
             <tr>
                 <td style="font-weight:600;color:#fff">${s.full_name || '—'}</td>
                 <td>${s.course || '—'}</td>
-                <td><span class="badge ${s.status === 'accepted' ? 'green' : s.status === 'rejected' ? 'red' : 'yellow'}">${s.status === 'accepted' ? 'Aceptado' : s.status === 'rejected' ? 'Rechazado' : 'Pendiente'}</span></td>
+                <td><span class="badge green">Activo</span></td>
                 <td>${s.updated_at ? new Date(s.updated_at).toLocaleDateString('es-CO') : '—'}</td>
             </tr>
         `).join('');
@@ -497,7 +601,7 @@
         const tbody = document.getElementById('inscriptionsTbody');
         if (!tbody) return;
         if (students.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:30px 20px"><div class="empty-state"><i class="fa-solid fa-users-slash"></i><p>No hay estudiantes registrados</p></div></td></tr>';
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:30px 20px"><div class="empty-state"><i class="fa-solid fa-users-slash"></i><p>No hay estudiantes registrados</p></div></td></tr>';
             return;
         }
         tbody.innerHTML = students.map(s => `
@@ -505,36 +609,46 @@
                 <td style="font-weight:600;color:#fff">${s.full_name || '—'}</td>
                 <td>${s.email || '—'}</td>
                 <td>${s.course || '—'}</td>
-                <td><span class="badge ${s.status === 'accepted' ? 'green' : s.status === 'rejected' ? 'red' : 'yellow'}">${s.status === 'accepted' ? 'Aceptado' : s.status === 'rejected' ? 'Rechazado' : 'Pendiente'}</span></td>
+                <td><span class="badge green">Activo</span></td>
                 <td>${s.updated_at ? new Date(s.updated_at).toLocaleDateString('es-CO') : '—'}</td>
-                <td>
-                    ${s.status === 'pending' ? '<button class="btn-sm green" onclick="acceptSupabaseStudent(\'' + s.id + '\',\'' + (s.full_name || '').replace(/'/g, "\\'") + '\',\'' + (s.email || '').replace(/'/g, "\\'") + '\',\'' + (s.course || '').replace(/'/g, "\\'") + '\',\'' + (s.temp_password || '').replace(/'/g, "\\'") + '\')">✔ Aceptar</button> ' : ''}
-                    <button class="btn-sm red" onclick="rejectSupabaseStudent('${s.id}')">✕ Rechazar</button>
-                </td>
             </tr>
         `).join('');
     }
 
-    async function acceptSupabaseStudent(id, fullName, email, course, password) {
-        const { error } = await window.supabase.from('profiles').update({ status: 'accepted' }).eq('id', id);
-        if (error) {
-            alert('❌ Error al aceptar: ' + error.message);
+    function updateCoursesTable(students) {
+        const tbody = document.getElementById('coursesTbody');
+        if (!tbody) return;
+        const counts = {};
+        students.forEach(s => {
+            const c = s.course || 'Sin curso';
+            counts[c] = (counts[c] || 0) + 1;
+        });
+        const names = Object.keys(counts);
+        if (names.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:30px 20px"><div class="empty-state"><i class="fa-solid fa-book-open"></i><p>No hay cursos con estudiantes</p></div></td></tr>';
             return;
         }
-        if (email && window.enviarCorreoAceptacion) {
-            try {
-                await window.enviarCorreoAceptacion(fullName, email, course, password);
-                console.log('📧 Correo de aceptación enviado a', email);
-            } catch (e) { console.warn('⚠️ Error enviando correo:', e.message); }
-        }
-        alert('✅ Estudiante aceptado y correo enviado.');
-        loadSupabaseData();
+        tbody.innerHTML = names.map(n => `
+            <tr>
+                <td style="font-weight:600;color:#fff">${n}</td>
+                <td>IA</td>
+                <td>${counts[n]}</td>
+                <td>Gratis</td>
+                <td><span class="badge green">Activo</span></td>
+                <td><button class="btn-sm purple" onclick="alert('Editar: ${n.replace(/'/g, "\\'")}')"><i class="fa-solid fa-pen"></i></button></td>
+            </tr>
+        `).join('');
     }
 
-    async function rejectSupabaseStudent(id) {
-        await window.supabase.from('profiles').update({ status: 'rejected' }).eq('id', id);
-        loadSupabaseData();
-    }
+    document.getElementById('studentSearch')?.addEventListener('input', function() {
+        const q = this.value.toLowerCase().trim();
+        const rows = document.querySelectorAll('#inscriptionsTbody tr');
+        rows.forEach(tr => {
+            if (tr.querySelector('td[colspan]')) return;
+            const text = tr.textContent.toLowerCase();
+            tr.style.display = !q || text.includes(q) ? '' : 'none';
+        });
+    });
 
     loadSupabaseData();
 </script>

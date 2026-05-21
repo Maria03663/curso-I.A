@@ -265,9 +265,8 @@
         'carlos': { username:'carlos', password:'estudiante123', fullName:'Carlos García', email:'carlos@campusia.com', phone:'+57 310 987 6543', education:'tecnico', experience:'basica', course:'Algoritmos Genéticos', date:'2026-02-20', status:'accepted' },
     };
 
-    // Check existing session
-    const saved = sessionStorage.getItem(STUDENT_KEY);
-    if (saved) { try { showDashboard(JSON.parse(saved)); } catch(e) { sessionStorage.removeItem(STUDENT_KEY); } }
+    // Clear any previous session so login is required every time
+    sessionStorage.removeItem(STUDENT_KEY);
 
     document.getElementById('loginForm').addEventListener('submit', async function(e) {
         e.preventDefault();
@@ -425,6 +424,8 @@
         document.getElementById('loginForm').style.display = 'block';
         document.getElementById('loginLoading').style.display = 'none';
     });
+
+    addEventListener('beforeunload', function() { sessionStorage.removeItem(STUDENT_KEY); });
 </script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
     <script src="supabase.js"></script>
