@@ -8,6 +8,7 @@ Plataforma educativa de cursos de Inteligencia Artificial con contenido interact
 - **Backend:** Supabase (Auth + Database)
 - **Emails:** Google Apps Script (welcome + acceptance)
 - **Hosting:** GitHub Pages
+-**DIGITAL OCEAN:** https://monkfish-app-au7oa.ondigitalocean.app/
 
 ## Estructura
 
