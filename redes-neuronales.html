@@ -193,6 +193,17 @@
         .lesson-lock-msg{display:none;padding:14px 18px 14px 60px;font-size:.82rem;color:#F59E0B}
         .lesson-card.locked.open .lesson-lock-msg{display:block}
         .lesson-card.locked.open .lesson-body{display:none}
+
+        /* TIMED EXAM */
+        .exam-timer-critical{animation:pulse-red 1s ease infinite}
+        @keyframes pulse-red{0%,100%{opacity:1}50%{opacity:.5}}
+        .exam-grade-excellent{color:var(--green)}
+        .exam-grade-good{color:#F59E0B}
+        .exam-grade-fail{color:#EF4444}
+        /* LOCKED DIFFERENTIATION */
+        .locked-banner-alt{display:none;background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.2);border-radius:var(--radius-sm);padding:14px 20px;margin-bottom:20px;font-size:.85rem;color:#F87171;text-align:center}
+        .locked-banner-alt.visible{display:block}
+        .locked-banner-alt a{color:#FCA5A5;font-weight:700}
     </style>
 </head>
 <body>
@@ -368,6 +379,7 @@
                             <div class="highlight-box">
                                 <i class="fa-solid fa-lightbulb"></i> <strong>Conceptos clave:</strong> Neurona artificial, pesos y sesgos, funciones de activación (ReLU, sigmoide, tanh), capa oculta, inicialización de pesos, forward propagation.
                             </div>
+                            <p>El <strong>perceptrón simple</strong> fue desarrollado por Frank Rosenblatt en 1957 y solo podía clasificar datos linealmente separables. La publicación del libro "Perceptrons" de Minsky y Papert en 1969 demostró sus limitaciones (como no poder resolver XOR), lo que llevó al primer "invierno de la IA". No fue hasta los años 80 que el backpropagation popularizó las redes multicapa.</p>
                             <div class="lesson-duration"><i class="fa-regular fa-clock"></i> Duración estimada: 1h 30min</div>
                         </div>
                     </div>
@@ -445,40 +457,11 @@
         </div>
     </section>
 
-    <section class="section-block" style="padding-top:0">
-        <div class="container-narrow">
-            <h2 class="section-title"><i class="fa-solid fa-clipboard-question" style="color:var(--green)"></i> Examen del curso</h2>
-            <p style="color:var(--text-secondary); font-size:.88rem; margin-bottom:16px">Poné a prueba tus conocimientos sobre redes neuronales.</p>
-
-            <div class="quiz-card">
-                <div class="quiz-header" onclick="toggleQuiz(this)">
-                    <span>¿Qué función de activación se usa comúnmente en capas ocultas para evitar el desvanecimiento del gradiente?</span>
-                    <i class="fa-solid fa-chevron-down quiz-chevron"></i>
-                </div>
-                <div class="quiz-body">
-                    <div class="quiz-answer">✅ <strong>ReLU (Rectified Linear Unit).</strong> Su derivada es 1 para entradas positivas, evitando que el gradiente se desvanezca en capas profundas.</div>
-                </div>
-            </div>
-
-            <div class="quiz-card">
-                <div class="quiz-header" onclick="toggleQuiz(this)">
-                    <span>¿Qué técnica permite entrenar redes de más de 100 capas sin degradación?</span>
-                    <i class="fa-solid fa-chevron-down quiz-chevron"></i>
-                </div>
-                <div class="quiz-body">
-                    <div class="quiz-answer">✅ <strong>Conexiones residuales (ResNet).</strong> Saltan capas sumando la entrada directamente a la salida, permitiendo que el gradiente fluya sin atenuarse.</div>
-                </div>
-            </div>
-
-            <div class="quiz-card">
-                <div class="quiz-header" onclick="toggleQuiz(this)">
-                    <span>¿Qué arquitectura es más adecuada para clasificar imágenes?</span>
-                    <i class="fa-solid fa-chevron-down quiz-chevron"></i>
-                </div>
-                <div class="quiz-body">
-                    <div class="quiz-answer">✅ <strong>CNN (Red Convolucional).</strong> Utiliza filtros que detectan patrones espaciales como bordes, texturas y formas en las imágenes.</div>
-                </div>
-            </div>
+    <section class="section-block" style="padding:0 0 50px">
+        <div class="container" style="max-width:900px">
+            <h2 class="section-title">📝 Examen del curso</h2>
+            <p style="color:var(--text-secondary);font-size:.85rem;margin-bottom:16px">Respondé cada pregunta en menos de <strong style="color:#fff">1 minuto</strong>. 4 opciones (A, B, C, D).</p>
+            <div id="examContainer" style="background:var(--bg-card);backdrop-filter:blur(16px);border:1px solid var(--border);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow)"></div>
         </div>
     </section>
 
@@ -608,21 +591,26 @@
         const session = (() => { try { return JSON.parse(sessionStorage.getItem('ia_student_session')); } catch(e) { return null; } })();
         const isAdmin = sessionStorage.getItem('ia_admin_auth') === 'true'; if (session && !isAdmin) { const adminLink = document.querySelector('.admin-link'); if (adminLink) adminLink.style.display = 'none'; }
 
+        // Enrolled vs Locked UI
         (function() {
-            function lockCourse(msg) {
-                document.getElementById('lockBanner').classList.add('visible');
-                document.querySelectorAll('.lesson-card').forEach(item => {
-                    item.classList.add('locked');
-                    const lockMsg = document.createElement('div');
-                    lockMsg.className = 'lesson-lock-msg';
-                    lockMsg.innerHTML = msg;
-                    item.appendChild(lockMsg);
-                });
-            }
-            if (!session && !isAdmin) {
-                lockCourse('🔒 <strong>Contenido bloqueado.</strong> <a href="inscripcion.html">Inscribite</a> y iniciá sesión para acceder a la teoría completa.');
-            } else if (session && session.course !== COURSE_NAME && !isAdmin) {
-                lockCourse('🔒 <strong>No estás inscrito en este curso.</strong> Estás inscrito en: <strong>' + session.course + '</strong>. <a href="perfil.html">Ir a mi perfil</a>');
+            const session = JSON.parse(sessionStorage.getItem('ia_student_session'));
+            const COURSE = 'Redes Neuronales y Deep Learning';
+            const lockBanner = document.getElementById('lockBanner');
+            const lessonCards = document.querySelectorAll('.lesson-card');
+            
+            if (!session) {
+                if(lockBanner) lockBanner.classList.add('visible');
+                lessonCards.forEach(c => { c.classList.add('locked'); });
+            } else if (session.course !== COURSE) {
+                if(lockBanner) lockBanner.classList.remove('visible');
+                const altBanner = document.createElement('div');
+                altBanner.className = 'locked-banner-alt visible';
+                altBanner.innerHTML = '🔒 <strong>No estás inscrito en este curso.</strong> Estás inscrito en: <strong>' + session.course + '</strong>. <a href="perfil.html">Ir a mi perfil</a>';
+                lockBanner.parentNode.insertBefore(altBanner, lockBanner.nextSibling);
+                lessonCards.forEach(c => { c.classList.add('locked'); });
+            } else {
+                if(lockBanner) lockBanner.classList.remove('visible');
+                lessonCards.forEach(c => { c.classList.remove('locked'); });
             }
         })();
 
@@ -686,9 +674,21 @@
             card.classList.toggle('open');
         }
 
+        document.addEventListener('DOMContentLoaded', function() {
+            const ec = document.getElementById('examContainer');
+            if(ec) initTimedExam('examContainer', [
+                {text:'¿Qué función de activación introduce no-linealidad en redes neuronales?', options:['Lineal','ReLU','Identidad','Escalón'], correct:1},
+                {text:'¿Qué algoritmo permite a la red aprender de sus errores propagando el gradiente?', options:['Forward pass','Backpropagation','Dropout','Batch normalization'], correct:1},
+                {text:'¿Qué arquitectura es ideal para procesar imágenes?', options:['CNN','RNN','Transformer','Autoencoder'], correct:0},
+                {text:'¿Qué problema resuelve el dropout?', options:['Underfitting','Overfitting','Vanishing gradient','Exploding gradient'], correct:1},
+                {text:'¿Qué es el "vanishing gradient"?', options:['El gradiente se vuelve infinito','El gradiente se vuelve extremadamente pequeño','La red olvida lo aprendido','Los pesos no se actualizan'], correct:1},
+            ], 60, 'redes-exam');
+        });
+
         updateProgressUI();
     </script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
     <script src="supabase.js"></script>
+    <script src="examen.js"></script>
 </body>
 </html>

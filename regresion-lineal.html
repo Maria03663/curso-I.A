@@ -114,6 +114,17 @@
         .lesson-card.locked.open .lesson-lock-msg{display:block}
         .lesson-card.locked.open .lesson-body{display:none}
 
+        /* TIMED EXAM */
+        .exam-timer-critical{animation:pulse-red 1s ease infinite}
+        @keyframes pulse-red{0%,100%{opacity:1}50%{opacity:.5}}
+        .exam-grade-excellent{color:var(--green)}
+        .exam-grade-good{color:#F59E0B}
+        .exam-grade-fail{color:#EF4444}
+        /* LOCKED DIFFERENTIATION */
+        .locked-banner-alt{display:none;background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.2);border-radius:var(--radius-sm);padding:14px 20px;margin-bottom:20px;font-size:.85rem;color:#F87171;text-align:center}
+        .locked-banner-alt.visible{display:block}
+        .locked-banner-alt a{color:#FCA5A5;font-weight:700}
+
         /* ============ NEW SECTIONS ============ */
 
         /* COURSE LAYOUT (2-col grid) */
@@ -316,66 +327,8 @@
             <!-- EXAMEN DEL CURSO -->
             <section class="exam-section">
                 <h2>📝 Examen del curso</h2>
-
-                <div class="exam-card">
-                    <div class="exam-header" onclick="toggleExamQuestion(this)">
-                        <div class="exam-num">1</div>
-                        <div class="exam-title">¿Qué minimiza OLS?</div>
-                        <i class="fa-solid fa-chevron-right exam-chevron"></i>
-                    </div>
-                    <div class="exam-body">
-                        <div class="exam-content">
-                            <div class="exam-options">
-                                <label><input type="radio" name="q1" value="a"> La suma de los errores absolutos</label>
-                                <label><input type="radio" name="q1" value="b"> La suma de los errores al cuadrado</label>
-                                <label><input type="radio" name="q1" value="c"> El máximo error</label>
-                                <label><input type="radio" name="q1" value="d"> La mediana de los errores</label>
-                            </div>
-                            <button class="exam-btn" onclick="checkExamAnswer(1,'b')">Verificar</button>
-                            <div class="quiz-feedback" id="feedback-q1"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="exam-card">
-                    <div class="exam-header" onclick="toggleExamQuestion(this)">
-                        <div class="exam-num">2</div>
-                        <div class="exam-title">¿Qué métrica está en las mismas unidades que Y?</div>
-                        <i class="fa-solid fa-chevron-right exam-chevron"></i>
-                    </div>
-                    <div class="exam-body">
-                        <div class="exam-content">
-                            <div class="exam-options">
-                                <label><input type="radio" name="q2" value="a"> MSE</label>
-                                <label><input type="radio" name="q2" value="b"> R²</label>
-                                <label><input type="radio" name="q2" value="c"> RMSE</label>
-                                <label><input type="radio" name="q2" value="d"> MAE</label>
-                            </div>
-                            <button class="exam-btn" onclick="checkExamAnswer(2,'c')">Verificar</button>
-                            <div class="quiz-feedback" id="feedback-q2"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="exam-card">
-                    <div class="exam-header" onclick="toggleExamQuestion(this)">
-                        <div class="exam-num">3</div>
-                        <div class="exam-title">¿Qué regularización puede llevar coeficientes a cero?</div>
-                        <i class="fa-solid fa-chevron-right exam-chevron"></i>
-                    </div>
-                    <div class="exam-body">
-                        <div class="exam-content">
-                            <div class="exam-options">
-                                <label><input type="radio" name="q3" value="a"> Ridge</label>
-                                <label><input type="radio" name="q3" value="b"> Lasso</label>
-                                <label><input type="radio" name="q3" value="c"> OLS</label>
-                                <label><input type="radio" name="q3" value="d"> ElasticNet</label>
-                            </div>
-                            <button class="exam-btn" onclick="checkExamAnswer(3,'b')">Verificar</button>
-                            <div class="quiz-feedback" id="feedback-q3"></div>
-                        </div>
-                    </div>
-                </div>
+                <p style="color:var(--text-secondary);font-size:.85rem;margin-bottom:16px">Respondé cada pregunta en menos de <strong style="color:#fff">1 minuto</strong>. Tenés 4 opciones (A, B, C, D).</p>
+                <div id="examContainer" style="background:var(--bg-card);backdrop-filter:blur(16px);border:1px solid var(--border);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow)"></div>
             </section>
 
             <!-- CURSOS RELACIONADOS -->
@@ -481,6 +434,8 @@
                             <div class="highlight-box">
                                 <i class="fa-solid fa-lightbulb"></i> <strong>Aplicaciones reales:</strong> Predicción del precio de casas en base a metros cuadrados, ubicación y antigüedad. Estimación de ventas futuras según inversión publicitaria. Pronóstico de temperatura a partir de datos históricos. Cálculo de rendimiento académico según horas de estudio y asistencia.
                             </div>
+                            <p>La regresión lineal asume una relación lineal entre las variables, lo que significa que un cambio en X produce un cambio proporcional en Y. Esta simplicidad es también su mayor limitación: si la relación real es curvilínea o tiene interacciones complejas, la regresión lineal no capturará bien esos patrones sin transformaciones adecuadas como añadir términos polinómicos o interacciones entre variables.</p>
+                            <p>Los supuestos clave del modelo incluyen: <strong>linealidad</strong> (la relación entre X e Y es lineal), <strong>independencia</strong> (las observaciones son independientes entre sí), <strong>homocedasticidad</strong> (la varianza de los errores es constante a lo largo de X), <strong>normalidad</strong> (los errores siguen una distribución normal), y <strong>no-multicolinealidad</strong> (las variables predictoras no están altamente correlacionadas). Violar estos supuestos puede llevar a estimaciones sesgadas o predicciones poco fiables.</p>
                             <div class="lesson-duration"><i class="fa-regular fa-clock"></i> ⏱ 45 min</div>
                         </div>
                     </div>
@@ -572,6 +527,7 @@
                             <div class="highlight-box">
                                 <i class="fa-solid fa-lightbulb"></i> <strong>¿Cuándo usar cada uno?:</strong> Ridge cuando tenés muchas variables y todas potencialmente relevantes. Lasso cuando querés un modelo más simple e interpretable con menos variables. El parámetro λ (lambda) controla la intensidad de la regularización: elegilo mediante <strong>validación cruzada</strong>, dividiendo los datos en k folds, entrenando con k−1 y validando con el restante, y promediando el error. Valores típicos a probar: 0.001, 0.01, 0.1, 1, 10, 100.
                             </div>
+                            <p>Un concepto importante en regularización es el <strong>trade-off entre sesgo y varianza</strong>. Modelos muy simples (alto sesgo) subestiman los patrones en datos, mientras que modelos muy complejos (alta varianza) sobreajustan el ruido. La regularización busca el punto óptimo donde el error total (sesgo² + varianza + error irreducible) se minimiza. Los gráficos de validación cruzada mostrando error de entrenamiento vs validación para diferentes valores de λ ayudan visualmente a encontrar este punto.</p>
                             <div class="lesson-duration"><i class="fa-regular fa-clock"></i> ⏱ 50 min</div>
                         </div>
                     </div>
@@ -769,8 +725,46 @@
                 feedbackEl.className = 'quiz-feedback visible incorrect';
             }
         }
+
+        // Enrolled vs Locked UI
+        (function() {
+            const session = JSON.parse(sessionStorage.getItem('ia_student_session'));
+            const COURSE = 'Regresión Lineal';
+            const lockBanner = document.getElementById('lockBanner');
+            const lessonCards = document.querySelectorAll('.lesson-card');
+            
+            if (!session) {
+                lockBanner.classList.add('visible');
+                lessonCards.forEach(c => { c.classList.add('locked'); });
+            } else if (session.course !== COURSE) {
+                lockBanner.classList.remove('visible');
+                const altBanner = document.createElement('div');
+                altBanner.className = 'locked-banner-alt visible';
+                altBanner.innerHTML = `🔒 <strong>No estás inscrito en este curso.</strong> Estás inscrito en: <strong>${session.course}</strong>. <a href="perfil.html">Ir a mi perfil</a>`;
+                lockBanner.parentNode.insertBefore(altBanner, lockBanner.nextSibling);
+                lessonCards.forEach(c => { c.classList.add('locked'); });
+            } else {
+                lockBanner.classList.remove('visible');
+                lessonCards.forEach(c => { c.classList.remove('locked'); });
+            }
+        })();
+
+        // Init timed exam
+        document.addEventListener('DOMContentLoaded', function() {
+            const examContainer = document.getElementById('examContainer');
+            if (examContainer) {
+                initTimedExam('examContainer', [
+                    { text: '¿Qué minimiza el método de Mínimos Cuadrados Ordinarios (OLS)?', options: ['La suma de los errores absolutos', 'La suma de los errores al cuadrado', 'El máximo error', 'La mediana de los errores'], correct: 1 },
+                    { text: '¿Qué métrica de evaluación está expresada en las mismas unidades que la variable dependiente Y?', options: ['MSE', 'R²', 'RMSE', 'MAE'], correct: 2 },
+                    { text: '¿Qué tipo de regularización puede llevar coeficientes exactamente a cero?', options: ['Ridge (L2)', 'Lasso (L1)', 'OLS', 'ElasticNet'], correct: 1 },
+                    { text: '¿Qué mide el coeficiente de determinación R²?', options: ['El error promedio del modelo', 'La proporción de varianza explicada por el modelo', 'La pendiente de la recta de regresión', 'La correlación entre X e Y'], correct: 1 },
+                    { text: '¿Qué problema ocurre cuando dos variables predictoras están altamente correlacionadas?', options: ['Heterocedasticidad', 'Multicolinealidad', 'Autocorrelación', 'Sobreajuste'], correct: 1 },
+                ], 60, 'regresion-lineal-exam');
+            }
+        });
     </script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
     <script src="supabase.js"></script>
+    <script src="examen.js"></script>
 </body>
 </html>

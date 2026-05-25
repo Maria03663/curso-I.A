@@ -113,6 +113,16 @@
 .lesson-lock-msg{display:none;padding:14px 18px 14px 60px;font-size:.82rem;color:#F59E0B}
 .lesson-card.locked.open .lesson-lock-msg{display:block}
 .lesson-card.locked.open .lesson-body{display:none}
+/* TIMED EXAM */
+.exam-timer-critical{animation:pulse-red 1s ease infinite}
+@keyframes pulse-red{0%,100%{opacity:1}50%{opacity:.5}}
+.exam-grade-excellent{color:var(--green)}
+.exam-grade-good{color:#F59E0B}
+.exam-grade-fail{color:#EF4444}
+/* LOCKED DIFFERENTIATION */
+.locked-banner-alt{display:none;background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.2);border-radius:var(--radius-sm);padding:14px 20px;margin-bottom:20px;font-size:.85rem;color:#F87171;text-align:center}
+.locked-banner-alt.visible{display:block}
+.locked-banner-alt a{color:#FCA5A5;font-weight:700}
     </style>
 </head>
 <body>
@@ -171,6 +181,7 @@
                             <div class="highlight-box">
                                 <i class="fa-solid fa-lightbulb"></i> <strong>Ejemplo numérico:</strong> Dataset con 14 instancias (9 "Sí", 5 "No"). Entropía inicial = 0.94. Al hacer split por "Tiempo" (soleado/nublado/lluvia), la entropía baja a 0.69. Ganancia = 0.94 - 0.69 = 0.25 bits. Repetimos para cada atributo y elegimos el de mayor ganancia.
                             </div>
+                            <p>Los árboles de decisión tienen una ventaja única sobre otros algoritmos de ML: son <strong>totalmente interpretables</strong>. Podemos visualizar el árbol completo y entender exactamente por qué el modelo toma cada decisión. Esto los hace ideales para dominios con requisitos regulatorios como salud, finanzas o seguros, donde es obligatorio explicar cada predicción. En la práctica, un solo árbol rara vez es el mejor predictor, pero entender cómo funciona es la base para dominar métodos ensemble como Random Forest y Gradient Boosting.</p>
                             <div class="lesson-duration"><i class="fa-regular fa-clock"></i> Duración estimada: 55 min</div>
                         </div>
                     </div>
@@ -243,6 +254,15 @@
                 </div>
 
             </div>
+        </div>
+    </section>
+
+    <!-- EXAMEN DEL CURSO -->
+    <section style="padding:40px 0;position:relative;z-index:1">
+        <div class="container" style="max-width:900px">
+            <div style="font-size:.75rem;font-weight:700;color:var(--purple);letter-spacing:3px;text-transform:uppercase;margin-bottom:20px">📝 Examen del curso</div>
+            <p style="color:var(--text-secondary);font-size:.85rem;margin-bottom:16px">Respondé cada pregunta en menos de <strong style="color:#fff">1 minuto</strong>. Tenés 4 opciones (A, B, C, D).</p>
+            <div id="examContainer" style="background:var(--bg-card);backdrop-filter:blur(16px);border:1px solid var(--border);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow)"></div>
         </div>
     </section>
 
@@ -411,9 +431,44 @@
             }
         }
 
+        // Enrolled vs Locked UI
+        (function() {
+            const session = JSON.parse(sessionStorage.getItem('ia_student_session'));
+            const COURSE = 'Árboles de Decisión y Random Forest';
+            const lockBanner = document.getElementById('lockBanner');
+            const lessonCards = document.querySelectorAll('.lesson-card');
+            
+            if (!session) {
+                if(lockBanner) lockBanner.classList.add('visible');
+                lessonCards.forEach(c => { c.classList.add('locked'); });
+            } else if (session.course !== COURSE) {
+                if(lockBanner) lockBanner.classList.remove('visible');
+                const altBanner = document.createElement('div');
+                altBanner.className = 'locked-banner-alt visible';
+                altBanner.innerHTML = '🔒 <strong>No estás inscrito en este curso.</strong> Estás inscrito en: <strong>' + session.course + '</strong>. <a href="perfil.html">Ir a mi perfil</a>';
+                lockBanner.parentNode.insertBefore(altBanner, lockBanner.nextSibling);
+                lessonCards.forEach(c => { c.classList.add('locked'); });
+            } else {
+                if(lockBanner) lockBanner.classList.remove('visible');
+                lessonCards.forEach(c => { c.classList.remove('locked'); });
+            }
+        })();
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const ec = document.getElementById('examContainer');
+            if(ec) initTimedExam('examContainer', [
+                {text:'¿Qué métrica mide el desorden en un nodo de un árbol de decisión?', options:['Ganancia de información','Entropía','Precisión','F1-score'], correct:1},
+                {text:'¿Qué algoritmo de árbol usa Gini impurity para clasificación?', options:['ID3','C4.5','CART','CHAID'], correct:2},
+                {text:'¿Qué técnica combina múltiples árboles para mejorar precisión?', options:['Poda','Random Forest','Boosting','Bagging'], correct:1},
+                {text:'¿Qué problema tienen los árboles si crecen sin control?', options:['Underfitting','Overfitting','Bajo sesgo','Alta precisión'], correct:1},
+                {text:'¿Qué parámetro limita la profundidad máxima de un árbol?', options:['min_samples_split','max_depth','min_samples_leaf','max_features'], correct:1},
+            ], 60, 'arboles-exam');
+        });
+
         updateProgressUI();
     </script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
     <script src="supabase.js"></script>
+    <script src="examen.js"></script>
 </body>
 </html>

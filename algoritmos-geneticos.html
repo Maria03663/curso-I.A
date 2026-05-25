@@ -208,6 +208,17 @@
         .lesson-lock-msg{display:none;padding:14px 18px 14px 60px;font-size:.82rem;color:#F59E0B}
         .lesson-card.locked.open .lesson-lock-msg{display:block}
         .lesson-card.locked.open .lesson-body{display:none}
+
+        /* TIMED EXAM */
+        .exam-timer-critical{animation:pulse-red 1s ease infinite}
+        @keyframes pulse-red{0%,100%{opacity:1}50%{opacity:.5}}
+        .exam-grade-excellent{color:var(--green)}
+        .exam-grade-good{color:#F59E0B}
+        .exam-grade-fail{color:#EF4444}
+        /* LOCKED DIFFERENTIATION */
+        .locked-banner-alt{display:none;background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.2);border-radius:var(--radius-sm);padding:14px 20px;margin-bottom:20px;font-size:.85rem;color:#F87171;text-align:center}
+        .locked-banner-alt.visible{display:block}
+        .locked-banner-alt a{color:#FCA5A5;font-weight:700}
     </style>
 </head>
 <body>
@@ -393,6 +404,7 @@
                             <div class="highlight-box">
                                 <i class="fa-solid fa-lightbulb"></i> <strong>Conceptos clave:</strong> Población (conjunto de soluciones), Individuo (una solución candidata), Gen (cada componente de la solución), Fitness (qué tan buena es), Generaciones (iteraciones del proceso evolutivo).
                             </div>
+                            <p>Los Algoritmos Genéticos fueron popularizados por <strong>John Holland</strong> en su libro "Adaptation in Natural and Artificial Systems" (1975). Holland demostró que los principios de la evolución darwiniana — selección natural, cruce y mutación — podían aplicarse como algoritmos de optimización para resolver problemas complejos donde los métodos tradicionales fallan.</p>
                             <div class="lesson-duration"><i class="fa-regular fa-clock"></i> Duración estimada: 1h 15min</div>
                         </div>
                     </div>
@@ -469,40 +481,11 @@
     </section>
 
     <!-- EXAMEN DEL CURSO -->
-    <section class="section-block" style="padding-top:0">
-        <div class="container-narrow">
-            <h2 class="section-title"><i class="fa-solid fa-clipboard-question" style="color:var(--green)"></i> Examen del curso</h2>
-            <p style="color:var(--text-secondary); font-size:.88rem; margin-bottom:16px">Poné a prueba tus conocimientos sobre algoritmos genéticos.</p>
-
-            <div class="quiz-card">
-                <div class="quiz-header" onclick="toggleQuiz(this)">
-                    <span>¿Qué fase mantiene la diversidad genética en la población?</span>
-                    <i class="fa-solid fa-chevron-down quiz-chevron"></i>
-                </div>
-                <div class="quiz-body">
-                    <div class="quiz-answer">✅ <strong>Mutación.</strong> Introduce cambios aleatorios en los genes para evitar que la población converja prematuramente hacia óptimos locales.</div>
-                </div>
-            </div>
-
-            <div class="quiz-card">
-                <div class="quiz-header" onclick="toggleQuiz(this)">
-                    <span>¿Qué método preserva a los mejores individuos intactos entre generaciones?</span>
-                    <i class="fa-solid fa-chevron-down quiz-chevron"></i>
-                </div>
-                <div class="quiz-body">
-                    <div class="quiz-answer">✅ <strong>Elitismo.</strong> Garantiza que los n individuos con mejor fitness pasen directamente a la siguiente generación sin ser modificados.</div>
-                </div>
-            </div>
-
-            <div class="quiz-card">
-                <div class="quiz-header" onclick="toggleQuiz(this)">
-                    <span>¿Qué operador genético combina genes de dos padres para generar descendencia?</span>
-                    <i class="fa-solid fa-chevron-down quiz-chevron"></i>
-                </div>
-                <div class="quiz-body">
-                    <div class="quiz-answer">✅ <strong>Cruce (crossover).</strong> Permite explorar nuevas regiones del espacio de búsqueda combinando características prometedoras de ambos padres.</div>
-                </div>
-            </div>
+    <section class="section-block" style="padding:0 0 50px">
+        <div class="container" style="max-width:900px">
+            <h2 class="section-title">📝 Examen del curso</h2>
+            <p style="color:var(--text-secondary);font-size:.85rem;margin-bottom:16px">Respondé cada pregunta en menos de <strong style="color:#fff">1 minuto</strong>. 4 opciones (A, B, C, D).</p>
+            <div id="examContainer" style="background:var(--bg-card);backdrop-filter:blur(16px);border:1px solid var(--border);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow)"></div>
         </div>
     </section>
 
@@ -639,21 +622,26 @@
         const session = (() => { try { return JSON.parse(sessionStorage.getItem('ia_student_session')); } catch(e) { return null; } })();
         const isAdmin = sessionStorage.getItem('ia_admin_auth') === 'true'; if (session && !isAdmin) { const adminLink = document.querySelector('.admin-link'); if (adminLink) adminLink.style.display = 'none'; }
 
+        // Enrolled vs Locked UI
         (function() {
-            function lockCourse(msg) {
-                document.getElementById('lockBanner').classList.add('visible');
-                document.querySelectorAll('.lesson-card').forEach(item => {
-                    item.classList.add('locked');
-                    const lockMsg = document.createElement('div');
-                    lockMsg.className = 'lesson-lock-msg';
-                    lockMsg.innerHTML = msg;
-                    item.appendChild(lockMsg);
-                });
-            }
-            if (!session && !isAdmin) {
-                lockCourse('🔒 <strong>Contenido bloqueado.</strong> <a href="inscripcion.html">Inscribite</a> y iniciá sesión para acceder a la teoría completa.');
-            } else if (session && session.course !== COURSE_NAME && !isAdmin) {
-                lockCourse('🔒 <strong>No estás inscrito en este curso.</strong> Estás inscrito en: <strong>' + session.course + '</strong>. <a href="perfil.html">Ir a mi perfil</a>');
+            const session = JSON.parse(sessionStorage.getItem('ia_student_session'));
+            const COURSE = 'Algoritmos Genéticos';
+            const lockBanner = document.getElementById('lockBanner');
+            const lessonCards = document.querySelectorAll('.lesson-card');
+            
+            if (!session) {
+                if(lockBanner) lockBanner.classList.add('visible');
+                lessonCards.forEach(c => { c.classList.add('locked'); });
+            } else if (session.course !== COURSE) {
+                if(lockBanner) lockBanner.classList.remove('visible');
+                const altBanner = document.createElement('div');
+                altBanner.className = 'locked-banner-alt visible';
+                altBanner.innerHTML = '🔒 <strong>No estás inscrito en este curso.</strong> Estás inscrito en: <strong>' + session.course + '</strong>. <a href="perfil.html">Ir a mi perfil</a>';
+                lockBanner.parentNode.insertBefore(altBanner, lockBanner.nextSibling);
+                lessonCards.forEach(c => { c.classList.add('locked'); });
+            } else {
+                if(lockBanner) lockBanner.classList.remove('visible');
+                lessonCards.forEach(c => { c.classList.remove('locked'); });
             }
         })();
 
@@ -718,9 +706,21 @@
             card.classList.toggle('open');
         }
 
+        document.addEventListener('DOMContentLoaded', function() {
+            const ec = document.getElementById('examContainer');
+            if(ec) initTimedExam('examContainer', [
+                {text:'¿Qué operador genético combina dos soluciones padre?', options:['Selección','Mutación','Cruce (crossover)','Elitismo'], correct:2},
+                {text:'¿Qué método de selección da más probabilidad a los mejores individuos?', options:['Selección aleatoria','Selección por torneo','Selección por ruleta','Selección rankeada'], correct:2},
+                {text:'¿Qué representa un cromosoma en un AG?', options:['La población completa','Una posible solución','El mejor individuo','La función de fitness'], correct:1},
+                {text:'¿Qué operador mantiene la diversidad genética?', options:['Selección','Cruce','Mutación','Elitismo'], correct:2},
+                {text:'¿Qué estrategia asegura que el mejor individuo sobrevive intacto?', options:['Selección por ruleta','Elitismo','Cruce uniforme','Mutación adaptativa'], correct:1},
+            ], 60, 'geneticos-exam');
+        });
+
         updateProgressUI();
     </script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
     <script src="supabase.js"></script>
+    <script src="examen.js"></script>
 </body>
 </html>

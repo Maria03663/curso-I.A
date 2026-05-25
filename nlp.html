@@ -113,6 +113,16 @@
 .lesson-lock-msg{display:none;padding:14px 18px 14px 60px;font-size:.82rem;color:#F59E0B}
 .lesson-card.locked.open .lesson-lock-msg{display:block}
 .lesson-card.locked.open .lesson-body{display:none}
+/* TIMED EXAM */
+.exam-timer-critical{animation:pulse-red 1s ease infinite}
+@keyframes pulse-red{0%,100%{opacity:1}50%{opacity:.5}}
+.exam-grade-excellent{color:var(--green)}
+.exam-grade-good{color:#F59E0B}
+.exam-grade-fail{color:#EF4444}
+/* LOCKED DIFFERENTIATION */
+.locked-banner-alt{display:none;background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.2);border-radius:var(--radius-sm);padding:14px 20px;margin-bottom:20px;font-size:.85rem;color:#F87171;text-align:center}
+.locked-banner-alt.visible{display:block}
+.locked-banner-alt a{color:#FCA5A5;font-weight:700}
     </style>
 </head>
 <body>
@@ -171,6 +181,7 @@
                             <div class="highlight-box">
                                 <i class="fa-solid fa-triangle-exclamation"></i> <strong>Desafíos del lenguaje humano:</strong> La ambigüedad (una misma palabra puede tener múltiples significados según el contexto), la dependencia del contexto (el significado cambia con las palabras circundantes), el sarcasmo y la ironía (lo que se dice no es lo que se quiere decir), y la variabilidad lingüística (jergas, dialectos, errores tipográficos). El pipeline típico de NLP va desde la adquisición del texto, pasando por preprocesamiento, tokenización, análisis sintáctico y semántico, hasta la tarea final.
                             </div>
+                            <p>Los <strong>modelos de lenguaje grandes (LLMs)</strong> como GPT-4, Claude y Gemini representan el estado del arte en NLP. Estos modelos se basan en la arquitectura Transformer y se entrenan con cantidades masivas de texto (billones de tokens) usando aprendizaje autosupervisado: predicen la siguiente palabra dado el contexto anterior. El fine-tuning permite adaptarlos a tareas específicas como resumen, traducción o generación de código.</p>
                             <div class="lesson-duration"><i class="fa-regular fa-clock"></i> Duración estimada: 55 min</div>
                         </div>
                     </div>
@@ -243,6 +254,15 @@
                 </div>
 
             </div>
+        </div>
+    </section>
+
+    <!-- EXAMEN DEL CURSO -->
+    <section style="padding:40px 0;position:relative;z-index:1">
+        <div class="container" style="max-width:900px">
+            <div style="font-size:.75rem;font-weight:700;color:var(--purple);letter-spacing:3px;text-transform:uppercase;margin-bottom:20px">📝 Examen del curso</div>
+            <p style="color:var(--text-secondary);font-size:.85rem;margin-bottom:16px">Respondé cada pregunta en menos de <strong style="color:#fff">1 minuto</strong>. Tenés 4 opciones (A, B, C, D).</p>
+            <div id="examContainer" style="background:var(--bg-card);backdrop-filter:blur(16px);border:1px solid var(--border);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow)"></div>
         </div>
     </section>
 
@@ -411,9 +431,44 @@
             }
         }
 
+        // Enrolled vs Locked UI
+        (function() {
+            const session = JSON.parse(sessionStorage.getItem('ia_student_session'));
+            const COURSE = 'Procesamiento de Lenguaje Natural (NLP)';
+            const lockBanner = document.getElementById('lockBanner');
+            const lessonCards = document.querySelectorAll('.lesson-card');
+            
+            if (!session) {
+                if(lockBanner) lockBanner.classList.add('visible');
+                lessonCards.forEach(c => { c.classList.add('locked'); });
+            } else if (session.course !== COURSE) {
+                if(lockBanner) lockBanner.classList.remove('visible');
+                const altBanner = document.createElement('div');
+                altBanner.className = 'locked-banner-alt visible';
+                altBanner.innerHTML = '🔒 <strong>No estás inscrito en este curso.</strong> Estás inscrito en: <strong>' + session.course + '</strong>. <a href="perfil.html">Ir a mi perfil</a>';
+                lockBanner.parentNode.insertBefore(altBanner, lockBanner.nextSibling);
+                lessonCards.forEach(c => { c.classList.add('locked'); });
+            } else {
+                if(lockBanner) lockBanner.classList.remove('visible');
+                lessonCards.forEach(c => { c.classList.remove('locked'); });
+            }
+        })();
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const ec = document.getElementById('examContainer');
+            if(ec) initTimedExam('examContainer', [
+                {text:'¿Qué técnica representa palabras como vectores densos capturando relaciones semánticas?', options:['One-hot encoding','Bag of Words','Word2Vec','TF-IDF'], correct:2},
+                {text:'¿Qué arquitectura de Transformer se usa principalmente para GENERAR texto?', options:['BERT','GPT','T5','RoBERTa'], correct:1},
+                {text:'¿Qué paso del pipeline de NLP divide el texto en unidades más pequeñas?', options:['Stemming','Tokenización','Lematización','Parsing'], correct:1},
+                {text:'¿Qué métrica pondera términos por su frecuencia e inversa de frecuencia documental?', options:['TF-IDF','BoW','Word2Vec','GloVe'], correct:0},
+                {text:'¿Qué problema del lenguaje natural se refiere a palabras con múltiples significados?', options:['Sarcasmo','Ambigüedad','Anáfora','Entropía'], correct:1},
+            ], 60, 'nlp-exam');
+        });
+
         updateProgressUI();
     </script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
     <script src="supabase.js"></script>
+    <script src="examen.js"></script>
 </body>
 </html>

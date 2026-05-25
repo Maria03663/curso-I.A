@@ -113,6 +113,16 @@
 .lesson-lock-msg{display:none;padding:14px 18px 14px 60px;font-size:.82rem;color:#F59E0B}
 .lesson-card.locked.open .lesson-lock-msg{display:block}
 .lesson-card.locked.open .lesson-body{display:none}
+/* TIMED EXAM */
+.exam-timer-critical{animation:pulse-red 1s ease infinite}
+@keyframes pulse-red{0%,100%{opacity:1}50%{opacity:.5}}
+.exam-grade-excellent{color:var(--green)}
+.exam-grade-good{color:#F59E0B}
+.exam-grade-fail{color:#EF4444}
+/* LOCKED DIFFERENTIATION */
+.locked-banner-alt{display:none;background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.2);border-radius:var(--radius-sm);padding:14px 20px;margin-bottom:20px;font-size:.85rem;color:#F87171;text-align:center}
+.locked-banner-alt.visible{display:block}
+.locked-banner-alt a{color:#FCA5A5;font-weight:700}
     </style>
 </head>
 <body>
@@ -171,6 +181,7 @@
                             <div class="highlight-box">
                                 <i class="fa-solid fa-lightbulb"></i> <strong>Ejemplos concretos:</strong> Un robot aprendiendo a caminar (estado = ángulos de articulaciones, acción = torque en motores, recompensa = distancia avanzada), un agente jugando ajedrez (estado = tablero, acción = movimiento, recompensa = ganar/perder), o un sistema de recomendación (estado = historial del usuario, acción = ítem recomendado, recompensa = click/compra).
                             </div>
+                            <p>El RL ha logrado hitos impresionantes: <strong>AlphaGo</strong> (2016) venció al campeón mundial de Go, un juego con más configuraciones que átomos en el universo; <strong>AlphaFold</strong> resolvió el problema del plegamiento de proteínas (50 años de investigación); <strong>Dota 2 y StarCraft II</strong> tienen agentes que superan a jugadores profesionales; y en robótica, RL entrena brazos robóticos a realizar tareas de manipulación precisa. La clave del éxito moderno es combinar RL con deep learning (Deep RL), usando redes neuronales profundas para aproximar la función Q o la política directamente.</p>
                             <div class="lesson-duration"><i class="fa-regular fa-clock"></i> Duración estimada: 55 min</div>
                         </div>
                     </div>
@@ -243,6 +254,15 @@
                 </div>
 
             </div>
+        </div>
+    </section>
+
+    <!-- EXAMEN DEL CURSO -->
+    <section style="padding:40px 0;position:relative;z-index:1">
+        <div class="container" style="max-width:900px">
+            <div style="font-size:.75rem;font-weight:700;color:var(--purple);letter-spacing:3px;text-transform:uppercase;margin-bottom:20px">📝 Examen del curso</div>
+            <p style="color:var(--text-secondary);font-size:.85rem;margin-bottom:16px">Respondé cada pregunta en menos de <strong style="color:#fff">1 minuto</strong>. Tenés 4 opciones (A, B, C, D).</p>
+            <div id="examContainer" style="background:var(--bg-card);backdrop-filter:blur(16px);border:1px solid var(--border);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow)"></div>
         </div>
     </section>
 
@@ -410,9 +430,44 @@
             }
         }
 
+        // Enrolled vs Locked UI
+        (function() {
+            const session = JSON.parse(sessionStorage.getItem('ia_student_session'));
+            const COURSE = 'Aprendizaje por Refuerzo';
+            const lockBanner = document.getElementById('lockBanner');
+            const lessonCards = document.querySelectorAll('.lesson-card');
+            
+            if (!session) {
+                if(lockBanner) lockBanner.classList.add('visible');
+                lessonCards.forEach(c => { c.classList.add('locked'); });
+            } else if (session.course !== COURSE) {
+                if(lockBanner) lockBanner.classList.remove('visible');
+                const altBanner = document.createElement('div');
+                altBanner.className = 'locked-banner-alt visible';
+                altBanner.innerHTML = '🔒 <strong>No estás inscrito en este curso.</strong> Estás inscrito en: <strong>' + session.course + '</strong>. <a href="perfil.html">Ir a mi perfil</a>';
+                lockBanner.parentNode.insertBefore(altBanner, lockBanner.nextSibling);
+                lessonCards.forEach(c => { c.classList.add('locked'); });
+            } else {
+                if(lockBanner) lockBanner.classList.remove('visible');
+                lessonCards.forEach(c => { c.classList.remove('locked'); });
+            }
+        })();
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const ec = document.getElementById('examContainer');
+            if(ec) initTimedExam('examContainer', [
+                {text:'¿Qué componente del MDP define la estrategia del agente?', options:['Recompensa','Política','Estado','Acción'], correct:1},
+                {text:'¿Qué algoritmo de RL aprende la función Q usando la mejor acción posible del siguiente estado?', options:['SARSA','Q-Learning','Policy Gradient','Monte Carlo'], correct:1},
+                {text:'¿Qué balance busca todo agente de RL?', options:['Precisión vs recall','Exploración vs explotación','Sesgo vs varianza','Velocidad vs memoria'], correct:1},
+                {text:'¿Qué valor ε en epsilon-greedy significa 100% explotación?', options:['ε = 1','ε = 0','ε = 0.5','ε = 0.1'], correct:1},
+                {text:'¿Qué ecuación es la base matemática del RL?', options:['Ecuación de Bellman','Ecuación de Bayes','Ecuación de Fermi','Ecuación de Laplace'], correct:0},
+            ], 60, 'refuerzo-exam');
+        });
+
         updateProgressUI();
     </script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
     <script src="supabase.js"></script>
+    <script src="examen.js"></script>
 </body>
 </html>

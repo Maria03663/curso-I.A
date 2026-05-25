@@ -232,6 +232,17 @@
         .lesson-lock-msg{display:none;padding:14px 18px 14px 60px;font-size:.82rem;color:#F59E0B}
         .lesson-card.locked.open .lesson-lock-msg{display:block}
         .lesson-card.locked.open .lesson-body{display:none}
+
+        /* TIMED EXAM */
+        .exam-timer-critical{animation:pulse-red 1s ease infinite}
+        @keyframes pulse-red{0%,100%{opacity:1}50%{opacity:.5}}
+        .exam-grade-excellent{color:var(--green)}
+        .exam-grade-good{color:#F59E0B}
+        .exam-grade-fail{color:#EF4444}
+        /* LOCKED DIFFERENTIATION */
+        .locked-banner-alt{display:none;background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.2);border-radius:var(--radius-sm);padding:14px 20px;margin-bottom:20px;font-size:.85rem;color:#F87171;text-align:center}
+        .locked-banner-alt.visible{display:block}
+        .locked-banner-alt a{color:#FCA5A5;font-weight:700}
     </style>
 </head>
 <body>
@@ -378,43 +389,8 @@
     <section class="quiz-section">
         <div class="container">
             <div class="section-title">📝 Examen del curso</div>
-            <div class="section-subtitle">Poné a prueba tus conocimientos antes de avanzar.</div>
-            <div class="quiz-card">
-                <div class="quiz-header">
-                    <i class="fa-solid fa-circle-question"></i>
-                    <h3>Quiz rápido — 3 preguntas</h3>
-                </div>
-
-                <div class="quiz-question" data-question="1">
-                    <div class="q-text">1. ¿Cuál es la principal ventaja de los contenedores sobre las VMs?</div>
-                    <div class="quiz-options">
-                        <div class="quiz-option" data-answer="wrong" onclick="selectQuizOption(this, 1)">Son más seguros porque virtualizan el hardware</div>
-                        <div class="quiz-option" data-answer="correct" onclick="selectQuizOption(this, 1)">Arrancan en segundos y comparten el kernel del host</div>
-                        <div class="quiz-option" data-answer="wrong" onclick="selectQuizOption(this, 1)">Requieren más memoria RAM pero son más rápidos</div>
-                    </div>
-                    <div class="quiz-feedback" id="feedback1"></div>
-                </div>
-
-                <div class="quiz-question" data-question="2">
-                    <div class="q-text">2. ¿Qué framework usamos para la API?</div>
-                    <div class="quiz-options">
-                        <div class="quiz-option" data-answer="wrong" onclick="selectQuizOption(this, 2)">Flask</div>
-                        <div class="quiz-option" data-answer="wrong" onclick="selectQuizOption(this, 2)">Django REST</div>
-                        <div class="quiz-option" data-answer="correct" onclick="selectQuizOption(this, 2)">FastAPI</div>
-                    </div>
-                    <div class="quiz-feedback" id="feedback2"></div>
-                </div>
-
-                <div class="quiz-question" data-question="3">
-                    <div class="q-text">3. ¿Qué herramienta automatiza despliegues en cada push?</div>
-                    <div class="quiz-options">
-                        <div class="quiz-option" data-answer="wrong" onclick="selectQuizOption(this, 3)">Jenkins</div>
-                        <div class="quiz-option" data-answer="correct" onclick="selectQuizOption(this, 3)">GitHub Actions</div>
-                        <div class="quiz-option" data-answer="wrong" onclick="selectQuizOption(this, 3)">CircleCI</div>
-                    </div>
-                    <div class="quiz-feedback" id="feedback3"></div>
-                </div>
-            </div>
+            <div class="section-subtitle">Respondé cada pregunta en menos de <strong style="color:#fff">1 minuto</strong>. 4 opciones (A, B, C, D).</div>
+            <div id="examContainer" style="background:var(--bg-card);backdrop-filter:blur(16px);border:1px solid var(--border);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow)"></div>
         </div>
     </section>
 
@@ -491,6 +467,7 @@
                                 <i class="fa-solid fa-lightbulb"></i> <strong>Costos estimados:</strong> Una VM básica (2 vCPU, 4 GB RAM) cuesta ~$25-40/mes en GCP/AWS, ~$12-24/mes en DigitalOcean. Siempre configurá alertas de presupuesto para evitar sorpresas. El free tier de GCP incluye una instancia e2-micro gratuita de por vida.
                             </div>
                             <p>Crearemos una VM en GCP paso a paso: desde la consola, seleccionamos Compute Engine → Crear instancia, elegimos región (us-east1 por latencia), tipo e2-medium (2 vCPU, 4 GB), Ubuntu 22.04 LTS, permitimos tráfico HTTP/HTTPS, y generamos una clave SSH para conectarnos.</p>
+                            <p>Una decisión importante al crear VMs es elegir la <strong>región</strong> de despliegue. Las regiones más cercanas a tus usuarios reducen la latencia, pero pueden ser más costosas. GCP tiene regiones en US (us-east1, us-west1), Europa (europe-west1), Asia (asia-east1), y Sudamérica (southamerica-east1 en São Paulo). Cada región tiene diferentes precios y disponibilidad de tipos de instancia.</p>
                             <div class="lesson-duration"><i class="fa-regular fa-clock"></i> ⏱ 60 min</div>
                         </div>
                     </div>
@@ -699,21 +676,26 @@
         const session = (() => { try { return JSON.parse(sessionStorage.getItem('ia_student_session')); } catch(e) { return null; } })();
         const isAdmin = sessionStorage.getItem('ia_admin_auth') === 'true'; if (session && !isAdmin) { const adminLink = document.querySelector('.admin-link'); if (adminLink) adminLink.style.display = 'none'; }
 
+        // Enrolled vs Locked UI
         (function() {
-            function lockCourse(msg) {
-                document.getElementById('lockBanner').classList.add('visible');
-                document.querySelectorAll('.lesson-card').forEach(item => {
-                    item.classList.add('locked');
-                    const lockMsg = document.createElement('div');
-                    lockMsg.className = 'lesson-lock-msg';
-                    lockMsg.innerHTML = msg;
-                    item.appendChild(lockMsg);
-                });
-            }
-            if (!session && !isAdmin) {
-                lockCourse('🔒 <strong>Contenido bloqueado.</strong> <a href="inscripcion.html">Inscribite</a> y iniciá sesión para acceder a la teoría completa.');
-            } else if (session && session.course !== COURSE_NAME && !isAdmin) {
-                lockCourse('🔒 <strong>No estás inscrito en este curso.</strong> Estás inscrito en: <strong>' + session.course + '</strong>. <a href="perfil.html">Ir a mi perfil</a>');
+            const session = JSON.parse(sessionStorage.getItem('ia_student_session'));
+            const COURSE = 'Infraestructura y Despliegue';
+            const lockBanner = document.getElementById('lockBanner');
+            const lessonCards = document.querySelectorAll('.lesson-card');
+            
+            if (!session) {
+                if(lockBanner) lockBanner.classList.add('visible');
+                lessonCards.forEach(c => { c.classList.add('locked'); });
+            } else if (session.course !== COURSE) {
+                if(lockBanner) lockBanner.classList.remove('visible');
+                const altBanner = document.createElement('div');
+                altBanner.className = 'locked-banner-alt visible';
+                altBanner.innerHTML = '🔒 <strong>No estás inscrito en este curso.</strong> Estás inscrito en: <strong>' + session.course + '</strong>. <a href="perfil.html">Ir a mi perfil</a>';
+                lockBanner.parentNode.insertBefore(altBanner, lockBanner.nextSibling);
+                lessonCards.forEach(c => { c.classList.add('locked'); });
+            } else {
+                if(lockBanner) lockBanner.classList.remove('visible');
+                lessonCards.forEach(c => { c.classList.remove('locked'); });
             }
         })();
 
@@ -772,9 +754,21 @@
             }
         }
 
+        document.addEventListener('DOMContentLoaded', function() {
+            const ec = document.getElementById('examContainer');
+            if(ec) initTimedExam('examContainer', [
+                {text:'¿Cuál es la principal ventaja de los contenedores sobre las VMs?', options:['Son más seguros porque virtualizan hardware','Arrancan en segundos y comparten el kernel del host','Requieren más RAM pero son más rápidos','Tienen su propio sistema operativo'], correct:1},
+                {text:'¿Qué framework usamos para construir la API del curso?', options:['Flask','Django REST','FastAPI','Express'], correct:2},
+                {text:'¿Qué herramienta automatiza deploys en cada push?', options:['Jenkins','GitHub Actions','CircleCI','Travis CI'], correct:1},
+                {text:'¿Qué tipo de instancia de GCP es gratuita de por vida?', options:['e2-medium','e2-micro','n1-standard','f1-micro'], correct:1},
+                {text:'¿Qué estrategia de deploy minimiza el downtime?', options:['Blue-green deployment','Big bang deployment','Rolling update','Canary release'], correct:0},
+            ], 60, 'infra-exam');
+        });
+
         updateProgressUI();
     </script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
     <script src="supabase.js"></script>
+    <script src="examen.js"></script>
 </body>
 </html>
