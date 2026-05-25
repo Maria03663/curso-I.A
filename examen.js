@@ -27,24 +27,20 @@ function initTimedExam(containerId, questions, timePerQuestionSeconds, examName)
     let answers = new Array(questions.length).fill(null);
     let timerInterval = null;
     let timeLeft = timePerQuestionSeconds;
+    let started = false;
 
     const existing = getExamStatus(examName || containerId);
     if (existing) {
-        container.innerHTML = `
-            <div style="text-align:center;padding:30px">
-                <i class="fa-solid fa-circle-check" style="font-size:3rem;color:var(--green);margin-bottom:12px;display:block"></i>
-                <h3 style="color:#fff;margin-bottom:8px">Examen completado</h3>
-                <p style="color:var(--text-secondary);font-size:.9rem">Puntaje: ${existing.score}/${existing.total} (${Math.round(existing.score/existing.total*100)}%)</p>
-                <p style="color:var(--text-muted);font-size:.8rem;margin-top:4px">${existing.answered} preguntas respondidas</p>
-                <button onclick="resetExam('${containerId}', ${JSON.stringify(questions).replace(/"/g,'&quot;')}, ${timePerQuestionSeconds}, '${examName || containerId}')" style="margin-top:16px;padding:10px 24px;background:var(--purple);color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600">Reintentar examen</button>
-            </div>
-        `;
+        showExamCompletedScreen(containerId, existing, questions, timePerQuestionSeconds, examName);
         return;
     }
 
+    if (window.examTimers === undefined) window.examTimers = {};
+    if (window.examQuestions === undefined) window.examQuestions = {};
+    window.examQuestions[containerId] = questions;
+
     function renderQuestion() {
         const q = questions[currentQ];
-        const totalSec = timePerQuestionSeconds;
         const min = Math.floor(timeLeft / 60);
         const seg = timeLeft % 60;
 
@@ -64,9 +60,8 @@ function initTimedExam(containerId, questions, timePerQuestionSeconds, examName)
             <div class="exam-options" style="display:flex;flex-direction:column;gap:8px">
                 ${q.options.map((opt, i) => {
                     const letters = ['A', 'B', 'C', 'D'];
-                    const selectedClass = answers[currentQ] === i ? 'exam-option-selected' : '';
                     return `
-                        <div class="exam-option-single ${selectedClass}" data-opt-index="${i}" onclick="selectExamOption(${currentQ}, ${i}, '${containerId}')" style="display:flex;align-items:center;gap:12px;padding:12px 16px;background:${answers[currentQ] === i ? 'rgba(139,92,246,0.08)' : 'rgba(255,255,255,0.02)'};border:1px solid ${answers[currentQ] === i ? 'rgba(139,92,246,0.4)' : 'var(--border)'};border-radius:10px;cursor:pointer;transition:all .2s;font-size:.9rem;color:var(--text-secondary)">
+                        <div class="exam-option-single" data-opt-index="${i}" onclick="selectExamOption(${currentQ}, ${i}, '${containerId}')" style="display:flex;align-items:center;gap:12px;padding:12px 16px;background:${answers[currentQ] === i ? 'rgba(139,92,246,0.08)' : 'rgba(255,255,255,0.02)'};border:1px solid ${answers[currentQ] === i ? 'rgba(139,92,246,0.4)' : 'var(--border)'};border-radius:10px;cursor:pointer;transition:all .2s;font-size:.9rem;color:var(--text-secondary)">
                             <span style="width:28px;height:28px;border-radius:50%;background:${answers[currentQ] === i ? 'var(--purple)' : 'rgba(255,255,255,0.04)'};color:${answers[currentQ] === i ? '#fff' : 'var(--text-muted)'};display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.75rem;flex-shrink:0;border:1px solid ${answers[currentQ] === i ? 'var(--purple)' : 'var(--border)'}">${letters[i]}</span>
                             <span>${opt}</span>
                         </div>
@@ -76,7 +71,7 @@ function initTimedExam(containerId, questions, timePerQuestionSeconds, examName)
             <div style="display:flex;justify-content:space-between;align-items:center;margin-top:20px;gap:12px;flex-wrap:wrap">
                 <div style="display:flex;gap:8px">
                     ${currentQ > 0 ? `<button onclick="navigateExam(${currentQ-1}, '${containerId}')" style="padding:8px 18px;background:rgba(255,255,255,0.04);color:var(--text-secondary);border:1px solid var(--border);border-radius:8px;cursor:pointer;font-weight:600;font-size:.82rem;font-family:'Inter',sans-serif;transition:all .2s">← Anterior</button>` : ''}
-                    ${currentQ < questions.length - 1 
+                    ${currentQ < questions.length - 1
                         ? `<button onclick="navigateExam(${currentQ+1}, '${containerId}')" style="padding:8px 18px;background:var(--purple);color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:.82rem;font-family:'Inter',sans-serif;transition:all .2s">Siguiente →</button>`
                         : `<button onclick="finishExam('${containerId}')" style="padding:8px 24px;background:var(--green);color:#0a0a0f;border:none;border-radius:8px;cursor:pointer;font-weight:700;font-size:.82rem;font-family:'Inter',sans-serif;transition:all .2s;box-shadow:0 0 16px rgba(152,202,63,0.3)">Finalizar examen ✓</button>`
                     }
@@ -85,13 +80,8 @@ function initTimedExam(containerId, questions, timePerQuestionSeconds, examName)
                     ${answers.filter(a => a !== null).length} de ${questions.length} respondidas
                 </span>
             </div>
-            <div id="exam-feedback-${currentQ}" style="margin-top:12px;font-size:.82rem;display:none"></div>
         `;
     }
-
-    if (window.examTimers === undefined) window.examTimers = {};
-    if (window.examQuestions === undefined) window.examQuestions = {};
-    window.examQuestions[containerId] = questions;
 
     function startTimer() {
         clearInterval(timerInterval);
@@ -122,8 +112,32 @@ function initTimedExam(containerId, questions, timePerQuestionSeconds, examName)
         }, 1000);
     }
 
-    renderQuestion();
-    startTimer();
+    // Show start screen
+    showStartScreen();
+
+    function showStartScreen() {
+        const totalMin = Math.ceil((questions.length * timePerQuestionSeconds) / 60);
+        container.innerHTML = `
+            <div style="text-align:center;padding:30px 20px">
+                <div style="font-size:3rem;margin-bottom:12px">📝</div>
+                <h3 style="color:#fff;font-size:1.3rem;margin-bottom:8px">Examen del curso</h3>
+                <p style="color:var(--text-secondary);font-size:.9rem;margin-bottom:6px">${questions.length} preguntas · ${timePerQuestionSeconds} segundos por pregunta</p>
+                <p style="color:var(--text-muted);font-size:.82rem;margin-bottom:20px">Tiempo total estimado: ~${totalMin} min · Formato ABCD</p>
+                <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:24px">
+                    <span style="padding:6px 14px;border-radius:8px;background:rgba(152,202,63,0.08);border:1px solid rgba(152,202,63,0.2);font-size:.78rem;color:var(--green)">⏱ Timer por pregunta</span>
+                    <span style="padding:6px 14px;border-radius:8px;background:rgba(139,92,246,0.08);border:1px solid rgba(139,92,246,0.2);font-size:.78rem;color:var(--purple)">↩ Volver atrás permitido</span>
+                    <span style="padding:6px 14px;border-radius:8px;background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.2);font-size:.78rem;color:var(--blue)">📊 Resultado al final</span>
+                </div>
+                <button onclick="startExam('${containerId}')" style="padding:14px 40px;background:var(--green);color:#0a0a0f;border:none;border-radius:10px;cursor:pointer;font-weight:700;font-size:1rem;font-family:'Inter',sans-serif;transition:all .2s;box-shadow:0 0 24px rgba(152,202,63,0.3)">
+                    <i class="fa-solid fa-play"></i> Comenzar examen
+                </button>
+            </div>
+        `;
+    }
+
+    window[`startExam_${containerId}`] = function() {
+        startExam(containerId);
+    };
 
     window[`finishExam_${containerId}`] = function() {
         finishExam(containerId);
@@ -136,6 +150,116 @@ function initTimedExam(containerId, questions, timePerQuestionSeconds, examName)
     window[`navigateExam_${containerId}`] = function(newQ) {
         navigateExam(newQ, containerId);
     };
+}
+
+function startExam(containerId) {
+    const questions = window.examQuestions[containerId];
+    if (!questions) return;
+
+    // Re-init with started flag
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    let currentQ = 0;
+    let answers = new Array(questions.length).fill(null);
+    let timerInterval = null;
+    let timeLeft = 60;
+
+    if (window.examCurrentAnswers === undefined) window.examCurrentAnswers = {};
+    window.examCurrentAnswers[containerId] = answers;
+    if (window.examCurrentQ === undefined) window.examCurrentQ = {};
+    window.examCurrentQ[containerId] = 0;
+
+    function renderQuestion() {
+        const q = questions[currentQ];
+        const min = Math.floor(timeLeft / 60);
+        const seg = timeLeft % 60;
+
+        container.innerHTML = `
+            <div class="exam-progress" style="margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+                <span style="font-size:.82rem;color:var(--text-secondary)">Pregunta <strong style="color:#fff">${currentQ+1}/${questions.length}</strong></span>
+                <span class="exam-timer ${timeLeft <= 10 ? 'exam-timer-critical' : ''}" id="examTimerDisplay" style="font-size:.9rem;font-weight:700;color:var(--green);padding:4px 12px;border-radius:8px;background:rgba(152,202,63,0.08);border:1px solid rgba(152,202,63,0.2);transition:all .3s">
+                    <i class="fa-regular fa-clock"></i> ${min}:${String(seg).padStart(2,'0')}
+                </span>
+            </div>
+            <div class="progress-bar-wrap" style="height:4px;background:rgba(255,255,255,0.04);border-radius:99px;overflow:hidden;margin-bottom:20px">
+                <div style="height:100%;width:${((currentQ+1)/questions.length)*100}%;background:linear-gradient(90deg,var(--green),var(--purple));border-radius:99px;transition:width .4s ease"></div>
+            </div>
+            <div class="exam-question-text" style="font-weight:600;color:#fff;font-size:1.02rem;margin-bottom:18px;line-height:1.6">
+                ${currentQ+1}. ${q.text}
+            </div>
+            <div class="exam-options" style="display:flex;flex-direction:column;gap:8px">
+                ${q.options.map((opt, i) => {
+                    const letters = ['A', 'B', 'C', 'D'];
+                    return `
+                        <div class="exam-option-single" data-opt-index="${i}" onclick="selectExamOption(${currentQ}, ${i}, '${containerId}')" style="display:flex;align-items:center;gap:12px;padding:12px 16px;background:${answers[currentQ] === i ? 'rgba(139,92,246,0.08)' : 'rgba(255,255,255,0.02)'};border:1px solid ${answers[currentQ] === i ? 'rgba(139,92,246,0.4)' : 'var(--border)'};border-radius:10px;cursor:pointer;transition:all .2s;font-size:.9rem;color:var(--text-secondary)">
+                            <span style="width:28px;height:28px;border-radius:50%;background:${answers[currentQ] === i ? 'var(--purple)' : 'rgba(255,255,255,0.04)'};color:${answers[currentQ] === i ? '#fff' : 'var(--text-muted)'};display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.75rem;flex-shrink:0;border:1px solid ${answers[currentQ] === i ? 'var(--purple)' : 'var(--border)'}">${letters[i]}</span>
+                            <span>${opt}</span>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:20px;gap:12px;flex-wrap:wrap">
+                <div style="display:flex;gap:8px">
+                    ${currentQ > 0 ? `<button onclick="navigateExam(${currentQ-1}, '${containerId}')" style="padding:8px 18px;background:rgba(255,255,255,0.04);color:var(--text-secondary);border:1px solid var(--border);border-radius:8px;cursor:pointer;font-weight:600;font-size:.82rem;font-family:'Inter',sans-serif;transition:all .2s">← Anterior</button>` : ''}
+                    ${currentQ < questions.length - 1
+                        ? `<button onclick="navigateExam(${currentQ+1}, '${containerId}')" style="padding:8px 18px;background:var(--purple);color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:.82rem;font-family:'Inter',sans-serif;transition:all .2s">Siguiente →</button>`
+                        : `<button onclick="finishExam('${containerId}')" style="padding:8px 24px;background:var(--green);color:#0a0a0f;border:none;border-radius:8px;cursor:pointer;font-weight:700;font-size:.82rem;font-family:'Inter',sans-serif;transition:all .2s;box-shadow:0 0 16px rgba(152,202,63,0.3)">Finalizar examen ✓</button>`
+                    }
+                </div>
+                <span style="font-size:.75rem;color:var(--text-muted)">
+                    ${answers.filter(a => a !== null).length} de ${questions.length} respondidas
+                </span>
+            </div>
+        `;
+    }
+
+    function startTimer() {
+        clearInterval(timerInterval);
+        timerInterval = setInterval(() => {
+            timeLeft--;
+            const timerEl = document.querySelector(`#${containerId} #examTimerDisplay`);
+            if (timerEl) {
+                const min = Math.floor(timeLeft / 60);
+                const seg = timeLeft % 60;
+                timerEl.innerHTML = `<i class="fa-regular fa-clock"></i> ${min}:${String(seg).padStart(2,'0')}`;
+                if (timeLeft <= 10) {
+                    timerEl.style.color = '#EF4444';
+                    timerEl.style.background = 'rgba(239,68,68,0.08)';
+                    timerEl.style.borderColor = 'rgba(239,68,68,0.3)';
+                }
+            }
+            if (timeLeft <= 0) {
+                clearInterval(timerInterval);
+                if (currentQ < questions.length - 1) {
+                    currentQ++;
+                    window.examCurrentQ[containerId] = currentQ;
+                    timeLeft = 60;
+                    renderQuestion();
+                    startTimer();
+                } else {
+                    finishExam(containerId);
+                }
+            }
+        }, 1000);
+    }
+
+    renderQuestion();
+    startTimer();
+}
+
+function showExamCompletedScreen(containerId, existing, questions, timePerQuestionSeconds, examName) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    container.innerHTML = `
+        <div style="text-align:center;padding:30px">
+            <i class="fa-solid fa-circle-check" style="font-size:3rem;color:var(--green);margin-bottom:12px;display:block"></i>
+            <h3 style="color:#fff;margin-bottom:8px">Examen completado</h3>
+            <p style="color:var(--text-secondary);font-size:.9rem">Puntaje: ${existing.score}/${existing.total} (${Math.round(existing.score/existing.total*100)}%)</p>
+            <p style="color:var(--text-muted);font-size:.8rem;margin-top:4px">${existing.answered} preguntas respondidas</p>
+            <button onclick="resetExam('${containerId}', ${JSON.stringify(questions).replace(/"/g,'&quot;')}, ${timePerQuestionSeconds}, '${examName || containerId}')" style="margin-top:16px;padding:10px 24px;background:var(--purple);color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600">Reintentar examen</button>
+        </div>
+    `;
 }
 
 function selectExamOption(qIdx, optIdx, containerId) {
